@@ -19,95 +19,111 @@ using AntiCaptchaApi.Net.Responses;
 
 namespace AntiCaptchaApi.Net
 {
+    /// <summary>
+    /// The default implementation of <see cref="IAnticaptchaClient"/>. Handles communication with the Anti-Captcha API.
+    /// </summary>
     public class AnticaptchaClient : IAnticaptchaClient
     {
+        /// <inheritdoc />
         public ClientConfig ClientConfig { get; private set; }
 
+        /// <summary>
+        /// Gets the Anti-Captcha API client key used for authentication.
+        /// </summary>
         public string ClientKey { get; }
         
         private IAnticaptchaApi AnticaptchaApi { get; set; }
 
-        public AnticaptchaClient(string clientKey, ClientConfig clientConfig = null, HttpClient httpClient = null)
-        {
-            ClientConfig = clientConfig ?? new ClientConfig();
-            httpClient ??= new HttpClient
-            {
-                Timeout = TimeSpan.FromMilliseconds(ClientConfig.MaxHttpRequestTimeMs)
-            };
-            AnticaptchaApi = new AnticaptchaApi(httpClient);
-            ClientKey = clientKey;
-        }
-
+        /// <summary>
+        /// Internal constructor for dependency injection scenarios.
+        /// This is the sole constructor and requires services to be registered via `AddAnticaptcha` extension method.
+        /// </summary>
+        /// <param name="anticaptchaApi">The underlying API communication service, resolved via DI.</param>
+        /// <param name="clientKey">Your Anti-Captcha API client key, provided during service registration.</param>
+        /// <param name="clientConfig">Client configuration settings, resolved via DI.</param>
         internal AnticaptchaClient(
             IAnticaptchaApi anticaptchaApi,
             string clientKey,
-            ClientConfig clientConfig = null)
+            ClientConfig clientConfig)
         {
             ClientConfig = clientConfig ?? new ClientConfig();
             AnticaptchaApi = anticaptchaApi;
             ClientKey = clientKey;
         }
 
+        /// <inheritdoc />
         public void Configure(ClientConfig clientConfig)
         {
             ClientConfig = clientConfig ?? new ClientConfig();;
         }
         
+        /// <inheritdoc />
         public async Task<GetQueueStatsResponse> GetQueueStatsAsync(QueueType queueType, CancellationToken cancellationToken = default)
         {
             var payload = new GetQueueStatsPayload((int)queueType);
             return await AnticaptchaApi.CallApiMethodAsync(ApiMethod.GetQueueStats, payload, cancellationToken);
         }
 
+        /// <inheritdoc />
         public async Task<GetAppStatsResponse> GetAppStatsAsync(int softId, AppStatsMode? mode = null, CancellationToken cancellationToken = default)
         {
             var payload = new GetAppStatsPayload(ClientKey, softId, mode?.ToString());
             return await AnticaptchaApi.CallApiMethodAsync(ApiMethod.GetAppStats, payload, cancellationToken);
         }
 
+        /// <inheritdoc />
         public async Task<GetSpendingStatsResponse> GetSpendingStatsAsync(int? date = null, string queue = null, int? softId = null, string ip = null, CancellationToken cancellationToken = default)
         {
             var payload = new GetSpendingStatsPayload(ClientKey, queue, softId, date, ip);
             return await AnticaptchaApi.CallApiMethodAsync(ApiMethod.GetSpendingStats, payload, cancellationToken);
         }
 
+        /// <inheritdoc />
         public async Task<ActionResponse> PushAntiGateVariableAsync(int taskId, string name, object value, CancellationToken cancellationToken = default)
-        { 
+        {
             var payload = new PushAntiGateVariablePayload(ClientKey, taskId, name, value);
             return await AnticaptchaApi.CallApiMethodAsync(ApiMethod.PushAntiGateVariable, payload, cancellationToken);
         }
 
-        public async Task<ActionResponse> ReportIncorrectImageCaptchaAsync(int taskId, CancellationToken cancellationToken = default) =>
-            await ReportCaptcha(taskId, ApiMethod.ReportIncorrectImageCaptcha, cancellationToken);
-
-        public async Task<ActionResponse> ReportIncorrectImageRecaptchaAsync(int taskId, CancellationToken cancellationToken = default) =>
-            await ReportCaptcha(taskId, ApiMethod.ReportIncorrectRecaptcha, cancellationToken);
-
-
-        public async Task<ActionResponse> ReportCorrectRecaptchaAsync(int taskId, CancellationToken cancellationToken = default) =>
-            await ReportCaptcha(taskId, ApiMethod.ReportCorrectRecaptcha, cancellationToken);
-
-
-        public async Task<ActionResponse> ReportIncorrectImageHCaptchaAsync(int taskId, CancellationToken cancellationToken = default) =>
-            await ReportCaptcha(taskId, ApiMethod.ReportIncorrectHCaptcha, cancellationToken);
-
-
+       /// <inheritdoc />
+       public async Task<ActionResponse> ReportTaskOutcomeAsync(int taskId, ReportOutcome outcome, CancellationToken cancellationToken = default)
+       {
+           var apiMethod = outcome switch
+           {
+               ReportOutcome.IncorrectImageCaptcha => ApiMethod.ReportIncorrectImageCaptcha,
+               ReportOutcome.IncorrectRecaptcha => ApiMethod.ReportIncorrectRecaptcha,
+               ReportOutcome.CorrectRecaptcha => ApiMethod.ReportCorrectRecaptcha,
+               ReportOutcome.IncorrectHCaptcha => ApiMethod.ReportIncorrectHCaptcha,
+               _ => throw new ArgumentOutOfRangeException(nameof(outcome), $"Unsupported report outcome: {outcome}")
+           };
+           return await ReportCaptcha(taskId, apiMethod, cancellationToken);
+       }
+       
+        /// <summary>
+        /// Helper method to send a report action to the API.
+        /// </summary>
+        /// <param name="taskId">The task ID to report.</param>
+        /// <param name="method">The specific API report method to call.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>An <see cref="ActionResponse"/>.</returns>
         private async Task<ActionResponse> ReportCaptcha(int taskId, ApiMethod method, CancellationToken cancellationToken)
         {
             var payload = new ActionPayload(ClientKey, taskId);
             return await AnticaptchaApi.CallApiMethodAsync(method, payload, cancellationToken);
         }
 
+        /// <inheritdoc />
         public async Task<BalanceResponse> GetBalanceAsync(CancellationToken cancellationToken = default)
         {
             var payload = new GetBalancePayload(ClientKey);
             return await AnticaptchaApi.GetBalanceAsync(payload, cancellationToken);
         }
 
+        /// <inheritdoc />
         public async Task<TaskResultResponse<TSolution>> SolveCaptchaAsync<TSolution>(
-            ICaptchaRequest<TSolution> request, 
+            ICaptchaRequest<TSolution> request,
             string languagePool = null,
-            string callbackUrl = null,  
+            string callbackUrl = null,
             CancellationToken cancellationToken = default)
             where TSolution : BaseSolution, new()
         {
@@ -135,7 +151,8 @@ namespace AntiCaptchaApi.Net
             return taskResult;
         }
 
-        public async Task<CreateTaskResponse> CreateCaptchaTaskAsync<T>(ICaptchaRequest<T> request, string languagePool = null, string callbackUrl = null, CancellationToken cancellationToken = default) 
+        /// <inheritdoc />
+        public async Task<CreateTaskResponse> CreateCaptchaTaskAsync<T>(ICaptchaRequest<T> request, string languagePool = null, string callbackUrl = null, CancellationToken cancellationToken = default)
             where T : BaseSolution
         {
             var validationResult = CreateCaptchaRequestHelper.Validate(request);
@@ -151,6 +168,7 @@ namespace AntiCaptchaApi.Net
             return await AnticaptchaApi.CreateTaskAsync(payload, cancellationToken);
         }
 
+        /// <inheritdoc />
         public async Task<TaskResultResponse<TSolution>> GetTaskResultAsync<TSolution>(int taskId, CancellationToken cancellationToken)
             where TSolution : BaseSolution, new()
         {
@@ -158,6 +176,7 @@ namespace AntiCaptchaApi.Net
             return await AnticaptchaApi.GetTaskResultAsync(payload, cancellationToken);
         }
 
+        /// <inheritdoc />
         public async Task<TaskResultResponse<TSolution>> WaitForTaskResultAsync<TSolution>(int taskId, CancellationToken cancellationToken = default(CancellationToken)) where TSolution : BaseSolution, new()
         {
             var taskResultResponse = await WaitForTaskResultAsync<TSolution>(new CreateTaskResponse()
@@ -167,12 +186,22 @@ namespace AntiCaptchaApi.Net
             return taskResultResponse;
         }
 
+        /// <summary>
+        /// Waits for a task created via <see cref="CreateTaskResponse"/> to complete by polling the API.
+        /// This overload is typically used internally by <see cref="SolveCaptchaAsync{TSolution}"/>.
+        /// </summary>
+        /// <typeparam name="TSolution">The expected solution type.</typeparam>
+        /// <param name="createTaskResponse">The response object from the task creation.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>A <see cref="TaskResultResponse{TSolution}"/> with the result or error.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="createTaskResponse"/> or its TaskId is null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if an unexpected <see cref="TaskStatusType"/> is encountered during polling (should not happen).</exception>
         public async Task<TaskResultResponse<TSolution>> WaitForTaskResultAsync<TSolution>(
             CreateTaskResponse createTaskResponse,
-            CancellationToken cancellationToken = default) 
+            CancellationToken cancellationToken = default)
             where TSolution : BaseSolution, new()
         {
-            if (!createTaskResponse.TaskId.HasValue)
+            if (createTaskResponse?.TaskId == null) // Simplified null check
                 throw new ArgumentNullException(nameof(createTaskResponse.TaskId));
             var timer = new Stopwatch();
             timer.Start();
@@ -187,10 +216,17 @@ namespace AntiCaptchaApi.Net
                 taskResultResponse = await GetTaskResultAsync<TSolution>(createTaskResponse.TaskId.Value, cancellationToken);
                 taskResultResponse.CreateTaskResponse = createTaskResponse;
                 var status = taskResultResponse.Status;
+
+                // If status is null, it indicates an unexpected response format or error not captured earlier.
                 if (!status.HasValue)
-                    return !string.IsNullOrEmpty(taskResultResponse.ErrorCode) || !string.IsNullOrEmpty(taskResultResponse.ErrorDescription) ? BaseTaskResultResponseBuilder.Build<TSolution>(taskResultResponse.ErrorCode, taskResultResponse.ErrorDescription) : BaseTaskResultResponseBuilder.Build<TSolution>(HttpStatusCode.InternalServerError.ToString(), "An unknown API status, please contact code owners to fix this issue.");
-                var valueOrDefault = status.GetValueOrDefault();
-                switch (valueOrDefault)
+                {
+                    // Ensure error details are set if not already present from GetTaskResultAsync
+                    taskResultResponse.ErrorCode ??= HttpStatusCode.InternalServerError.ToString();
+                    taskResultResponse.ErrorDescription ??= "Received an unexpected null status from the API.";
+                    return taskResultResponse;
+                }
+                
+                switch (status.Value) // Use status.Value now that we know it HasValue
                 {
                     case TaskStatusType.Processing:
                         continue;
@@ -198,23 +234,22 @@ namespace AntiCaptchaApi.Net
                     case TaskStatusType.Error:
                         return taskResultResponse;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        // This case should ideally be unreachable if TaskStatusType enum covers all API possibilities
+                        throw new ArgumentOutOfRangeException(nameof(status), $"Unexpected task status encountered: {status.Value}");
                 }
             }
-            var taskResultResponse1 = taskResultResponse;
-            if (taskResultResponse1.ErrorDescription == null)
+            
+            // Timeout handling
+            if (taskResultResponse.ErrorDescription == null)
             {
-                var taskId2 = (ValueType) createTaskResponse.TaskId;
-                var totalMilliseconds = (ValueType) timer.Elapsed.TotalMilliseconds;
-                var str2 = $"Anticaptcha task did not finish in given time limit. The task id: {(object)taskId2}, the time elapsed: {(object)totalMilliseconds} ms.";
-                taskResultResponse1.ErrorDescription = str2;
+                 taskResultResponse.ErrorDescription = $"Anticaptcha task {createTaskResponse.TaskId} did not finish within the configured timeout ({ClientConfig.MaxWaitForTaskResultTimeMs} ms).";
             }
-            var taskResultResponse3 = taskResultResponse;
-            if (taskResultResponse3.ErrorCode != null) return taskResultResponse;
-            const HttpStatusCode httpStatusCode = HttpStatusCode.RequestTimeout;
-            var str3 = httpStatusCode.ToString();
-            taskResultResponse3.ErrorCode = str3;
+            if (taskResultResponse.ErrorCode == null)
+            {
+                taskResultResponse.ErrorCode = HttpStatusCode.RequestTimeout.ToString();
+            }
             return taskResultResponse;
         }
+
     }
 }

@@ -2,17 +2,16 @@
 
 namespace AntiCaptchaApi.Net.Internal.Models;
 
-internal class GetSpendingStatsPayload : ClientPayload<GetSpendingStatsResponse>
+internal class GetSpendingStatsPayload(
+    string clientKey,
+    string queue = null,
+    int? softId = null,
+    int? date = null,
+    string ip = null)
+    : ClientPayload<GetSpendingStatsResponse>(clientKey)
 {
-    public GetSpendingStatsPayload(string clientKey, string queue = null, int? softId = null, int? date  = null, string ip = null) : base(clientKey)
-    {
-        Date = date;
-        Queue = queue;
-        SoftId = softId;
-        Ip = ip;
-    }
-    public int? Date { get; set;}
-    public string Queue { get; set; }
-    public int? SoftId { get; set; }
-    public string Ip { get; set; }
+    public int? Date { get; set;} = date;
+    public string Queue { get; set; } = queue;
+    public int? SoftId { get; set; } = softId;
+    public string Ip { get; set; } = ip;
 }

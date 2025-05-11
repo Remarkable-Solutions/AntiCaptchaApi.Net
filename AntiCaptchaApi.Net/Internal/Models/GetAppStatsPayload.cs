@@ -2,12 +2,8 @@
 
 namespace AntiCaptchaApi.Net.Internal.Models;
 
-internal class GetAppStatsPayload : SoftAndClientPayload <GetAppStatsResponse>
+internal class GetAppStatsPayload(string clientKey, int softId, string mode = null)
+    : SoftAndClientPayload<GetAppStatsResponse>(clientKey, softId)
 {
-    public GetAppStatsPayload(string clientKey, int softId, string mode = null) : base(clientKey, softId)
-    {
-        Mode = mode;
-    }
-
-    public string Mode { get; }
+    public string Mode { get; } = mode;
 }

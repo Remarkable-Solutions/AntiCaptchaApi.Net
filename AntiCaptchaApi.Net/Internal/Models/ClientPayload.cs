@@ -2,13 +2,8 @@
 
 namespace AntiCaptchaApi.Net.Internal.Models;
 
-internal class ClientPayload<TResponse> : Payload <TResponse>
+internal class ClientPayload<TResponse>(string clientKey) : Payload<TResponse>
     where TResponse : BaseResponse, new()
 {
-    public ClientPayload(string clientKey)
-    {
-        ClientKey = clientKey;
-    }
-
-    public string ClientKey { get; set; }
+    public string ClientKey { get; set; } = clientKey;
 }

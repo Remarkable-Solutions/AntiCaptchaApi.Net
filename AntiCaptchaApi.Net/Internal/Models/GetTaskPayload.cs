@@ -3,13 +3,9 @@ using AntiCaptchaApi.Net.Responses;
 
 namespace AntiCaptchaApi.Net.Internal.Models;
 
-internal class GetTaskPayload <TSolution> : ClientPayload <TaskResultResponse<TSolution>>
+internal class GetTaskPayload<TSolution>(string clientKey, int taskId)
+    : ClientPayload<TaskResultResponse<TSolution>>(clientKey)
     where TSolution : BaseSolution, new()
 {
-    public GetTaskPayload(string clientKey, int taskId) : base(clientKey)
-    {
-        TaskId = taskId;
-    }
-        
-    public int TaskId { get; }
+    public int TaskId { get; } = taskId;
 }
