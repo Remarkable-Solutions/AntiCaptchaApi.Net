@@ -1,0 +1,61 @@
+name: Publish NuGet Package
+
+on:
+  push:
+    branches:
+      - main # Triggers on pushes to the main branch
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*' # Triggers on tags like v1.0.0, v1.2.3-beta
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # Needed to check out the repository
+      packages: write # Needed to publish to GitHub Packages (if you choose to, not used for nuget.org here)
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x' # Use the .NET version your project targets
+
+    - name: Restore dependencies
+      run: dotnet restore AntiCaptchaApi.Net.sln
+
+    - name: Build
+      run: dotnet build AntiCaptchaApi.Net.sln --configuration Release --no-restore
+
+    # Optional: Run tests
+    # - name: Test
+    #   run: dotnet test AntiCaptchaApi.Net.sln --configuration Release --no-build
+
+    - name: Determine Package Version
+      id: package_version
+      shell: bash
+      run: |
+        if [[ "${{ github.ref_type }}" == "tag" ]]; then
+          # Use the tag name directly (remove 'v' prefix)
+          VERSION="${{ github.ref_name }}"
+          VERSION=${VERSION#v} 
+          echo "Using tag version: $VERSION"
+        else
+          VERSION_FROM_CSPROJ=$(grep '<Version>' AntiCaptchaApi.Net/AntiCaptchaApi.Net.csproj | sed -e 's/.*<Version>\(.*\)<\/Version>.*/\1/')
+          VERSION="${VERSION_FROM_CSPROJ}-ci-${{ github.run_number }}"
+          echo "Using CI version for main branch: $VERSION"
+        fi
+        echo "package_version=$VERSION" >> $GITHUB_OUTPUT
+        
+    - name: Pack NuGet package
+      run: dotnet pack AntiCaptchaApi.Net/AntiCaptchaApi.Net.csproj --configuration Release --no-build -p:PackageVersion=${{ steps.package_version.outputs.package_version }} -o ./nuget-packages
+
+    - name: Publish NuGet package to NuGet.org
+      if: startsWith(github.ref, 'refs/tags/v') # Only publish to NuGet.org for version tags
+      run: dotnet nuget push "./nuget-packages/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+    - name: Publish NuGet package to GitHub Packages
+      if: github.ref == 'refs/heads/main' # Only publish to GitHub Packages for pushes to main branch
+      run: dotnet nuget push "./nuget-packages/*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "https://nuget.pkg.github.com/Remarkable-Solutions/index.json" --skip-duplicate

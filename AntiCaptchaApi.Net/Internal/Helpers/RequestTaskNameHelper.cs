@@ -15,7 +15,6 @@ internal static class RequestTaskNameHelper
         where TSolution : BaseSolution
     {
         var @switch = new Dictionary<Type, string> {
-            { typeof(AntiGateRequest), "AntiGateTask" },
             { typeof(FunCaptchaRequest), "FunCaptchaTask" },
             { typeof(FunCaptchaProxylessRequest), "FunCaptchaTaskProxyless" },
             { typeof(GeeTestV3Request), "GeeTestTask" },

@@ -2,12 +2,7 @@
 
 namespace AntiCaptchaApi.Net.Internal.Models;
 
-internal class GetQueueStatsPayload : Payload<GetQueueStatsResponse>
+internal class GetQueueStatsPayload(int queueId) : Payload<GetQueueStatsResponse>
 {
-    public GetQueueStatsPayload(int queueId)
-    {
-        QueueId = queueId;
-    }
-
-    public int QueueId { get; }
+    public int QueueId { get; } = queueId;
 }

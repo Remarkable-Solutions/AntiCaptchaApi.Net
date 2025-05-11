@@ -17,7 +17,6 @@ internal static class CreateCaptchaRequestHelper
         where TSolution : BaseSolution
     {
         var @switch = new Dictionary<Type, Func<ValidationResult>> {
-            { typeof(AntiGateRequest), () => new AntiGateRequestValidator().Validate(request as AntiGateRequest) },
             { typeof(FunCaptchaRequest), () => new FunCaptchaRequestValidator().Validate(request as FunCaptchaRequest) },
             { typeof(FunCaptchaProxylessRequest), () => new FunCaptchaProxylessRequestValidator().Validate(request as FunCaptchaProxylessRequest) },
             { typeof(GeeTestV3Request), () => new GeeTestV3RequestValidator().Validate(request as GeeTestV3Request) },
@@ -72,7 +71,7 @@ internal static class CreateCaptchaRequestHelper
 
         if (serialized.ContainsKey("proxyConfig"))
         {
-            if(!string.IsNullOrEmpty(serialized["proxyConfig"]?["proxyType"]?.ToString()) && request is not AntiGateRequest)
+            if(!string.IsNullOrEmpty(serialized["proxyConfig"]?["proxyType"]?.ToString()))
                 serialized["proxyType"] = ((ProxyTypeOption)int.Parse(serialized["proxyConfig"]?["proxyType"]?.ToString())).ToString().ToLower();
             
             if(!string.IsNullOrEmpty(serialized["proxyConfig"]?["proxyAddress"]?.ToString()))

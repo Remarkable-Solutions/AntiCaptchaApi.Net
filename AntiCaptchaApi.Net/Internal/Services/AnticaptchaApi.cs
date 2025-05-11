@@ -12,12 +12,10 @@ using Newtonsoft.Json.Linq;
 
 namespace AntiCaptchaApi.Net.Internal.Services
 {
-    internal class AnticaptchaApi : IAnticaptchaApi
+    internal class AnticaptchaApi(IHttpHelper httpHelper) : IAnticaptchaApi
     {
         private const string Host = "api.anti-captcha.com";
-        private readonly HttpHelper _httpHelper;
-
-        internal AnticaptchaApi(HttpClient httpClient) => _httpHelper = new HttpHelper(httpClient);
+        private readonly IHttpHelper _httpHelper = httpHelper ?? throw new ArgumentNullException(nameof(httpHelper));
 
         public async Task<CreateTaskResponse> CreateTaskAsync<TPayload>(TPayload payload, CancellationToken cancellationToken)
             where TPayload : Payload<CreateTaskResponse>

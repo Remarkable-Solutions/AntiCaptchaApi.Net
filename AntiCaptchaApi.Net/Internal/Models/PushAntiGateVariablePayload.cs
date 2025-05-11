@@ -2,15 +2,10 @@
 
 namespace AntiCaptchaApi.Net.Internal.Models;
 
-internal class PushAntiGateVariablePayload : ClientPayload <ActionResponse>
+internal class PushAntiGateVariablePayload(string clientKey, int taskId, string name, object value)
+    : ClientPayload<ActionResponse>(clientKey)
 {
-    public PushAntiGateVariablePayload(string clientKey, int taskId, string name, object value) : base(clientKey)
-    {
-        TaskId = taskId;
-        Name = name;
-        Value = value;
-    }
-    public int TaskId { get; }
-    public string Name { get; }
-    public object Value { get; }
+    public int TaskId { get; } = taskId;
+    public string Name { get; } = name;
+    public object Value { get; } = value;
 }
