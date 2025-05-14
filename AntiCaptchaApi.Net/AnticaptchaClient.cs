@@ -151,6 +151,42 @@ namespace AntiCaptchaApi.Net
             return taskResult;
         }
 
+        public async Task<TaskResultResponse<ProsopoSolution>> SolveProsopoProxylessAsync(
+            IProsopoProxylessRequest request,
+            string languagePool = null,
+            string callbackUrl = null,
+            CancellationToken cancellationToken = default)
+        {
+            return await SolveCaptchaAsync<ProsopoSolution>(request, languagePool, callbackUrl, cancellationToken);
+        }
+
+        public async Task<TaskResultResponse<ProsopoSolution>> SolveProsopoAsync(
+            IProsopoRequest request,
+            string languagePool = null,
+            string callbackUrl = null,
+            CancellationToken cancellationToken = default)
+        {
+            return await SolveCaptchaAsync<ProsopoSolution>(request, languagePool, callbackUrl, cancellationToken);
+        }
+
+        public async Task<TaskResultResponse<ProsopoSolution>> SolveFriendlyCaptchaProxylessAsync(
+            IFriendlyCaptchaProxylessRequest request,
+            string languagePool = null,
+            string callbackUrl = null,
+            CancellationToken cancellationToken = default)
+        {
+            return await SolveCaptchaAsync<ProsopoSolution>(request, languagePool, callbackUrl, cancellationToken);
+        }
+
+        public async Task<TaskResultResponse<ProsopoSolution>> SolveFriendlyCaptchaAsync(
+            IFriendlyCaptchaRequest request,
+            string languagePool = null,
+            string callbackUrl = null,
+            CancellationToken cancellationToken = default)
+        {
+            return await SolveCaptchaAsync<ProsopoSolution>(request, languagePool, callbackUrl, cancellationToken);
+        }
+
         /// <inheritdoc />
         public async Task<CreateTaskResponse> CreateCaptchaTaskAsync<T>(ICaptchaRequest<T> request, string languagePool = null, string callbackUrl = null, CancellationToken cancellationToken = default)
             where T : BaseSolution

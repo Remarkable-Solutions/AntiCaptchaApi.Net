@@ -33,6 +33,10 @@ internal static class CreateCaptchaRequestHelper
             { typeof(TurnstileCaptchaProxylessRequest), () => new TurnstileProxylessRequestValidator().Validate(request as TurnstileCaptchaProxylessRequest) },
             { typeof(TurnstileCaptchaRequest), () => new TurnstileProxylessRequestValidator().Validate(request as TurnstileCaptchaProxylessRequest) },
             { typeof(ImageToCoordinatesRequest), () => new ImageToCoordinatesRequestValidator().Validate(request as ImageToCoordinatesRequest) },
+            { typeof(ProsopoProxylessRequest), () => new ProsopoProxylessRequestValidator().Validate(request as ProsopoProxylessRequest) },
+            { typeof(ProsopoRequest), () => new ProsopoRequestValidator().Validate(request as ProsopoRequest) },
+            { typeof(FriendlyCaptchaProxylessRequest), () => new FriendlyCaptchaProxylessRequestValidator().Validate(request as FriendlyCaptchaProxylessRequest) },
+            { typeof(FriendlyCaptchaRequest), () => new FriendlyCaptchaRequestValidator().Validate(request as FriendlyCaptchaRequest) },
         };
         return @switch[request.GetType()];
     }

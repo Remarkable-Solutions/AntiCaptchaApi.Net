@@ -113,6 +113,62 @@ public interface IAnticaptchaClient
       where TSolution : BaseSolution, new();
 
     /// <summary>
+    /// Creates a Prosopo captcha task, waits for its completion, and returns the result in a single call.
+    /// </summary>
+    /// <param name="request">The Prosopo captcha task request details.</param>
+    /// <param name="languagePool">Optional language pool for the task.</param>
+    /// <param name="callbackUrl">Optional URL for receiving the task result via callback.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A <see cref="TaskResultResponse{ProsopoSolution}"/> containing the task result or error information.</returns>
+    Task<TaskResultResponse<ProsopoSolution>> SolveProsopoProxylessAsync(
+      IProsopoProxylessRequest request,
+      string languagePool = null,
+      string callbackUrl = null,
+      CancellationToken cancellationToken = default (CancellationToken));
+
+    /// <summary>
+    /// Creates a Prosopo captcha task with proxy, waits for its completion, and returns the result in a single call.
+    /// </summary>
+    /// <param name="request">The Prosopo captcha task request details (with proxy).</param>
+    /// <param name="languagePool">Optional language pool for the task.</param>
+    /// <param name="callbackUrl">Optional URL for receiving the task result via callback.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A <see cref="TaskResultResponse{ProsopoSolution}"/> containing the task result or error information.</returns>
+    Task<TaskResultResponse<ProsopoSolution>> SolveProsopoAsync(
+        IProsopoRequest request,
+        string languagePool = null,
+        string callbackUrl = null,
+        CancellationToken cancellationToken = default (CancellationToken));
+
+    /// <summary>
+    /// Creates a Friendly Captcha task (proxyless), waits for its completion, and returns the result in a single call.
+    /// </summary>
+    /// <param name="request">The Friendly Captcha (proxyless) task request details.</param>
+    /// <param name="languagePool">Optional language pool for the task.</param>
+    /// <param name="callbackUrl">Optional URL for receiving the task result via callback.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A <see cref="TaskResultResponse{ProsopoSolution}"/> containing the task result or error information.</returns>
+    Task<TaskResultResponse<ProsopoSolution>> SolveFriendlyCaptchaProxylessAsync(
+        IFriendlyCaptchaProxylessRequest request,
+        string languagePool = null,
+        string callbackUrl = null,
+        CancellationToken cancellationToken = default (CancellationToken));
+
+    /// <summary>
+    /// Creates a Friendly Captcha task (with proxy), waits for its completion, and returns the result in a single call.
+    /// </summary>
+    /// <param name="request">The Friendly Captcha (with proxy) task request details.</param>
+    /// <param name="languagePool">Optional language pool for the task.</param>
+    /// <param name="callbackUrl">Optional URL for receiving the task result via callback.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A <see cref="TaskResultResponse{ProsopoSolution}"/> containing the task result or error information.</returns>
+    Task<TaskResultResponse<ProsopoSolution>> SolveFriendlyCaptchaAsync(
+        IFriendlyCaptchaRequest request,
+        string languagePool = null,
+        string callbackUrl = null,
+        CancellationToken cancellationToken = default (CancellationToken));
+
+    /// <summary>
     /// Creates a new captcha task on the Anti-Captcha service.
     /// This is the first step in the two-step solving process. Follow up with <see cref="GetTaskResultAsync{TSolution}"/> or <see cref="WaitForTaskResultAsync{TSolution}(int, CancellationToken)"/> to retrieve the solution.
     /// </summary>

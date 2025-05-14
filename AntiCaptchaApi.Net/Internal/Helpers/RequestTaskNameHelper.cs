@@ -31,6 +31,10 @@ internal static class RequestTaskNameHelper
             { typeof(TurnstileCaptchaProxylessRequest), "TurnstileTaskProxyless" },
             { typeof(TurnstileCaptchaRequest), "TurnstileTask" },
             { typeof(ImageToCoordinatesRequest), "ImageToCoordinatesTask" },
+            { typeof(ProsopoProxylessRequest), "ProsopoTaskProxyless" },
+            { typeof(ProsopoRequest), "ProsopoTask" },
+            { typeof(FriendlyCaptchaProxylessRequest), "FriendlyCaptchaTaskProxyless" },
+            { typeof(FriendlyCaptchaRequest), "FriendlyCaptchaTask" }
         };
         return @switch[request.GetType()];
     }
