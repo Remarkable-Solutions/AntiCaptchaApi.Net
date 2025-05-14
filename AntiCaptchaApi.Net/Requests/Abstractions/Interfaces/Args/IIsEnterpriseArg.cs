@@ -1,6 +1,7 @@
-﻿namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args;
-
-public interface IIsEnterpriseArg : IRequestArg
+﻿namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args
 {
-    public bool? IsEnterprise { get; set; }
+    public interface IIsEnterpriseArg : IRequestArg
+    {
+        public bool? IsEnterprise { get; set; }
+    }
 }

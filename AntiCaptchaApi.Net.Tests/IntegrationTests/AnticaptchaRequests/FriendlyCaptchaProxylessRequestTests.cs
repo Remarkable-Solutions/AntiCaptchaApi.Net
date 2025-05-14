@@ -6,30 +6,31 @@ using AntiCaptchaApi.Net.Tests.Helpers;
 using AntiCaptchaApi.Net.Tests.IntegrationTests.Base;
 using Xunit;
 
-namespace AntiCaptchaApi.Net.Tests.IntegrationTests.AnticaptchaRequests;
-
-public class FriendlyCaptchaProxylessRequestTests : AnticaptchaRequestTestBase<ProsopoSolution> // Using ProsopoSolution as it's identical
+namespace AntiCaptchaApi.Net.Tests.IntegrationTests.AnticaptchaRequests
 {
-    [Fact]
-    public async Task ShouldReturnCorrectCaptchaResult_WhenCallingAuthenticRequest()
+    public class FriendlyCaptchaProxylessRequestTests : AnticaptchaRequestTestBase<ProsopoSolution> // Using ProsopoSolution as it's identical
     {
-        await TestAuthenticRequest();
-    }
-
-    protected override FriendlyCaptchaProxylessRequest CreateAuthenticRequest()
-    {
-        // Note: Using example key from documentation. 
-        // A live Friendly Captcha test page URL would be ideal for a more comprehensive "authentic" test.
-        return new FriendlyCaptchaProxylessRequest
+        [Fact]
+        public async Task ShouldReturnCorrectCaptchaResult_WhenCallingAuthenticRequest()
         {
-            WebsiteUrl = "https://example-service-that-uses-friendlycaptcha.com", // Placeholder URL
-            WebsiteKey = "FCMDESUD3M34857N" // Example key from AntiCaptcha docs for Friendly Captcha
-        };
-    }
+            await TestAuthenticRequest();
+        }
 
-    protected override void AssertTaskResult(TaskResultResponse<ProsopoSolution> taskResult)
-    {
-        AssertHelper.NotNullNotEmpty(taskResult.Solution.Token);
-        AssertHelper.NotNullNotEmpty(taskResult.Solution.UserAgent); // UserAgent is part of the solution for FriendlyCaptcha
+        protected override FriendlyCaptchaProxylessRequest CreateAuthenticRequest()
+        {
+            // Note: Using example key from documentation. 
+            // A live Friendly Captcha test page URL would be ideal for a more comprehensive "authentic" test.
+            return new FriendlyCaptchaProxylessRequest
+            {
+                WebsiteUrl = "https://example-service-that-uses-friendlycaptcha.com", // Placeholder URL
+                WebsiteKey = "FCMDESUD3M34857N" // Example key from AntiCaptcha docs for Friendly Captcha
+            };
+        }
+
+        protected override void AssertTaskResult(TaskResultResponse<ProsopoSolution> taskResult)
+        {
+            AssertHelper.NotNullNotEmpty(taskResult.Solution.Token);
+            AssertHelper.NotNullNotEmpty(taskResult.Solution.UserAgent); // UserAgent is part of the solution for FriendlyCaptcha
+        }
     }
 }

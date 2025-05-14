@@ -1,6 +1,7 @@
-﻿namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args;
-
-public interface IWebsiteKeyArg : IRequestArg
+﻿namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args
 {
-    public string WebsiteKey { get; set; }
+    public interface IWebsiteKeyArg : IRequestArg
+    {
+        public string WebsiteKey { get; set; }
+    }
 }

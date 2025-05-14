@@ -1,9 +1,10 @@
 ﻿using AntiCaptchaApi.Net.Models.Solutions;
 using AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args;
 
-namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces;
-
-public interface IRecaptchaV2ProxylessRequest : IWebCaptchaRequest<RecaptchaSolution>, IIsInvisibleArg
+namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces
 {
-    public string RecaptchaDataSValue { get; set; }
+    public interface IRecaptchaV2ProxylessRequest : IWebCaptchaRequest<RecaptchaSolution>, IIsInvisibleArg
+    {
+        public string RecaptchaDataSValue { get; set; }
+    }
 }

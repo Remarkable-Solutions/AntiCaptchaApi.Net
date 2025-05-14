@@ -1,12 +1,19 @@
-﻿namespace AntiCaptchaApi.Net.Internal.Validation.ValidationErrors;
-
-public class ValidationError(string propertyName, string errorMessage)
+﻿namespace AntiCaptchaApi.Net.Internal.Validation.ValidationErrors
 {
-    public string PropertyName { get; } = propertyName;
-    public string ErrorMessage { get; } = errorMessage;
-
-    public override string ToString()
+    public class ValidationError
     {
-        return $"{PropertyName} {ErrorMessage}";
+        public ValidationError(string propertyName, string errorMessage)
+        {
+            PropertyName = propertyName;
+            ErrorMessage = errorMessage;
+        }
+
+        public string PropertyName { get; }
+        public string ErrorMessage { get; }
+
+        public override string ToString()
+        {
+            return $"{PropertyName} {ErrorMessage}";
+        }
     }
 }

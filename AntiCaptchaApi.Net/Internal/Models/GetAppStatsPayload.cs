@@ -1,9 +1,14 @@
 ﻿using AntiCaptchaApi.Net.Responses;
 
-namespace AntiCaptchaApi.Net.Internal.Models;
-
-internal class GetAppStatsPayload(string clientKey, int softId, string mode = null)
-    : SoftAndClientPayload<GetAppStatsResponse>(clientKey, softId)
+namespace AntiCaptchaApi.Net.Internal.Models
 {
-    public string Mode { get; } = mode;
+    internal class GetAppStatsPayload : SoftAndClientPayload<GetAppStatsResponse>
+    {
+        public GetAppStatsPayload(string clientKey, int softId, string mode = null) : base(clientKey, softId)
+        {
+            Mode = mode;
+        }
+
+        public string Mode { get; }
+    }
 }

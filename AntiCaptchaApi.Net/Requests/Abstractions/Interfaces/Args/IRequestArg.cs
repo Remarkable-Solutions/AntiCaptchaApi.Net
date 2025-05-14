@@ -1,6 +1,7 @@
-﻿namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args;
-
-public interface IRequestArg
+﻿namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args
 {
+    public interface IRequestArg
+    {
     
+    }
 }

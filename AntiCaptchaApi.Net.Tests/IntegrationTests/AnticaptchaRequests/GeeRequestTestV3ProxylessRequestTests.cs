@@ -6,31 +6,32 @@ using AntiCaptchaApi.Net.Responses;
 using AntiCaptchaApi.Net.Tests.Helpers;
 using Xunit;
 
-namespace AntiCaptchaApi.Net.Tests.IntegrationTests.AnticaptchaRequests;
-
-public class GeeRequestTestV3ProxylessRequestTests : GeeRequestTestsBase<GeeTestV3Solution>
+namespace AntiCaptchaApi.Net.Tests.IntegrationTests.AnticaptchaRequests
 {
-    [Fact]
-    public async Task ShouldReturnCorrectCaptchaResult_WhenCallingAuthenticRequest()
+    public class GeeRequestTestV3ProxylessRequestTests : GeeRequestTestsBase<GeeTestV3Solution>
     {
-        await TestAuthenticRequest();
-    }
-
-    protected override GeeTestV3ProxylessRequest CreateAuthenticRequest()
-    {
-        var (gt, websiteChallenge) = GetTokens();
-        return new GeeTestV3ProxylessRequest()
+        [Fact]
+        public async Task ShouldReturnCorrectCaptchaResult_WhenCallingAuthenticRequest()
         {
-            WebsiteUrl = "https://www.geetest.com/en/demo",
-            Gt = gt,
-            Challenge = websiteChallenge,
-        };
-    }
+            await TestAuthenticRequest();
+        }
 
-    protected override void AssertTaskResult(TaskResultResponse<GeeTestV3Solution> taskResult)
-    {
-        AssertHelper.NotNullNotEmpty(taskResult.Solution.Challenge);
-        AssertHelper.NotNullNotEmpty(taskResult.Solution.Validate);
-        AssertHelper.NotNullNotEmpty(taskResult.Solution.Seccode);
+        protected override GeeTestV3ProxylessRequest CreateAuthenticRequest()
+        {
+            var (gt, websiteChallenge) = GetTokens();
+            return new GeeTestV3ProxylessRequest()
+            {
+                WebsiteUrl = "https://www.geetest.com/en/demo",
+                Gt = gt,
+                Challenge = websiteChallenge,
+            };
+        }
+
+        protected override void AssertTaskResult(TaskResultResponse<GeeTestV3Solution> taskResult)
+        {
+            AssertHelper.NotNullNotEmpty(taskResult.Solution.Challenge);
+            AssertHelper.NotNullNotEmpty(taskResult.Solution.Validate);
+            AssertHelper.NotNullNotEmpty(taskResult.Solution.Seccode);
+        }
     }
 }

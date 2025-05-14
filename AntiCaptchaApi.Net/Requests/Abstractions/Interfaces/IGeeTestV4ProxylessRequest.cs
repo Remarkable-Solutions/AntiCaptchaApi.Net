@@ -2,9 +2,10 @@
 using AntiCaptchaApi.Net.Models.Solutions;
 using AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args;
 
-namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces;
-
-public interface IGeeTestV4ProxylessRequest : ICaptchaRequest<GeeTestV4Solution>, IGeeTestArgs
+namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces
 {
-    public Dictionary<string, string> InitParameters { get; set; }   
+    public interface IGeeTestV4ProxylessRequest : ICaptchaRequest<GeeTestV4Solution>, IGeeTestArgs
+    {
+        public Dictionary<string, string> InitParameters { get; set; }   
+    }
 }

@@ -1,14 +1,21 @@
 ﻿using AntiCaptchaApi.Net.Responses;
 using Newtonsoft.Json.Linq;
 
-namespace AntiCaptchaApi.Net.Internal.Models;
-
-internal class CreateTaskPayload(string clientKey, JObject task, string languagePool = null, string callbackUrl = null)
-    : SoftAndClientPayload<CreateTaskResponse>(clientKey)
+namespace AntiCaptchaApi.Net.Internal.Models
 {
-    public JObject Task { get; } = task;
+    internal class CreateTaskPayload : SoftAndClientPayload<CreateTaskResponse>
+    {
+        public CreateTaskPayload(string clientKey, JObject task, string languagePool = null, string callbackUrl = null) : base(clientKey)
+        {
+            Task = task;
+            LanguagePool = languagePool;
+            CallbackUrl = callbackUrl;
+        }
 
-    public string LanguagePool { get; } = languagePool;
+        public JObject Task { get; }
 
-    public string CallbackUrl { get; } = callbackUrl;
+        public string LanguagePool { get; }
+
+        public string CallbackUrl { get; }
+    }
 }

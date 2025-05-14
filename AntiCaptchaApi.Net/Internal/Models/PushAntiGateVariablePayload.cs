@@ -1,11 +1,18 @@
 ﻿using AntiCaptchaApi.Net.Responses;
 
-namespace AntiCaptchaApi.Net.Internal.Models;
-
-internal class PushAntiGateVariablePayload(string clientKey, int taskId, string name, object value)
-    : ClientPayload<ActionResponse>(clientKey)
+namespace AntiCaptchaApi.Net.Internal.Models
 {
-    public int TaskId { get; } = taskId;
-    public string Name { get; } = name;
-    public object Value { get; } = value;
+    internal class PushAntiGateVariablePayload : ClientPayload<ActionResponse>
+    {
+        public PushAntiGateVariablePayload(string clientKey, int taskId, string name, object value) : base(clientKey)
+        {
+            TaskId = taskId;
+            Name = name;
+            Value = value;
+        }
+
+        public int TaskId { get; }
+        public string Name { get; }
+        public object Value { get; }
+    }
 }

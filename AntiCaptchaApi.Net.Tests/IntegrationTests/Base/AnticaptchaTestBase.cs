@@ -2,25 +2,26 @@
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace AntiCaptchaApi.Net.Tests.IntegrationTests.Base;
-
-[Collection("Sequential")]
-public class AnticaptchaTestBase
+namespace AntiCaptchaApi.Net.Tests.IntegrationTests.Base
 {
-    protected readonly IAnticaptchaClient AnticaptchaClient;
-    protected readonly ServiceProvider ServiceProvider;
-
-    public AnticaptchaTestBase()
+    [Collection("Sequential")]
+    public class AnticaptchaTestBase
     {
-        var services = new ServiceCollection();
-        
-        services.AddAnticaptcha(TestEnvironment.ClientKey, config =>
+        protected readonly IAnticaptchaClient AnticaptchaClient;
+        protected readonly ServiceProvider ServiceProvider;
+
+        public AnticaptchaTestBase()
         {
-            // Configure test-specific options if needed, e.g., shorter timeouts
-            // config.MaxWaitForTaskResultTimeMs = 30000; // 30 seconds for tests
-            // config.DelayTimeBetweenCheckingTaskResultMs = 2000; // 2 seconds for tests
-        });
-        ServiceProvider = services.BuildServiceProvider();
-        AnticaptchaClient = ServiceProvider.GetRequiredService<IAnticaptchaClient>();
+            var services = new ServiceCollection();
+        
+            services.AddAnticaptcha(TestEnvironment.ClientKey, config =>
+            {
+                // Configure test-specific options if needed, e.g., shorter timeouts
+                // config.MaxWaitForTaskResultTimeMs = 30000; // 30 seconds for tests
+                // config.DelayTimeBetweenCheckingTaskResultMs = 2000; // 2 seconds for tests
+            });
+            ServiceProvider = services.BuildServiceProvider();
+            AnticaptchaClient = ServiceProvider.GetRequiredService<IAnticaptchaClient>();
+        }
     }
 }

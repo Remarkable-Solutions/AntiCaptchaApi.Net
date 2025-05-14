@@ -2,9 +2,10 @@
 using AntiCaptchaApi.Net.Models;
 using AntiCaptchaApi.Net.Responses.Abstractions;
 
-namespace AntiCaptchaApi.Net.Responses;
-
-public class GetSpendingStatsResponse : BaseResponse
+namespace AntiCaptchaApi.Net.Responses
 {
-    public List<DailySpendingStats> AllDailySpendingStats { get; set; }
+    public class GetSpendingStatsResponse : BaseResponse
+    {
+        public List<DailySpendingStats> AllDailySpendingStats { get; set; }
+    }
 }

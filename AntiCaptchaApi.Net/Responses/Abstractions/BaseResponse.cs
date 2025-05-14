@@ -22,6 +22,6 @@
         }
         
         public bool IsErrorResponse => 
-            !string.IsNullOrEmpty(ErrorDescription) || !string.IsNullOrEmpty(ErrorCode) || ErrorId is not 0;
+            !string.IsNullOrEmpty(ErrorDescription) || !string.IsNullOrEmpty(ErrorCode) || ErrorId != 0;
     }
 }

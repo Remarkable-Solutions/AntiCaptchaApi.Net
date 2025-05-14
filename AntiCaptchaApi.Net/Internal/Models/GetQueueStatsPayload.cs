@@ -1,8 +1,14 @@
 ﻿using AntiCaptchaApi.Net.Responses;
 
-namespace AntiCaptchaApi.Net.Internal.Models;
-
-internal class GetQueueStatsPayload(int queueId) : Payload<GetQueueStatsResponse>
+namespace AntiCaptchaApi.Net.Internal.Models
 {
-    public int QueueId { get; } = queueId;
+    internal class GetQueueStatsPayload : Payload<GetQueueStatsResponse>
+    {
+        public GetQueueStatsPayload(int queueId)
+        {
+            QueueId = queueId;
+        }
+
+        public int QueueId { get; }
+    }
 }

@@ -1,10 +1,15 @@
 ﻿using AntiCaptchaApi.Net.Responses.Abstractions;
 
-namespace AntiCaptchaApi.Net.Internal.Models;
-
-internal abstract class SoftAndClientPayload<TResponse>(string clientKey, int softId = Payload<TResponse>.DefaultSoftId)
-    : ClientPayload<TResponse>(clientKey)
-    where TResponse : BaseResponse, new()
+namespace AntiCaptchaApi.Net.Internal.Models
 {
-    public int SoftId { get;  set; } = softId;
+    internal abstract class SoftAndClientPayload<TResponse> : ClientPayload<TResponse>
+        where TResponse : BaseResponse, new()
+    {
+        protected SoftAndClientPayload(string clientKey, int softId = Payload<TResponse>.DefaultSoftId) : base(clientKey)
+        {
+            SoftId = softId;
+        }
+
+        public int SoftId { get;  set; }
+    }
 }

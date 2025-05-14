@@ -14,9 +14,9 @@ using Newtonsoft.Json;
 
 namespace AntiCaptchaApi.Net.Internal.Helpers
 {
-internal class HttpHelper(IHttpClientFactory httpClientFactory) : IHttpHelper
+internal class HttpHelper : IHttpHelper
 {
-        private static readonly List<JsonConverter> Converters = new()
+        private static readonly List<JsonConverter> Converters = new List<JsonConverter>()
         {
             new TaskResultConverter<FunCaptchaSolution>(),
             new AntiGateTaskResultConverter(),
@@ -28,7 +28,12 @@ internal class HttpHelper(IHttpClientFactory httpClientFactory) : IHttpHelper
             new TaskResultConverter<TurnstileSolution>(),
         };
         
-        private readonly IHttpClientFactory _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public HttpHelper(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        }
 
         public async Task<T> PostAsync<T>(Uri url, string payload, CancellationToken cancellationToken)
             where T : BaseResponse, new()

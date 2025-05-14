@@ -1,16 +1,17 @@
-﻿namespace AntiCaptchaApi.Net.Internal.Validation.ValidationErrors;
-
-internal class MustNotBeNullWithSpecialMessageError : MustNotBeNullError
+﻿namespace AntiCaptchaApi.Net.Internal.Validation.ValidationErrors
 {
-    public string Message { get; }
-
-    internal MustNotBeNullWithSpecialMessageError(string propertyName, string message) : base(propertyName)
+    internal class MustNotBeNullWithSpecialMessageError : MustNotBeNullError
     {
-        this.Message = message;
-    }
+        public string Message { get; }
 
-    public override string ToString()
-    {
-        return $"{base.ToString()} {Message}";
+        internal MustNotBeNullWithSpecialMessageError(string propertyName, string message) : base(propertyName)
+        {
+            this.Message = message;
+        }
+
+        public override string ToString()
+        {
+            return $"{base.ToString()} {Message}";
+        }
     }
 }

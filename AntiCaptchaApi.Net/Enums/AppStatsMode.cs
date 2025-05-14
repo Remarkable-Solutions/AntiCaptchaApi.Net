@@ -1,9 +1,11 @@
-﻿namespace AntiCaptchaApi.Net.Enums;
-public enum AppStatsMode
+﻿namespace AntiCaptchaApi.Net.Enums
 {
-    Errors,
-    Views,
-    Downloads,
-    Users,
-    Money
+    public enum AppStatsMode
+    {
+        Errors,
+        Views,
+        Downloads,
+        Users,
+        Money
+    }
 }

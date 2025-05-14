@@ -6,14 +6,14 @@ using AntiCaptchaApi.Net.Models.Solutions;
 using AntiCaptchaApi.Net.Requests.Abstractions.Interfaces;
 using AntiCaptchaApi.Net.Responses;
 
-namespace AntiCaptchaApi.Net;
-
-/// <summary>
-/// Defines the contract for interacting with the Anti-Captcha API service.
-/// Provides methods for retrieving account information, creating captcha tasks, retrieving solutions, and reporting results.
-/// </summary>
-public interface IAnticaptchaClient
+namespace AntiCaptchaApi.Net
 {
+  /// <summary>
+  /// Defines the contract for interacting with the Anti-Captcha API service.
+  /// Provides methods for retrieving account information, creating captcha tasks, retrieving solutions, and reporting results.
+  /// </summary>
+  public interface IAnticaptchaClient
+  {
     /// <summary>
     /// Gets the current client configuration settings.
     /// </summary>
@@ -78,15 +78,15 @@ public interface IAnticaptchaClient
       object value,
       CancellationToken cancellationToken = default (CancellationToken));
 
-   /// <summary>
-   /// Reports the outcome of a solved captcha task.
-   /// Use this to provide feedback to the Anti-Captcha service, which can improve service quality and potentially grant bonuses.
-   /// </summary>
-   /// <param name="taskId">The ID of the task to report.</param>
-   /// <param name="outcome">The outcome of the task (e.g., correct, incorrect).</param>
-   /// <param name="cancellationToken">Cancellation token.</param>
-   /// <returns>An <see cref="ActionResponse"/> indicating the status of the report operation.</returns>
-   Task<ActionResponse> ReportTaskOutcomeAsync(int taskId, ReportOutcome outcome, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Reports the outcome of a solved captcha task.
+    /// Use this to provide feedback to the Anti-Captcha service, which can improve service quality and potentially grant bonuses.
+    /// </summary>
+    /// <param name="taskId">The ID of the task to report.</param>
+    /// <param name="outcome">The outcome of the task (e.g., correct, incorrect).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An <see cref="ActionResponse"/> indicating the status of the report operation.</returns>
+    Task<ActionResponse> ReportTaskOutcomeAsync(int taskId, ReportOutcome outcome, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves the current balance of your Anti-Captcha account.
@@ -135,10 +135,10 @@ public interface IAnticaptchaClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A <see cref="TaskResultResponse{ProsopoSolution}"/> containing the task result or error information.</returns>
     Task<TaskResultResponse<ProsopoSolution>> SolveProsopoAsync(
-        IProsopoRequest request,
-        string languagePool = null,
-        string callbackUrl = null,
-        CancellationToken cancellationToken = default (CancellationToken));
+      IProsopoRequest request,
+      string languagePool = null,
+      string callbackUrl = null,
+      CancellationToken cancellationToken = default (CancellationToken));
 
     /// <summary>
     /// Creates a Friendly Captcha task (proxyless), waits for its completion, and returns the result in a single call.
@@ -149,10 +149,10 @@ public interface IAnticaptchaClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A <see cref="TaskResultResponse{ProsopoSolution}"/> containing the task result or error information.</returns>
     Task<TaskResultResponse<ProsopoSolution>> SolveFriendlyCaptchaProxylessAsync(
-        IFriendlyCaptchaProxylessRequest request,
-        string languagePool = null,
-        string callbackUrl = null,
-        CancellationToken cancellationToken = default (CancellationToken));
+      IFriendlyCaptchaProxylessRequest request,
+      string languagePool = null,
+      string callbackUrl = null,
+      CancellationToken cancellationToken = default (CancellationToken));
 
     /// <summary>
     /// Creates a Friendly Captcha task (with proxy), waits for its completion, and returns the result in a single call.
@@ -163,10 +163,10 @@ public interface IAnticaptchaClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A <see cref="TaskResultResponse{ProsopoSolution}"/> containing the task result or error information.</returns>
     Task<TaskResultResponse<ProsopoSolution>> SolveFriendlyCaptchaAsync(
-        IFriendlyCaptchaRequest request,
-        string languagePool = null,
-        string callbackUrl = null,
-        CancellationToken cancellationToken = default (CancellationToken));
+      IFriendlyCaptchaRequest request,
+      string languagePool = null,
+      string callbackUrl = null,
+      CancellationToken cancellationToken = default (CancellationToken));
 
     /// <summary>
     /// Creates a new captcha task on the Anti-Captcha service.
@@ -210,4 +210,5 @@ public interface IAnticaptchaClient
       int taskId,
       CancellationToken cancellationToken = default (CancellationToken))
       where TSolution : BaseSolution, new();
+  }
 }

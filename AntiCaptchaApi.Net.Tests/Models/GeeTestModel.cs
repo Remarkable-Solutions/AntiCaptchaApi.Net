@@ -1,7 +1,7 @@
-﻿namespace AntiCaptchaApi.Net.Tests.Models;
-
-
-public class GeeTestModel
+﻿namespace AntiCaptchaApi.Net.Tests.Models
 {
-    public GeeTestData Data { get; set; }
+    public class GeeTestModel
+    {
+        public GeeTestData Data { get; set; }
+    }
 }

@@ -1,7 +1,8 @@
-﻿namespace AntiCaptchaApi.Net.Models.Solutions;
-
-public class FunCaptchaSolution : BaseSolution
+﻿namespace AntiCaptchaApi.Net.Models.Solutions
 {
-    public string Token { get; set; }
-    public override bool IsValid() => Token != null;
+    public class FunCaptchaSolution : BaseSolution
+    {
+        public string Token { get; set; }
+        public override bool IsValid() => Token != null;
+    }
 }

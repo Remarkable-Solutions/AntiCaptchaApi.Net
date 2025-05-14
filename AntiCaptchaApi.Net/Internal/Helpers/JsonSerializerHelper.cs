@@ -1,19 +1,20 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace AntiCaptchaApi.Net.Internal.Helpers;
-
-internal static class JsonSerializerHelper
+namespace AntiCaptchaApi.Net.Internal.Helpers
 {
-    private static readonly JsonSerializer JsonSerializer = new()
+    internal static class JsonSerializerHelper
     {
-        NullValueHandling = NullValueHandling.Ignore,
-        Formatting = Formatting.Indented,
-        ContractResolver = new DefaultContractResolver()
+        private static readonly JsonSerializer JsonSerializer = new JsonSerializer()
         {
-            NamingStrategy = new CamelCaseNamingStrategy()
-        }
-    };
+            NullValueHandling = NullValueHandling.Ignore,
+            Formatting = Formatting.Indented,
+            ContractResolver = new DefaultContractResolver()
+            {
+                NamingStrategy = new CamelCaseNamingStrategy()
+            }
+        };
 
-    internal static JsonSerializer GetJsonSerializer() => JsonSerializer;
+        internal static JsonSerializer GetJsonSerializer() => JsonSerializer;
+    }
 }

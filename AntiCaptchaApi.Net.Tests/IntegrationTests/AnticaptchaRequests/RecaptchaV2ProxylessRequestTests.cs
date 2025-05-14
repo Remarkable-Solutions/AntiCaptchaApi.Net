@@ -7,27 +7,28 @@ using AntiCaptchaApi.Net.Tests.Helpers;
 using AntiCaptchaApi.Net.Tests.IntegrationTests.Base;
 using Xunit;
 
-namespace AntiCaptchaApi.Net.Tests.IntegrationTests.AnticaptchaRequests;
-
-public class RecaptchaV2ProxylessRequestTests : AnticaptchaRequestTestBase<RecaptchaSolution>
+namespace AntiCaptchaApi.Net.Tests.IntegrationTests.AnticaptchaRequests
 {
-    [Fact]
-    public async Task ShouldReturnCorrectCaptchaResult_WhenCallingAuthenticRequest()
+    public class RecaptchaV2ProxylessRequestTests : AnticaptchaRequestTestBase<RecaptchaSolution>
     {
-        await TestAuthenticRequest();
-    }
-
-    protected override RecaptchaV2EnterpriseProxylessRequest CreateAuthenticRequest()
-    {
-        return new RecaptchaV2EnterpriseProxylessRequest()
+        [Fact]
+        public async Task ShouldReturnCorrectCaptchaResult_WhenCallingAuthenticRequest()
         {
-            WebsiteUrl = "http://http.myjino.ru/recaptcha/test-get.php",
-            WebsiteKey = "6Lc_aCMTAAAAABx7u2W0WPXnVbI_v6ZdbM6rYf16"
-        };
-    }
+            await TestAuthenticRequest();
+        }
 
-    protected override void AssertTaskResult(TaskResultResponse<RecaptchaSolution> taskResult)
-    {
-        AssertHelper.NotNullNotEmpty(taskResult.Solution.GRecaptchaResponse);
+        protected override RecaptchaV2EnterpriseProxylessRequest CreateAuthenticRequest()
+        {
+            return new RecaptchaV2EnterpriseProxylessRequest()
+            {
+                WebsiteUrl = "http://http.myjino.ru/recaptcha/test-get.php",
+                WebsiteKey = "6Lc_aCMTAAAAABx7u2W0WPXnVbI_v6ZdbM6rYf16"
+            };
+        }
+
+        protected override void AssertTaskResult(TaskResultResponse<RecaptchaSolution> taskResult)
+        {
+            AssertHelper.NotNullNotEmpty(taskResult.Solution.GRecaptchaResponse);
+        }
     }
 }

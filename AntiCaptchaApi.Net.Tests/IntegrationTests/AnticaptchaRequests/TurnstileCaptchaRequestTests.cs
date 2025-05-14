@@ -6,29 +6,30 @@ using AntiCaptchaApi.Net.Tests.Helpers;
 using AntiCaptchaApi.Net.Tests.IntegrationTests.Base;
 using Xunit;
 
-namespace AntiCaptchaApi.Net.Tests.IntegrationTests.AnticaptchaRequests;
-
-public class TurnstileCaptchaRequestTests : AnticaptchaRequestTestBase<TurnstileSolution>
+namespace AntiCaptchaApi.Net.Tests.IntegrationTests.AnticaptchaRequests
 {
-    [Fact]
-    public async Task ShouldReturnCorrectCaptchaResult_WhenCallingAuthenticRequest()
+    public class TurnstileCaptchaRequestTests : AnticaptchaRequestTestBase<TurnstileSolution>
     {
-        await TestAuthenticRequest();
-    }
-
-    protected override TurnstileCaptchaRequest CreateAuthenticRequest()
-    {
-        return new TurnstileCaptchaRequest()
+        [Fact]
+        public async Task ShouldReturnCorrectCaptchaResult_WhenCallingAuthenticRequest()
         {
-            WebsiteUrl = "https://react-turnstile.vercel.app/",
-            WebsiteKey = "3x00000000000000000000FF",
-            ProxyConfig = TestEnvironment.GetCurrentTestProxyConfig(),
-            UserAgent = TestEnvironment.UserAgent
-        };
-    }
+            await TestAuthenticRequest();
+        }
 
-    protected override void AssertTaskResult(TaskResultResponse<TurnstileSolution> taskResult)
-    {
-        AssertHelper.NotNullNotEmpty(taskResult.Solution.Token);
+        protected override TurnstileCaptchaRequest CreateAuthenticRequest()
+        {
+            return new TurnstileCaptchaRequest()
+            {
+                WebsiteUrl = "https://react-turnstile.vercel.app/",
+                WebsiteKey = "3x00000000000000000000FF",
+                ProxyConfig = TestEnvironment.GetCurrentTestProxyConfig(),
+                UserAgent = TestEnvironment.UserAgent
+            };
+        }
+
+        protected override void AssertTaskResult(TaskResultResponse<TurnstileSolution> taskResult)
+        {
+            AssertHelper.NotNullNotEmpty(taskResult.Solution.Token);
+        }
     }
 }

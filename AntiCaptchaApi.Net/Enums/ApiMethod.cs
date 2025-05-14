@@ -1,15 +1,17 @@
-﻿namespace AntiCaptchaApi.Net.Enums;
-public enum ApiMethod
+﻿namespace AntiCaptchaApi.Net.Enums
 {
-    CreateTask,
-    GetTaskResult,
-    GetBalance,
-    GetQueueStats,
-    ReportIncorrectImageCaptcha,
-    ReportIncorrectRecaptcha,
-    ReportCorrectRecaptcha,
-    ReportIncorrectHCaptcha,
-    PushAntiGateVariable,
-    GetSpendingStats,
-    GetAppStats,
+    public enum ApiMethod
+    {
+        CreateTask,
+        GetTaskResult,
+        GetBalance,
+        GetQueueStats,
+        ReportIncorrectImageCaptcha,
+        ReportIncorrectRecaptcha,
+        ReportCorrectRecaptcha,
+        ReportIncorrectHCaptcha,
+        PushAntiGateVariable,
+        GetSpendingStats,
+        GetAppStats,
+    }
 }

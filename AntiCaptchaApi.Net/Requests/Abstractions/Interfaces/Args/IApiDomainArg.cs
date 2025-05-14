@@ -1,6 +1,7 @@
-﻿namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args;
-
-public interface IApiDomainArg : IRequestArg
+﻿namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args
 {
-    public string ApiDomain { get; set; }      
+    public interface IApiDomainArg : IRequestArg
+    {
+        public string ApiDomain { get; set; }      
+    }
 }

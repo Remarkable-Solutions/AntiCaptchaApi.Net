@@ -7,28 +7,29 @@ using AntiCaptchaApi.Net.Tests.Helpers;
 using AntiCaptchaApi.Net.Tests.IntegrationTests.Base;
 using Xunit;
 
-namespace AntiCaptchaApi.Net.Tests.IntegrationTests.AnticaptchaRequests;
-
-public class RecaptchaV3RequestTests : AnticaptchaRequestTestBase<RecaptchaSolution>
+namespace AntiCaptchaApi.Net.Tests.IntegrationTests.AnticaptchaRequests
 {
-    [Fact]
-    public async Task ShouldReturnCorrectCaptchaResult_WhenCallingAuthenticRequest()
+    public class RecaptchaV3RequestTests : AnticaptchaRequestTestBase<RecaptchaSolution>
     {
-        await TestAuthenticRequest();
-    }
-
-    protected override RecaptchaV3Request CreateAuthenticRequest()
-    {
-        return new RecaptchaV3Request()
+        [Fact]
+        public async Task ShouldReturnCorrectCaptchaResult_WhenCallingAuthenticRequest()
         {
-            WebsiteUrl = "https://www.netflix.com/login",
-            WebsiteKey = "6Lf8hrcUAAAAAIpQAFW2VFjtiYnThOjZOA5xvLyR",
-            IsEnterprise = true
-        };
-    }
+            await TestAuthenticRequest();
+        }
 
-    protected override void AssertTaskResult(TaskResultResponse<RecaptchaSolution> taskResult)
-    {
-        AssertHelper.NotNullNotEmpty(taskResult.Solution.GRecaptchaResponse);
+        protected override RecaptchaV3Request CreateAuthenticRequest()
+        {
+            return new RecaptchaV3Request()
+            {
+                WebsiteUrl = "https://www.netflix.com/login",
+                WebsiteKey = "6Lf8hrcUAAAAAIpQAFW2VFjtiYnThOjZOA5xvLyR",
+                IsEnterprise = true
+            };
+        }
+
+        protected override void AssertTaskResult(TaskResultResponse<RecaptchaSolution> taskResult)
+        {
+            AssertHelper.NotNullNotEmpty(taskResult.Solution.GRecaptchaResponse);
+        }
     }
 }

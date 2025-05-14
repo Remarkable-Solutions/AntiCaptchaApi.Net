@@ -4,15 +4,16 @@ using AntiCaptchaApi.Net.Tests.IntegrationTests.AnticaptchaRequests;
 using AntiCaptchaApi.Net.Tests.IntegrationTests.Base;
 using Xunit;
 
-namespace AntiCaptchaApi.Net.Tests.IntegrationTests;
-
-public class GetAppStatsRequestTests : AnticaptchaTestBase
+namespace AntiCaptchaApi.Net.Tests.IntegrationTests
 {
-    [Fact]
-    public async Task ShouldReturnCorrectBalance_WhenCallingAuthenticRequest()
+    public class GetAppStatsRequestTests : AnticaptchaTestBase
     {
-        var appStats = await AnticaptchaClient.GetAppStatsAsync(TestEnvironment.SoftId, AppStatsMode.Errors);
-        Assert.NotNull(appStats);
-        Assert.False(appStats.IsErrorResponse);
+        [Fact]
+        public async Task ShouldReturnCorrectBalance_WhenCallingAuthenticRequest()
+        {
+            var appStats = await AnticaptchaClient.GetAppStatsAsync(TestEnvironment.SoftId, AppStatsMode.Errors);
+            Assert.NotNull(appStats);
+            Assert.False(appStats.IsErrorResponse);
+        }
     }
 }

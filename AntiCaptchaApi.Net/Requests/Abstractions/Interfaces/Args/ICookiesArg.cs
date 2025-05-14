@@ -1,6 +1,7 @@
-﻿namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args;
-
-public interface ICookiesArg : IRequestArg
+﻿namespace AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args
 {
-    public string Cookies { get; set; }   
+    public interface ICookiesArg : IRequestArg
+    {
+        public string Cookies { get; set; }   
+    }
 }

@@ -1,6 +1,7 @@
-﻿namespace AntiCaptchaApi.Net.Models.Solutions;
-
-public abstract class BaseSolution
+﻿namespace AntiCaptchaApi.Net.Models.Solutions
 {
-    public abstract bool IsValid();
+    public abstract class BaseSolution
+    {
+        public abstract bool IsValid();
+    }
 }

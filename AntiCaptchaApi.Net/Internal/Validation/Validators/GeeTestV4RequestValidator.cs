@@ -1,15 +1,16 @@
 ﻿using AntiCaptchaApi.Net.Internal.Extensions;
 using AntiCaptchaApi.Net.Requests;
 
-namespace AntiCaptchaApi.Net.Internal.Validation.Validators;
-
-public class GeeTestV4RequestValidator : GeeTestV4ProxylessRequestValidator
+namespace AntiCaptchaApi.Net.Internal.Validation.Validators
 {
-    public override ValidationResult Validate(GeeTestV4ProxylessRequest request)
+    public class GeeTestV4RequestValidator : GeeTestV4ProxylessRequestValidator
     {
-        var proxyRequest = (GeeTestV4Request)request;
-        return base.Validate(request)
-            .ValidateProxy(proxyRequest.ProxyConfig)
-            .ValidateIsNotNullOrEmpty(nameof(GeeTestV3Request.UserAgent), proxyRequest.UserAgent);
+        public override ValidationResult Validate(GeeTestV4ProxylessRequest request)
+        {
+            var proxyRequest = (GeeTestV4Request)request;
+            return base.Validate(request)
+                .ValidateProxy(proxyRequest.ProxyConfig)
+                .ValidateIsNotNullOrEmpty(nameof(GeeTestV3Request.UserAgent), proxyRequest.UserAgent);
+        }
     }
 }

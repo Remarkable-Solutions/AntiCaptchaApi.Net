@@ -1,8 +1,9 @@
-﻿namespace AntiCaptchaApi.Net.Enums;
-
-public enum TaskStatusType
+﻿namespace AntiCaptchaApi.Net.Enums
 {
-    Processing,
-    Ready,
-    Error
+    public enum TaskStatusType
+    {
+        Processing,
+        Ready,
+        Error
+    }
 }
