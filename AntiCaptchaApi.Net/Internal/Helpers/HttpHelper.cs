@@ -29,16 +29,25 @@ internal class HttpHelper : IHttpHelper
         };
         
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HttpClient _httpClient;
 
+        // Constructor for dependency injection
         public HttpHelper(IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         }
 
+        // Constructor for manual instantiation
+        public HttpHelper(HttpClient httpClient)
+        {
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        }
+
         public async Task<T> PostAsync<T>(Uri url, string payload, CancellationToken cancellationToken)
             where T : BaseResponse, new()
         {
-            var httpClient = _httpClientFactory.CreateClient();
+            var httpClient = _httpClient ?? _httpClientFactory?.CreateClient() ?? throw new InvalidOperationException("HttpClient or IHttpClientFactory must be provided.");
+
             T response = null; // Initialize response to null
             var responseContent = string.Empty;
             

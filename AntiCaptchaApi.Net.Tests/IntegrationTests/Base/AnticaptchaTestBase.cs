@@ -21,7 +21,9 @@ namespace AntiCaptchaApi.Net.Tests.IntegrationTests.Base
                 // config.DelayTimeBetweenCheckingTaskResultMs = 2000; // 2 seconds for tests
             });
             ServiceProvider = services.BuildServiceProvider();
-            AnticaptchaClient = ServiceProvider.GetRequiredService<IAnticaptchaClient>();
+            AnticaptchaClient =
+                new AnticaptchaClient(TestEnvironment
+                    .ClientKey); // ServiceProvider.GetRequiredService<IAnticaptchaClient>();
         }
     }
 }

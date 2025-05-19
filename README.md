@@ -27,31 +27,22 @@ dotnet add package AntiCaptchaApi.Net
 Install-Package AntiCaptchaApi.Net
 ```
 
-## Migration Guide (From Older Versions or Manual HttpClient Usage)
+## Migration Guide (From Older Versions)
 
-This library now exclusively uses `IHttpClientFactory` for robust and efficient management of `HttpClient` instances, integrated via Dependency Injection (DI). Manual instantiation of `AnticaptchaClient` is no longer supported.
+This library primarily uses `IHttpClientFactory` for robust and efficient management of `HttpClient` instances, integrated via Dependency Injection (DI). While manual instantiation of `AnticaptchaClient` is now supported again, the DI approach is still recommended for most scenarios due to its benefits.
 
-**Why the Change?**
+**Why use IHttpClientFactory (Recommended Approach)?**
 
 Using `IHttpClientFactory` provides several benefits:
 *   **Improved Performance:** Addresses issues like socket exhaustion that can occur with direct `HttpClient` instantiation and disposal.
 *   **Centralized Configuration:** Allows for configuring `HttpClient` instances (e.g., default headers, Polly policies for resilience) in a central place.
 *   **Simplified Lifetime Management:** `IHttpClientFactory` manages the lifetime of `HttpClientMessageHandler` instances, optimizing resource use.
 
-**How to Migrate/Adopt:**
-
-If you were previously instantiating `AnticaptchaClient` manually, you **must** switch to the Dependency Injection (DI) approach:
+**How to Use Dependency Injection (Recommended):**
 
 1.  **Ensure you have the `Microsoft.Extensions.Http` package referenced** (usually included with ASP.NET Core or available as a separate NuGet package). The `AddAnticaptcha` method will call `services.AddHttpClient()` for you.
 2.  **Register `IAnticaptchaClient` using the `AddAnticaptcha` extension method** in your `ConfigureServices` method (e.g., in `Startup.cs` or `Program.cs`).
 
-**Before (Example of manual instantiation - Now Obsolete):**
-```csharp
-// This pattern is no longer supported:
-// var client = new AnticaptchaClient("YOUR_API_KEY", new ClientConfig());
-```
-
-**After (Required DI approach):**
 ```csharp
 // In your service configuration (e.g., Startup.cs or Program.cs)
 services.AddAnticaptcha("YOUR_API_KEY", options => {
@@ -71,8 +62,23 @@ public class MyService
     // ... use _anticaptchaClient
 }
 ```
-By adopting the `AddAnticaptcha` method, you ensure that the library uses `IHttpClientFactory` correctly, leading to a more stable and performant application.
 
+**How to Use Manual Instantiation (Alternative Approach):**
+
+Manual instantiation is now supported via a public constructor. You can optionally provide your own `HttpClient` instance for more control over its configuration.
+
+```csharp
+// Basic manual instantiation
+var client = new AnticaptchaClient("YOUR_API_KEY");
+
+// Manual instantiation with custom ClientConfig
+var config = new ClientConfig { MaxWaitForTaskResultTimeMs = 120000 };
+var clientWithConfig = new AnticaptchaClient("YOUR_API_KEY", config);
+
+// Manual instantiation with custom HttpClient and ClientConfig
+var customHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+var clientWithCustomHttpClient = new AnticaptchaClient("YOUR_API_KEY", config, customHttpClient);
+```
 ## Configuration
 
 The client behavior can be customized using `ClientConfig`.

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;netstandard2.1;</TargetFrameworks>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Version>2.1.1</Version>
+    <Version>2.1.2</Version>
     <Authors>RemarkableSolutions</Authors>
     <PackageProjectUrl>https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net</PackageProjectUrl>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -16,7 +16,12 @@
     <PublishRepositoryUrl>True</PublishRepositoryUrl>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PackageVersion>2.1.1</PackageVersion>
+    <PackageVersion>2.1.2</PackageVersion>
+    <PackageReleaseNotes>
+      2.1.2:
+      - Added a public constructor to AnticaptchaClient to allow manual instantiation without dependency injection.
+      - Modified HttpHelper to accept an HttpClient in its constructor to support manual instantiation.
+    </PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.4" />

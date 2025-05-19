@@ -36,7 +36,9 @@ namespace AntiCaptchaApi.Net
 
         /// <summary>
         /// Internal constructor for dependency injection scenarios.
-        /// This is the sole constructor and requires services to be registered via `AddAnticaptcha` extension method.
+        /// This constructor is intended for use by the dependency injection container
+        /// and requires services like <see cref="IAnticaptchaApi"/> and <see cref="ClientConfig"/> to be
+        /// registered via the <see cref="AnticaptchaServiceCollectionExtensions.AddAnticaptcha(Microsoft.Extensions.DependencyInjection.IServiceCollection, string, Action{ClientConfig})"/> extension method.
         /// </summary>
         /// <param name="anticaptchaApi">The underlying API communication service, resolved via DI.</param>
         /// <param name="clientKey">Your Anti-Captcha API client key, provided during service registration.</param>
@@ -49,6 +51,34 @@ namespace AntiCaptchaApi.Net
             ClientConfig = clientConfig ?? new ClientConfig();
             AnticaptchaApi = anticaptchaApi;
             ClientKey = clientKey;
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AnticaptchaClient"/> class
+        /// for direct use without dependency injection.
+        /// </summary>
+        /// <remarks>
+        /// This constructor manually creates internal dependencies like <see cref="HttpClient"/>,
+        /// <see cref="HttpHelper"/>, and <see cref="AnticaptchaApi"/>. If you require fine-grained control
+        /// over these dependencies (e.g., for advanced HttpClient configuration,
+        /// mocking in tests, or integration with an existing DI container),
+        /// it is recommended to use dependency injection and the internal constructor
+        /// by registering services via the <see cref="AnticaptchaServiceCollectionExtensions.AddAnticaptcha(Microsoft.Extensions.DependencyInjection.IServiceCollection, string, Action{ClientConfig})"/> extension method.
+        /// </remarks>
+        /// <param name="clientKey">Your Anti-Captcha API client key.</param>
+        /// <param name="clientConfig">Optional client configuration settings.</param>
+        /// <param name="httpClient">Optional http client used for requests.</param>
+        public AnticaptchaClient(string clientKey, ClientConfig clientConfig = null, HttpClient httpClient = null)
+        {
+            ClientKey = clientKey ?? throw new ArgumentNullException(nameof(clientKey));
+            ClientConfig = clientConfig ?? new ClientConfig();
+
+            httpClient ??= new HttpClient
+            {
+                Timeout = TimeSpan.FromMilliseconds(ClientConfig.MaxHttpRequestTimeMs)
+            };
+            var httpHelper = new HttpHelper(httpClient);
+            AnticaptchaApi = new AnticaptchaApi(httpHelper);
         }
 
         /// <inheritdoc />
