@@ -37,6 +37,8 @@ namespace AntiCaptchaApi.Net.Internal
                 { typeof(ProsopoRequest), () => new ProsopoRequestValidator().Validate(request as ProsopoRequest) },
                 { typeof(FriendlyCaptchaProxylessRequest), () => new FriendlyCaptchaProxylessRequestValidator().Validate(request as FriendlyCaptchaProxylessRequest) },
                 { typeof(FriendlyCaptchaRequest), () => new FriendlyCaptchaRequestValidator().Validate(request as FriendlyCaptchaRequest) },
+                { typeof(AmazonWafProxylessRequest), () => new AmazonWafProxylessRequestValidator().Validate(request as AmazonWafProxylessRequest) },
+                { typeof(AmazonWafRequest), () => new AmazonWafRequestValidator().Validate(request as AmazonWafRequest) },
             };
             return @switch[request.GetType()];
         }

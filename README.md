@@ -255,6 +255,12 @@ Here's an overview of the methods available on `IAnticaptchaClient`:
     // await client.PushAntiGateVariableAsync(taskId, "varName", "varValue");
     ```
 
+## Changelog
+
+**2.1.3**
+- Added Amazon WAF captcha support (AmazonTaskProxyless and AmazonTask).
+
+
 ## Contributing
 
 1.  Clone the repository: `git clone https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net.git`
