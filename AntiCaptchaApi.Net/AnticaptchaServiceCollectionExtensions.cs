@@ -42,8 +42,9 @@ namespace AntiCaptchaApi.Net
             configureClient?.Invoke(clientConfig);
             services.TryAddSingleton(clientConfig); // Register ClientConfig as singleton
 
-            // Register HttpHelper
-            services.TryAddScoped<IHttpHelper, HttpHelper>();
+            // Register HttpHelper with explicit factory selection
+            services.TryAddScoped<IHttpHelper>(provider =>
+                new HttpHelper(provider.GetRequiredService<IHttpClientFactory>()));
             
             // Register internal API service
             // It depends on IHttpHelper (which in turn depends on IHttpClientFactory)
