@@ -1,0 +1,244 @@
+name: Auto Update Dependencies and Release
+
+on:
+  schedule:
+    # Run daily at 5:00 AM UTC (before Selenium.AntiCaptcha check at 6:00 AM)
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run - check for updates without committing or tagging'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  update-dependencies:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.REPO_DISPATCH_PAT }}
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Determine mode
+      id: mode
+      shell: bash
+      run: |
+        DRY_RUN="${{ inputs.dry_run }}"
+        if [[ -z "$DRY_RUN" ]]; then
+          DRY_RUN="false"
+        fi
+        echo "dry_run=$DRY_RUN" >> $GITHUB_OUTPUT
+        if [[ "$DRY_RUN" == "true" ]]; then
+          echo "🧪 DRY RUN MODE - No changes will be committed or tagged"
+        fi
+
+    - name: Get current versions
+      id: current_versions
+      shell: bash
+      run: |
+        CSPROJ_FILE="AntiCaptchaApi.Net/AntiCaptchaApi.Net.csproj"
+        
+        # Extract current versions from csproj
+        CURRENT_VERSION=$(grep '<Version>' "$CSPROJ_FILE" | head -1 | sed -E 's/.*<Version>([^<]+)<\/Version>.*/\1/')
+        EXTENSIONS_HTTP=$(grep '<PackageReference Include="Microsoft.Extensions.Http"' "$CSPROJ_FILE" | sed -E 's/.*Version="([^"]+)".*/\1/')
+        NEWTONSOFT=$(grep '<PackageReference Include="Newtonsoft.Json"' "$CSPROJ_FILE" | sed -E 's/.*Version="([^"]+)".*/\1/')
+        
+        echo "Current package version: $CURRENT_VERSION"
+        echo "Current Microsoft.Extensions.Http: $EXTENSIONS_HTTP"
+        echo "Current Newtonsoft.Json: $NEWTONSOFT"
+        
+        echo "package_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+        echo "extensions_http=$EXTENSIONS_HTTP" >> $GITHUB_OUTPUT
+        echo "newtonsoft=$NEWTONSOFT" >> $GITHUB_OUTPUT
+
+    - name: Get latest versions from NuGet
+      id: latest_versions
+      shell: bash
+      run: |
+        # Get latest stable version from NuGet (excluding preview/rc versions)
+        get_latest_version() {
+          local package=$1
+          curl -s "https://api.nuget.org/v3-flatcontainer/${package,,}/index.json" | \
+            grep -oP '"\d+\.\d+\.\d+"' | \
+            tr -d '"' | \
+            sort -V | \
+            tail -1
+        }
+        
+        LATEST_EXTENSIONS_HTTP=$(get_latest_version "Microsoft.Extensions.Http")
+        LATEST_NEWTONSOFT=$(get_latest_version "Newtonsoft.Json")
+        
+        echo "Latest Microsoft.Extensions.Http: $LATEST_EXTENSIONS_HTTP"
+        echo "Latest Newtonsoft.Json: $LATEST_NEWTONSOFT"
+        
+        echo "extensions_http=$LATEST_EXTENSIONS_HTTP" >> $GITHUB_OUTPUT
+        echo "newtonsoft=$LATEST_NEWTONSOFT" >> $GITHUB_OUTPUT
+
+    - name: Check for updates needed
+      id: check_updates
+      shell: bash
+      run: |
+        CURRENT_EXTENSIONS_HTTP="${{ steps.current_versions.outputs.extensions_http }}"
+        CURRENT_NEWTONSOFT="${{ steps.current_versions.outputs.newtonsoft }}"
+        LATEST_EXTENSIONS_HTTP="${{ steps.latest_versions.outputs.extensions_http }}"
+        LATEST_NEWTONSOFT="${{ steps.latest_versions.outputs.newtonsoft }}"
+        
+        UPDATES_NEEDED="false"
+        UPDATE_SUMMARY=""
+        RELEASE_NOTE_PARTS=""
+        
+        if [[ "$CURRENT_EXTENSIONS_HTTP" != "$LATEST_EXTENSIONS_HTTP" ]]; then
+          UPDATES_NEEDED="true"
+          UPDATE_SUMMARY="Microsoft.Extensions.Http $CURRENT_EXTENSIONS_HTTP → $LATEST_EXTENSIONS_HTTP"
+          RELEASE_NOTE_PARTS="Microsoft.Extensions.Http $LATEST_EXTENSIONS_HTTP"
+          echo "Microsoft.Extensions.Http needs update: $CURRENT_EXTENSIONS_HTTP → $LATEST_EXTENSIONS_HTTP"
+        fi
+        
+        if [[ "$CURRENT_NEWTONSOFT" != "$LATEST_NEWTONSOFT" ]]; then
+          UPDATES_NEEDED="true"
+          if [[ -n "$UPDATE_SUMMARY" ]]; then
+            UPDATE_SUMMARY="$UPDATE_SUMMARY, Newtonsoft.Json $CURRENT_NEWTONSOFT → $LATEST_NEWTONSOFT"
+            RELEASE_NOTE_PARTS="$RELEASE_NOTE_PARTS, Newtonsoft.Json $LATEST_NEWTONSOFT"
+          else
+            UPDATE_SUMMARY="Newtonsoft.Json $CURRENT_NEWTONSOFT → $LATEST_NEWTONSOFT"
+            RELEASE_NOTE_PARTS="Newtonsoft.Json $LATEST_NEWTONSOFT"
+          fi
+          echo "Newtonsoft.Json needs update: $CURRENT_NEWTONSOFT → $LATEST_NEWTONSOFT"
+        fi
+        
+        if [[ "$UPDATES_NEEDED" == "false" ]]; then
+          echo "All dependencies are up to date!"
+        fi
+        
+        echo "updates_needed=$UPDATES_NEEDED" >> $GITHUB_OUTPUT
+        echo "update_summary=$UPDATE_SUMMARY" >> $GITHUB_OUTPUT
+        echo "release_note_parts=$RELEASE_NOTE_PARTS" >> $GITHUB_OUTPUT
+
+    - name: Calculate new version
+      if: steps.check_updates.outputs.updates_needed == 'true'
+      id: new_version
+      shell: bash
+      run: |
+        CURRENT_VERSION="${{ steps.current_versions.outputs.package_version }}"
+        
+        # Increment patch version
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+        NEW_PATCH=$((PATCH + 1))
+        NEW_VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+        
+        echo "Version bump: $CURRENT_VERSION → $NEW_VERSION"
+        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+    - name: Update AntiCaptchaApi.Net.csproj
+      if: steps.check_updates.outputs.updates_needed == 'true'
+      shell: bash
+      run: |
+        CSPROJ_FILE="AntiCaptchaApi.Net/AntiCaptchaApi.Net.csproj"
+        NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+        LATEST_EXTENSIONS_HTTP="${{ steps.latest_versions.outputs.extensions_http }}"
+        LATEST_NEWTONSOFT="${{ steps.latest_versions.outputs.newtonsoft }}"
+        UPDATE_SUMMARY="${{ steps.check_updates.outputs.update_summary }}"
+        
+        # Update Version and PackageVersion
+        sed -i "s/<Version>[^<]*<\/Version>/<Version>$NEW_VERSION<\/Version>/g" "$CSPROJ_FILE"
+        sed -i "s/<PackageVersion>[^<]*<\/PackageVersion>/<PackageVersion>$NEW_VERSION<\/PackageVersion>/g" "$CSPROJ_FILE"
+        
+        # Update package references
+        sed -i "s/\(<PackageReference Include=\"Microsoft.Extensions.Http\" Version=\"\)[^\"]*\"/\1$LATEST_EXTENSIONS_HTTP\"/g" "$CSPROJ_FILE"
+        sed -i "s/\(<PackageReference Include=\"Newtonsoft.Json\" Version=\"\)[^\"]*\"/\1$LATEST_NEWTONSOFT\"/g" "$CSPROJ_FILE"
+        
+        # Add release note at the beginning of PackageReleaseNotes (matching existing format)
+        RELEASE_NOTE_PARTS="${{ steps.check_updates.outputs.release_note_parts }}"
+        # Format: VERSION:\n      - Updated package dependencies to latest versions (Package1 X.X.X, Package2 Y.Y.Y).
+        sed -i "s/<PackageReleaseNotes>/<PackageReleaseNotes>\n      $NEW_VERSION:\n      - Updated package dependencies to latest versions ($RELEASE_NOTE_PARTS)./" "$CSPROJ_FILE"
+        
+        echo "Updated $CSPROJ_FILE"
+        cat "$CSPROJ_FILE"
+
+    - name: Verify build
+      if: steps.check_updates.outputs.updates_needed == 'true'
+      run: |
+        dotnet restore AntiCaptchaApi.Net.sln
+        dotnet build AntiCaptchaApi.Net.sln --configuration Release
+
+    - name: Run tests
+      if: steps.check_updates.outputs.updates_needed == 'true'
+      run: |
+        dotnet test AntiCaptchaApi.Net.Tests/AntiCaptchaApi.Net.Tests.csproj --configuration Release --no-build --verbosity normal
+      continue-on-error: true
+
+    - name: Commit and push changes
+      if: steps.check_updates.outputs.updates_needed == 'true' && steps.mode.outputs.dry_run != 'true'
+      shell: bash
+      run: |
+        NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+        UPDATE_SUMMARY="${{ steps.check_updates.outputs.update_summary }}"
+        
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        git add -A
+        git commit -m "chore: update dependencies ($UPDATE_SUMMARY)
+
+        Automated dependency update for AntiCaptchaApi.Net v$NEW_VERSION"
+        
+        git push origin main
+
+    - name: Create and push release tag
+      if: steps.check_updates.outputs.updates_needed == 'true' && steps.mode.outputs.dry_run != 'true'
+      shell: bash
+      run: |
+        NEW_VERSION="${{ steps.new_version.outputs.new_version }}"
+        TAG_NAME="v$NEW_VERSION"
+        
+        git tag -a "$TAG_NAME" -m "Release AntiCaptchaApi.Net v$NEW_VERSION"
+        git push origin "$TAG_NAME"
+        
+        echo "✅ Created and pushed tag: $TAG_NAME"
+        echo "The publish-nuget.yml workflow will now publish to NuGet.org"
+        echo "After publishing, Selenium.AntiCaptcha will be automatically notified"
+
+    - name: Summary
+      shell: bash
+      run: |
+        DRY_RUN="${{ steps.mode.outputs.dry_run }}"
+        if [[ "${{ steps.check_updates.outputs.updates_needed }}" == "true" ]]; then
+          if [[ "$DRY_RUN" == "true" ]]; then
+            echo "## 🧪 Dry Run - Updates Available" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ✅ Dependency Update Complete" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Updates:** ${{ steps.check_updates.outputs.update_summary }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**New version:** ${{ steps.new_version.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** v${{ steps.new_version.outputs.new_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "$DRY_RUN" == "true" ]]; then
+            echo "⚠️ **DRY RUN** - No changes were committed or tagged." >> $GITHUB_STEP_SUMMARY
+            echo "Run again without dry_run to apply changes." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### Next Steps (Automatic)" >> $GITHUB_STEP_SUMMARY
+            echo "1. ✅ publish-nuget.yml will publish to NuGet.org" >> $GITHUB_STEP_SUMMARY
+            echo "2. ✅ Selenium.AntiCaptcha will be notified via repository_dispatch" >> $GITHUB_STEP_SUMMARY
+            echo "3. ✅ Selenium.AntiCaptcha will update its reference and publish" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo "## ℹ️ No Updates Needed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All dependencies are already up to date:" >> $GITHUB_STEP_SUMMARY
+          echo "- Microsoft.Extensions.Http: ${{ steps.current_versions.outputs.extensions_http }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Newtonsoft.Json: ${{ steps.current_versions.outputs.newtonsoft }}" >> $GITHUB_STEP_SUMMARY
+        fi
