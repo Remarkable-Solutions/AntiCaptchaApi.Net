@@ -1,5 +1,4 @@
 name: Auto Update Dependencies and Release
-name: Auto Update Dependencies and Release
 
 on:
   schedule:
