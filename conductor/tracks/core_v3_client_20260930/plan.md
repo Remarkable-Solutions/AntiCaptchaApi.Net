@@ -75,7 +75,7 @@ Tasks:
     - `SystemClockTests.Delay_Zero_CompletesImmediately`
   - Commit: `test(infra): add fake HTTP handler, fake clock and snapshot assertions`
 
-- [~] Task 1.5: JSON foundation (TDD)
+- [x] Task 1.5: JSON foundation (TDD) cb66a37
   - Add:
     - `Internal/Json/AntiCaptchaJsonContext.cs`: `[JsonSourceGenerationOptions(DefaultIgnoreCondition=WhenWritingNull, WriteIndented=false, PropertyNamingPolicy=CamelCase)]`.
     - `Internal/Json/LowerCaseEnumConverter.cs`: `JsonStringEnumConverter<T>` with camelCase.
