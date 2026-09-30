@@ -216,13 +216,14 @@ Tasks:
   - Green: add `[Obsolete("...removed in 3.0")]` on `Enums/ReportOutcome.cs:30` and `#pragma warning disable/restore CS0618` around `AnticaptchaClient.cs:126` (and in the test). The warning count must not grow.
   - Commit: `refactor(report): mark ReportOutcome.IncorrectHCaptcha obsolete`
   - Red: `IncorrectHCaptcha_IsObsolete` failed (`ObsoleteAttribute` null). `ReportTaskOutcomeAsync_IncorrectHCaptcha_StillCallsApi` was already green (a regression guard; it also checks the `taskId` in the body). The obsolete test also asserts `IsError == false` and that the message mentions 3.0. Green: 126/126, 15 warnings. Deviation: the reflection test looks the field up by a string literal rather than `nameof(...)`, because `nameof` of an obsolete member raises CS0618 (16 warnings); only the API-call test needs the pragma.
-- [ ] Task 4.5: Fix the README (no red phase: docs).
+- [x] Task 4.5: Fix the README (no red phase: docs). [4c53475]
   - Line 3: ".NET 9 library" → ".NET library (netstandard2.1, net8.0, net9.0)".
   - Line 9: the accurate type list (no HCaptcha; add Amazon WAF, Prosopo, Friendly Captcha, AntiGate).
   - Lines 86-88: remove "DI (Required) / only way".
   - Add Amazon WAF and AntiGate examples and a short note on resilient polling and redacted `RawPayload`.
   - The Changelog section → a link to `CHANGELOG.md`.
   - Commit: `docs(readme): correct supported frameworks and captcha types, add AntiGate/WAF examples`
+  - No red phase (docs). The README was restructured (install → quick start → client creation → configuration table → per-type examples → behavior notes → methods → deprecations) instead of patched line by line; every item above is covered. Also added: a reCAPTCHA v3 example with the MinScore 0.5 deprecation, an AntiGate `PushAntiGateVariableAsync` two-step example, a Deprecations section, and the offline test command under Contributing. Check: all snippets were compiled verbatim against the csproj in a scratchpad net8.0 console project (0 errors; only CS8321 unused-local-function warnings from the harness; not committed). That fixed 2 pre-existing broken snippets (`QueueType.RecaptchaV2Proxyless` does not exist → `RecaptchaB2WithoutProxy`; `GetTaskResultAsync` needs an explicit `CancellationToken`). `grep` confirms no "HCaptcha", ".NET 9", "only way" or "(Required)" (FR-14 acceptance); the obsolete report value is described as "the hCaptcha value of `ReportOutcome`" to meet that. The AntiGate example uses a `YOUR_TEMPLATE_NAME` placeholder rather than guessing a catalog template name.
 - [ ] Task 4.6: Add CHANGELOG.md, collapse PackageReleaseNotes, bump to 2.2.0 (no red phase: release metadata).
   - New `CHANGELOG.md`, with a human-written 2.2.0 section:
     - Fixed: B1-B10
