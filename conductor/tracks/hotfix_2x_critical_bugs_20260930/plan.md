@@ -147,13 +147,15 @@ Tasks:
 Goal: AntiGate templates can be solved end to end, using the existing solution, converter and `PushAntiGateVariableAsync`.
 
 Tasks:
-- [ ] Task 3.1: Add `AntiGateRequest` with serialization (TDD, B11 / FR-11).
+- [x] Task 3.1: Add `AntiGateRequest` with serialization (TDD, B11 / FR-11). [c18c127]
   - Pre-step: check `https://anti-captcha.com/apidoc/task-types/AntiGateTask` for the exact field names and whether `proxyType` is accepted (spec Open Question 1). Record the finding in the spec with a dated note.
+    - Done (b58cc26): see spec.md "Resolution of Open Question 1 (2026-09-30)". `proxyType` is not documented, so `Build()` strips it for `AntiGateRequest`.
   - Red: in `RequestSerializationTests.cs`, add:
     - `AntiGateRequestSerializationTest` (`type = AntiGateTask`, `websiteURL`, `templateName`, `variables` object, `domainsOfInterest`, flattened proxy)
     - `AntiGateRequestSerializationTest_OnlyRequiredArguments` (same type name, no proxy keys)
   - Green: new `AntiCaptchaApi.Net/Requests/AntiGateRequest.cs`, `public class AntiGateRequest : CaptchaRequest<AntiGateSolution>, IAntiGateRequest`, with `TemplateName`, `JObject Variables`, `List<string> DomainsOfInterest`, `ProxyConfig`, a parameterless constructor and a copy constructor. It has full XML docs with a docs link. Add a `RequestTaskNameHelper` entry `{ typeof(AntiGateRequest), "AntiGateTask" }`. In `Build()`, strip `proxyType` for AntiGate only if the pre-step says so.
   - Commit: `feat(antigate): add AntiGateRequest for AntiGateTask`
+  - Red: compile failure first (type missing); with the class alone both snapshot tests failed with `KeyNotFoundException` for `AntiGateRequest` in `RequestTaskNameHelper`. Green: name entry + `proxyType` stripped in `Build()` for `AntiGateRequest`. Extra test: `AntiGateRequest_CopyConstructor_CopiesAllProperties`; the full snapshot also checks that nested `variables` keys are not camel-cased. As planned, `RegistryCompletenessTests.EveryRequestType_HasValidator` stays red (AntiGateRequest has no validator) until Task 3.2; 104/105 green at this commit.
 - [ ] Task 3.2: `AntiGateRequestValidator` and registry wiring (TDD).
   - Red: `UnitTests/AntiGateRequestValidatorTests.cs`:
     - `Validate_Minimal_IsValid`
