@@ -53,7 +53,7 @@ Tasks:
   - Verify: `dotnet build` shows 0 warnings for both TFMs, and `dotnet pack` shows the nuspec dependencies for ns2.0 = STJ only and net8.0 = none.
   - Commit: `chore(core)!: target netstandard2.0/net8.0 with System.Text.Json; exclude 2.x sources`
 
-- [~] Task 1.4: Test infrastructure (TDD)
+- [x] Task 1.4: Test infrastructure (TDD) 4247183
   - Core: `Internal/Time/ISystemClock.cs` (`DateTimeOffset UtcNow`, `Task Delay(TimeSpan, CancellationToken)`) and `Internal/Time/SystemClock.cs`.
   - `UnitTests/Infrastructure/FakeHttpMessageHandler.cs`:
     - Scripted responses per API method (a queue of `Func<HttpRequestMessage, Task<HttpResponseMessage>>` or exceptions).
