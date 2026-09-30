@@ -93,6 +93,14 @@ internal static class TaskSamples
         });
         AddCase(samples, EnterpriseCase, recaptchaV3 with { IsEnterprise = true });
 
+        var funCaptchaFull = new FunCaptchaTask(WebsiteUrl, WebsiteKey)
+        {
+            ApiJsSubdomain = "client-api.arkoselabs.com",
+            Data = "{\"blob\":\"BLOB_VALUE\"}",
+            UserAgent = UserAgent,
+        };
+        Add(samples, new FunCaptchaTask(WebsiteUrl, WebsiteKey), funCaptchaFull, funCaptchaFull with { Proxy = Proxy });
+
         return samples;
     }
 
