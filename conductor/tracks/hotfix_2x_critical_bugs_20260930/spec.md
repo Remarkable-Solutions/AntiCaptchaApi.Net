@@ -182,3 +182,10 @@ It also asserts that every concrete `BaseSolution` subclass has a converter. Fai
 2. **Transient-poll limit as public config?** *Default:* internal constant `3` (minimal 2.x surface; v3 exposes `SolveOptions`). Alternative: a new `ClientConfig.MaxConsecutivePollingErrors` (non-breaking).
 3. **`auto-dependency-update.yml`:** *Default:* delete it. Alternative: keep it as `workflow_dispatch`-only with `dry_run` defaulting to `true`. Note that a manual run would still raise floors back to latest.
 4. **Microsoft.Extensions.Http floor:** *Default:* `8.0.0`, or the lowest vulnerability-free 8.0.x.
+
+### Resolution of Open Question 1 (2026-09-30, checked https://anti-captcha.com/apidoc/task-types/AntiGateTask)
+- Task fields: `type` = `AntiGateTask` (same name with or without proxy), `websiteURL`, `templateName`, `variables` (object), optional `domainsOfInterest` (array), and proxy fields `proxyAddress`, `proxyPort`, `proxyLogin`, `proxyPassword`.
+- **`proxyType` is not documented** → `Build()` must remove `proxyType` for `AntiGateRequest`.
+- The page says: "Note that there are optional proxy parameters. Only HTTPS proxies are accepted, and 'proxyAddress' must be an IP address." The table marks the proxy fields "Yes" (required when a proxy is used). Decision: the proxy stays optional as a whole; when `ProxyConfig` is set, validate it with the existing `ValidateProxy` (address + port). Login/password stay optional, as for all other types, to avoid over-rejecting.
+- Documented solution fields: `cookies`, `localStorage`, `sessionStorage`, `fingerprint`, `url`, `domain`, `HTMLsInBase64`, `screenshots`, `requestHeaders`, `responseHeaders`. `AntiGateSolution` currently lacks `SessionStorage`, `Screenshots`, `RequestHeaders`, `ResponseHeaders` → add them (additive, parsed like the existing `JObject` fields; arrays wrapped as today by `ParseSolutionJObject`) in Task 3.3.
+- `AntiGateSolution.IsValid()` requires `LocalStorage` and `Fingerprint`, which a template may legitimately not return. Out of scope for 2.x (behavior change); revisit in 3.0.
