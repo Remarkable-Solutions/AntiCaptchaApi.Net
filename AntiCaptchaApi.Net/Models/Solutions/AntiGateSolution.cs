@@ -18,8 +18,12 @@ namespace AntiCaptchaApi.Net.Models.Solutions
         [JsonIgnore]
         public JObject Fingerprint { get; set; }
     
+        /// <summary>
+        /// Base64-encoded HTML of pages captured by the template (<c>HTMLsInBase64</c>), keyed by URL, or null if not returned.
+        /// The lowercase <c>htmlsInBase64</c> key is also accepted.
+        /// </summary>
         [JsonIgnore]
-        public JObject HTMLsInBase64 { get; set; } //TODO: Check if works.
+        public JObject HTMLsInBase64 { get; set; }
 
         /// <summary>
         /// Session storage of the final page (<c>sessionStorage</c>), or null if not returned.

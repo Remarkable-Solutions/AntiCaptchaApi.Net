@@ -70,6 +70,32 @@ public class AntiGateClientTests
     }
 
     [Fact]
+    public async Task SolveCaptchaAsync_AntiGate_ParsesHTMLsInBase64()
+    {
+        var handler = new FakeHttpMessageHandler()
+            .EnqueueJson("{\"errorId\":0,\"taskId\":558}")
+            .EnqueueJson(ReadyJsonWithHtmls("HTMLsInBase64"));
+        var client = CreateClient(handler);
+
+        var result = await client.SolveCaptchaAsync(CreateRequest());
+
+        Assert.Equal("PGh0bWw+", (string?)result.Solution.HTMLsInBase64?["https://x.com"]);
+    }
+
+    [Fact]
+    public async Task SolveCaptchaAsync_AntiGate_ParsesLegacyLowercaseHtmlsInBase64()
+    {
+        var handler = new FakeHttpMessageHandler()
+            .EnqueueJson("{\"errorId\":0,\"taskId\":559}")
+            .EnqueueJson(ReadyJsonWithHtmls("htmlsInBase64"));
+        var client = CreateClient(handler);
+
+        var result = await client.SolveCaptchaAsync(CreateRequest());
+
+        Assert.Equal("PGh0bWw+", (string?)result.Solution.HTMLsInBase64?["https://x.com"]);
+    }
+
+    [Fact]
     public async Task CreateCaptchaTaskAsync_AntiGateWithProxy_SendsAntiGateTaskWithoutProxyType()
     {
         var handler = new FakeHttpMessageHandler().EnqueueJson("{\"errorId\":0,\"taskId\":557}");
@@ -131,6 +157,13 @@ public class AntiGateClientTests
         Assert.Equal("user", (string?)valueObject["login"]);
         Assert.Equal(2, (int)valueObject["attempts"]!);
     }
+
+    private static string ReadyJsonWithHtmls(string key) =>
+        "{\"errorId\":0,\"status\":\"ready\",\"solution\":{" +
+        "\"url\":\"https://x.com\",\"domain\":\"x.com\"," +
+        "\"cookies\":{},\"localStorage\":{},\"fingerprint\":{}," +
+        $"\"{key}\":{{\"https://x.com\":\"PGh0bWw+\"}}}}," +
+        "\"cost\":\"0.00200\",\"ip\":\"1.2.3.4\",\"createTime\":1700000000,\"endTime\":1700000030,\"solveCount\":0}";
 
     private static AntiGateRequest CreateRequest() => new()
     {
