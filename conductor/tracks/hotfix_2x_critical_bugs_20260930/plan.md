@@ -192,13 +192,14 @@ Tasks:
 Goal: releases are intentional, CI runs the offline tests, dependency floors are minimal, the docs are accurate, and the package is versioned 2.2.0 locally (not published).
 
 Tasks:
-- [ ] Task 4.1: Remove the auto-release cron and add Dependabot (no red phase: CI config).
+- [x] Task 4.1: Remove the auto-release cron and add Dependabot (no red phase: CI config). [88f6570]
   - Delete `.github/workflows/auto-dependency-update.yml` (spec Open Question 3; the alternative is `workflow_dispatch` only with `dry_run: true` by default).
   - Add `.github/dependabot.yml` (`version: 2`):
     - `nuget` at `/` weekly, with `ignore` entries for `Microsoft.Extensions.Http` and `Newtonsoft.Json` (floors are intentional)
     - `github-actions` at `/` weekly
   - Validate the YAML (`actionlint` / `yamllint` if installed, otherwise review).
   - Commit: `chore(ci): replace daily auto-release cron with weekly Dependabot`
+  - No red phase (CI config). Validation: `actionlint`/`yamllint` are not installed, so the YAML was checked with a Python `yaml.safe_load` structural assertion (version 2, both ecosystems at `/` weekly, both ignore entries) and by review; `publish-nuget.yml` (untouched, including the Selenium repository-dispatch) also parses. Deviation: the `tech-stack.md` CI row was updated here with a dated note (the CI change lands in this task; 4.3 still updates the dependency rows).
 - [ ] Task 4.2: Run offline unit tests in `publish-nuget.yml` (no red phase: CI config).
   - Replace the commented-out step (lines 32-34) with `- name: Test (offline unit tests)` running `dotnet test AntiCaptchaApi.Net.sln --configuration Release --no-build --filter "FullyQualifiedName~UnitTests"`, placed before "Determine Package Version" so that a failure blocks pack/publish.
   - Locally, run the same command with `DOTNET_ROLL_FORWARD=Major` in Release.
