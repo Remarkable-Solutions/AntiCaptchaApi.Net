@@ -17,7 +17,7 @@ Conventions for every task (see `conductor/workflow.md`):
 
 ---
 
-## Phase 1: Foundation (branch, legacy capture, TFMs, JSON, test infra)
+## Phase 1: Foundation (branch, legacy capture, TFMs, JSON, test infra) [checkpoint: c751ad5]
 Goal: branch `v3` exists and the 2.x wire contract and public API are frozen into checked-in files. After that, the core targets `netstandard2.0;net8.0` with STJ and no Newtonsoft/M.E.Http, 2.x code is excluded from compilation, and the test project (net10.0) has fakes, snapshot tooling and the probe.
 
 Tasks:
@@ -93,7 +93,7 @@ Tasks:
   - `Program.cs` with the command `info`: prints the core assembly version, TFM and referenced assemblies. Later phases add commands. Live commands read `ClientKey` from the environment and exist only for the user to run.
   - Commit: `chore(probe): add console probe for manual verification`
 
-- [ ] Verification 1: Phase 1 checkpoint [checkpoint marker]
+- [x] Verification 1: Phase 1 checkpoint [c751ad5] — user confirmed 2026-09-30
   - Run the offline suite. Record the new baselines (tests, warnings) at the end of this file.
   - Manual:
     1. `dotnet build AntiCaptchaApi.Net.sln` shows 0 core warnings for both TFMs.
