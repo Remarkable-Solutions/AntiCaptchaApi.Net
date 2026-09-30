@@ -2,9 +2,13 @@ using System;
 using System.Linq;
 using System.Net.Http;
 using System.Threading;
+using System.Threading.Tasks;
 using AntiCaptchaApi.Net.Internal.Errors;
 using AntiCaptchaApi.Net.Internal.Http;
+using AntiCaptchaApi.Net.Internal.Json;
+using AntiCaptchaApi.Net.Internal.Json.Envelopes;
 using AntiCaptchaApi.Net.Internal.Time;
+using AntiCaptchaApi.Net.Tasks;
 
 namespace AntiCaptchaApi.Net;
 
@@ -77,9 +81,41 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
     /// <summary>The shared handler when the key-only constructor was used; otherwise <see langword="null"/>.</summary>
     internal HttpMessageHandler? SharedHandlerInUse { get; }
 
+    /// <inheritdoc />
+    public async Task<int> CreateTaskAsync(CaptchaTask task, CreateOptions? o = null, CancellationToken ct = default)
+    {
+        if (task is null)
+        {
+            throw new ArgumentNullException(nameof(task));
+        }
+        var callbackUrl = o?.CallbackUrl;
+        if (callbackUrl is { IsAbsoluteUri: false })
+        {
+            throw new ArgumentException("CallbackUrl must be an absolute URI.", nameof(o));
+        }
+        task.RunValidation();
+
+        var request = new CreateTaskRequest(_apiKey, TaskSerializer.ToJsonObject(task))
+        {
+            LanguagePool = o?.LanguagePool,
+            CallbackUrl = callbackUrl?.AbsoluteUri,
+        };
+        var response = await Transport.PostAsync(
+            "createTask",
+            request,
+            AntiCaptchaJsonContext.Default.CreateTaskRequest,
+            AntiCaptchaJsonContext.Default.CreateTaskResponse,
+            RedactorFor(task),
+            ct).ConfigureAwait(false);
+        return response.TaskId;
+    }
+
     /// <summary>Describes the client without revealing the API key.</summary>
     /// <returns>The type name and the base address.</returns>
     public override string ToString() => $"AntiCaptchaClient {{ BaseAddress = {Options.BaseAddress} }}";
+
+    // API descriptions can echo the task's proxy string, so its password is redacted too.
+    internal SecretRedactor RedactorFor(CaptchaTask task) => Redactor.With(task.Proxy?.Password);
 
     private static AntiCaptchaClientOptions Validate(AntiCaptchaClientOptions options)
     {
