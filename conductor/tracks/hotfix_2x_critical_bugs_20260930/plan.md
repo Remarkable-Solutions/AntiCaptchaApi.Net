@@ -200,10 +200,11 @@ Tasks:
   - Validate the YAML (`actionlint` / `yamllint` if installed, otherwise review).
   - Commit: `chore(ci): replace daily auto-release cron with weekly Dependabot`
   - No red phase (CI config). Validation: `actionlint`/`yamllint` are not installed, so the YAML was checked with a Python `yaml.safe_load` structural assertion (version 2, both ecosystems at `/` weekly, both ignore entries) and by review; `publish-nuget.yml` (untouched, including the Selenium repository-dispatch) also parses. Deviation: the `tech-stack.md` CI row was updated here with a dated note (the CI change lands in this task; 4.3 still updates the dependency rows).
-- [ ] Task 4.2: Run offline unit tests in `publish-nuget.yml` (no red phase: CI config).
+- [x] Task 4.2: Run offline unit tests in `publish-nuget.yml` (no red phase: CI config). [809ddb8]
   - Replace the commented-out step (lines 32-34) with `- name: Test (offline unit tests)` running `dotnet test AntiCaptchaApi.Net.sln --configuration Release --no-build --filter "FullyQualifiedName~UnitTests"`, placed before "Determine Package Version" so that a failure blocks pack/publish.
   - Locally, run the same command with `DOTNET_ROLL_FORWARD=Major` in Release.
   - Commit: `chore(ci): run offline unit tests before packing`
+  - No red phase (CI config). Local check of the CI sequence: `dotnet build -c Release` (15 warnings, 0 errors), then `DOTNET_ROLL_FORWARD=Major dotnet test AntiCaptchaApi.Net.sln --configuration Release --no-build --filter "FullyQualifiedName~UnitTests"` → 124/124 passed. The workflow YAML parses and step order was asserted (Build → Test → Determine Package Version). No `DOTNET_ROLL_FORWARD` in CI (it installs the 9.0 SDK, matching the net9.0 test project).
 - [ ] Task 4.3: Lower dependency floors (verification-driven; red = vulnerability/compat check).
   - `AntiCaptchaApi.Net.csproj:59-60`: `Microsoft.Extensions.Http` → `8.0.0`, `Newtonsoft.Json` → `13.0.1`.
   - Run `dotnet restore`, `dotnet build` (all 3 TFMs, warnings ≤ 15), `dotnet list AntiCaptchaApi.Net/AntiCaptchaApi.Net.csproj package --vulnerable --include-transitive`. If anything is flagged, raise to the lowest clean patch and note it in the spec. Run the offline suite.
