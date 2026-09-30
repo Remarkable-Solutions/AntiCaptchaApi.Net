@@ -211,10 +211,11 @@ Tasks:
   - Update the `tech-stack.md` "Current (2.x)" rows with a dated note, as workflow.md requires tech-stack changes to be documented first.
   - Commit: `chore(deps): lower dependency floors to Microsoft.Extensions.Http 8.0.0 and Newtonsoft.Json 13.0.1`
   - No red phase in the TDD sense; the check is the verification. `dotnet restore` OK. `dotnet build --no-incremental` for all 3 TFMs has 15 warnings (all pre-existing, in the test project) and no NU warnings. `dotnet list ... package --vulnerable --include-transitive` (nuget.org): "no vulnerable packages"; every TFM resolves Microsoft.Extensions.* 8.0.0 transitively. Offline suite 124/124 (the test project now also runs against Microsoft.Extensions.Http 8.0.0). No floor needed raising, so there is no spec note. `tech-stack.md` JSON/HTTP rows updated with a dated floors note.
-- [ ] Task 4.4: Mark `ReportOutcome.IncorrectHCaptcha` obsolete (TDD).
+- [x] Task 4.4: Mark `ReportOutcome.IncorrectHCaptcha` obsolete (TDD). [d130c17]
   - Red: `UnitTests/ReportOutcomeTests.cs`, `IncorrectHCaptcha_IsObsolete` (reflection: `ObsoleteAttribute` present, not an error-level obsolete). `ReportTaskOutcomeAsync_IncorrectHCaptcha_StillCallsApi` (fake handler, URI ends with `reportIncorrectHCaptcha`) so existing callers keep working.
   - Green: add `[Obsolete("...removed in 3.0")]` on `Enums/ReportOutcome.cs:30` and `#pragma warning disable/restore CS0618` around `AnticaptchaClient.cs:126` (and in the test). The warning count must not grow.
   - Commit: `refactor(report): mark ReportOutcome.IncorrectHCaptcha obsolete`
+  - Red: `IncorrectHCaptcha_IsObsolete` failed (`ObsoleteAttribute` null). `ReportTaskOutcomeAsync_IncorrectHCaptcha_StillCallsApi` was already green (a regression guard; it also checks the `taskId` in the body). The obsolete test also asserts `IsError == false` and that the message mentions 3.0. Green: 126/126, 15 warnings. Deviation: the reflection test looks the field up by a string literal rather than `nameof(...)`, because `nameof` of an obsolete member raises CS0618 (16 warnings); only the API-call test needs the pragma.
 - [ ] Task 4.5: Fix the README (no red phase: docs).
   - Line 3: ".NET 9 library" → ".NET library (netstandard2.1, net8.0, net9.0)".
   - Line 9: the accurate type list (no HCaptcha; add Amazon WAF, Prosopo, Friendly Captcha, AntiGate).
