@@ -326,7 +326,8 @@ Tasks:
     - `Properties_ExposeErrorTaskIdAttempts`
   - Commit: `feat(errors): add AntiCaptchaException and secret redaction`
 
-- [ ] Task 3.3: `ApiTransport` (TDD)
+- [x] Task 3.3: `ApiTransport` (TDD) e62a3c2
+  - Done 2026-09-30: the ctor is `(HttpClient, Uri baseAddress, TimeSpan requestTimeout)`, and `TResponse : class`. A trailing `/` is added to the base address, so a base like `https://gw/anticaptcha` keeps its path. The error envelope is parsed first, then `TResponse`. Transport exceptions have `TaskId = null` and `Attempts = 0`; the client/pipeline adds those. The `HttpRequestException` is **not** attached as the inner exception (its message is redacted into the description instead), because exception `ToString()` would print an unredacted inner message. Non-2xx responses are always `HttpError`, even with a JSON body. Extra tests: a base-with-path row in `PostAsync_PostsJsonToBaseAddressPlusMethod`, `PostAsync_AlreadyCancelledToken_ThrowsOperationCanceled`, `PostAsync_HttpRequestExceptionEchoesSecret_IsRedacted`, and `InvalidJson` as a Theory (HTML, empty, `null`).
   - File: `Internal/Http/ApiTransport.cs`, with `PostAsync<TReq,TRes>(string method, TReq body, JsonTypeInfo<TReq>, JsonTypeInfo<TRes>, SecretRedactor, CancellationToken)`. Use `#if NET5_0_OR_GREATER` for `ReadAsStringAsync(ct)`.
   - Tests `UnitTests/Http/ApiTransportTests.cs` (fake handler):
     - `PostAsync_PostsJsonToBaseAddressPlusMethod`
