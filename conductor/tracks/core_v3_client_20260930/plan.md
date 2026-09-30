@@ -27,7 +27,7 @@ Tasks:
   - Run build and offline tests. Record the test count and warning count under "Baselines" at the end of this file.
   - Commit: none (only the plan update `conductor(plan): Record v3 baseline`).
 
-- [~] Task 1.2: Capture 2.x wire contract and public API (TDD: characterization)
+- [x] Task 1.2: Capture 2.x wire contract and public API (TDD: characterization) fa71303
   - Add `AntiCaptchaApi.Net.Tests/UnitTests/Legacy/LegacyContractCapture.cs`. It is temporary and uses 2.x `CreateCaptchaRequestHelper.Build` and Newtonsoft.
   - `Capture_EveryLegacyRequestType_WritesWireSnapshot` (Theory over every concrete 2.x request type, **including the hotfix `AntiGateRequest`**) writes `Snapshots/Legacy2x/<RequestType>.<case>.json` in compact form with sorted keys:
     - Proxyless classes get the cases `minimal` and `full`. Proxy classes get `proxy`.
@@ -37,7 +37,7 @@ Tasks:
   - If a 2.x type throws during serialization (for example `ImageToCoordinatesRequest` duplicate `websiteURL`, unless the hotfix fixed it), write that file by hand from the 2.x properties and note it under "Deviations" at the end of this file.
   - Commit: `test(legacy): capture 2.x createTask wire contract and public API`
 
-- [ ] Task 1.3: Retarget core and drop 2.x dependencies (TDD)
+- [~] Task 1.3: Retarget core and drop 2.x dependencies (TDD)
   - Red: `UnitTests/Packaging/CoreAssemblyTests.cs`:
     - `CoreAssembly_DoesNotReferenceNewtonsoftOrMicrosoftExtensions` (checks `GetReferencedAssemblies()` of `typeof(SoftId).Assembly`)
     - `SoftId_Value_Is1023`
