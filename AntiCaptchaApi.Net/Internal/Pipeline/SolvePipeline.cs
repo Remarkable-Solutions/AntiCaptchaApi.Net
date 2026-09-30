@@ -33,6 +33,9 @@ internal sealed class SolvePipeline
         where TSolution : Solution
     {
         int? taskId = null;
+        // Spec R-6: the costs reported for this call's tasks. The API reports a cost only with a ready result, which ends
+        // the solve, so the known spend before a retry is 0: a budget of 0 stops every retry, a positive one none yet.
+        const decimal spent = 0m;
         for (var attempt = 1; ; attempt++)
         {
             AntiCaptchaException failure;
@@ -72,6 +75,11 @@ internal sealed class SolvePipeline
             if (!retryable || attempt >= options.MaxAttempts)
             {
                 return SolveOutcome<TSolution>.Failed(failure);
+            }
+            if (options.MaxCostPerSolve is { } budget && spent >= budget)
+            {
+                return SolveOutcome<TSolution>.Failed(
+                    new AntiCaptchaException(CostLimitReached(budget, spent, failure.Error), taskId, attempt, failure));
             }
             await _client.Clock.Delay(
                 Backoff.Delay(attempt, options.RetryBaseDelay, options.RetryMaxDelay, _client.Random),
@@ -146,6 +154,15 @@ internal sealed class SolvePipeline
             delay = options.PollInterval;
         }
     }
+
+    // Only codes and amounts go into the description, so it cannot carry secrets.
+    private static AntiCaptchaError CostLimitReached(decimal budget, decimal spent, AntiCaptchaError last) =>
+        new(
+            AntiCaptchaErrorCode.CostLimitReached,
+            null,
+            $"MaxCostPerSolve of {budget.ToString(CultureInfo.InvariantCulture)} USD reached before a retry "
+            + $"({spent.ToString(CultureInfo.InvariantCulture)} USD reported); the last attempt failed with {last.Code}.",
+            null);
 
     private static AntiCaptchaError SolveTimeout(TimeSpan timeout) =>
         new(
