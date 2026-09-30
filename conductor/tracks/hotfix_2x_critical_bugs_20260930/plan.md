@@ -93,7 +93,7 @@ Tasks:
   - Green: in `Internal/Converters/TaskResultConverter.cs`, use a local `var source = JObject.Load(reader)` and add `protected virtual void OnResultParsed(JObject source, TaskResultResponse<T> response) { }`, called before returning. Keep `protected JObject jObject` with `[Obsolete(...)]` and `[EditorBrowsable(EditorBrowsableState.Never)]`, never assigned (binary compatibility). `AntiGateTaskResultConverter` overrides `OnResultParsed` instead of overriding `ReadJson` and reading the field.
   - Commit: `fix(converters): make TaskResultConverter stateless to fix concurrent-solve race`
   - Red: the reflection test named `TaskResultConverter`1.jObject`; the parallel test also reproduced the race (cookie id mismatch). Green: deterministic (no shared state left). Deviation: `AntiGateTaskResultConverter.ReadJson` override kept as a pass-through to base so the public surface is unchanged; the AntiGate logic moved to `OnResultParsed`.
-- [ ] Task 2.2: Redact secrets in `RawPayload` (TDD, B7 / FR-7).
+- [x] Task 2.2: Redact secrets in `RawPayload` (TDD, B7 / FR-7). [be1dea0]
   - Red: `UnitTests/PayloadRedactorTests.cs`:
     - `Redact_ClientKey_Masked`
     - `Redact_NestedProxyPassword_Masked`
@@ -103,6 +103,7 @@ Tasks:
     `UnitTests/RawPayloadRedactionTests.cs` (fake handler): for success, `HttpRequestException`, invalid-JSON response, and cancellation, `RawPayload` contains neither `"test-key"` nor the proxy password. The handler-captured body still contains both.
   - Green: new `Internal/Helpers/PayloadRedactor.cs` (internal static). `HttpHelper.cs`: compute `var redacted = PayloadRedactor.Redact(payload)` once and assign it at all 5 `RawPayload` sites (lines 75, 87, 96, 106, 115).
   - Commit: `fix(security): redact clientKey and proxyPassword from RawPayload`
+  - Red: redactor tests failed against a pass-through stub; client tests found `"test-key"` in `RawPayload` on every path. Added the `UnexpectedError` path too (spec FR-7 lists it); cancellation is simulated by a handler-thrown `TaskCanceledException`. Redacted output keeps the previous (indented) `JObject.ToString()` formatting; `null` payload stays `null`.
 - [ ] Task 2.3: Keep polling on transient errors (TDD, B8 / FR-8).
   - Red: `UnitTests/WaitForTaskResultTests.cs`, with `ClientConfig { DelayTimeBetweenCheckingTaskResultMs = 1 }`:
     - `Wait_TransientErrorThenReady_ReturnsSolution` (`[throw, processing, throw, ready]`)
