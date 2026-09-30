@@ -99,6 +99,10 @@ namespace AntiCaptchaApi.Net.Internal
                     serialized["proxyPassword"] = serialized["proxyConfig"]?["proxyPassword"];
 
                 serialized.Remove("proxyConfig");
+
+                // AntiGateTask documents no proxyType field (proxies must be HTTPS by IP), so none is sent.
+                if (request is AntiGateRequest)
+                    serialized.Remove("proxyType");
             }
         
             return serialized;
