@@ -571,7 +571,7 @@ Tasks:
     - `Telemetry_Instruments_HaveSpecNamesAndUnits` (`MeterListener.InstrumentPublished`)
   - Commit: `feat(diagnostics): add AntiCaptcha ActivitySource and Meter`
 
-- [~] Task 6.2: Activities (TDD)
+- [x] Task 6.2: Activities (TDD) [640d9b5]
   - Tests `UnitTests/Diagnostics/ActivityTests.cs` (`ActivityListener`):
     - `Solve_Success_EmitsSolveActivityWithTypeTaskIdAttempts`
     - `Solve_Failure_SetsErrorStatusAndErrorCode`
