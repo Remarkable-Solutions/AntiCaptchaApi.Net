@@ -19,6 +19,7 @@ internal static class TaskSamples
     public const string WebsiteUrl = "https://example.com/login";
     public const string WebsiteKey = "SITE_KEY";
     public const string UserAgent = "Mozilla/5.0 (probe)";
+    public const string ImageBody = "iVBORw0KGgoAAAANSUhEUg==";
 
     public static readonly Proxy Proxy = new(ProxyType.Socks5, "203.0.113.10", 1080) { Login = "proxyUser", Password = "proxyPass" };
 
@@ -39,6 +40,25 @@ internal static class TaskSamples
             UserAgent = UserAgent,
         };
         Add(samples, new TurnstileTask(WebsiteUrl, WebsiteKey), turnstileFull, turnstileFull with { Proxy = Proxy });
+
+        Add(samples, new ImageToTextTask(ImageBody), new ImageToTextTask(ImageBody)
+        {
+            Phrase = true,
+            Case = true,
+            Numeric = NumericOption.NumbersOnly,
+            Math = true,
+            MinLength = 4,
+            MaxLength = 8,
+            Comment = "enter the text",
+            WebsiteUrl = WebsiteUrl,
+        });
+
+        Add(samples, new ImageToCoordinatesTask(ImageBody), new ImageToCoordinatesTask(ImageBody)
+        {
+            Comment = "select all cars",
+            Mode = ImageToCoordinatesMode.Rectangles,
+            WebsiteUrl = WebsiteUrl,
+        });
 
         return samples;
     }

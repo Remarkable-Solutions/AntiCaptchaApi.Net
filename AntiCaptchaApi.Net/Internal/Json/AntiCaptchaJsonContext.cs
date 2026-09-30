@@ -19,6 +19,10 @@ namespace AntiCaptchaApi.Net.Internal.Json;
 // Tasks and their solutions (one pair per catalog type; guarded by TaskSnapshotTests).
 [JsonSerializable(typeof(TurnstileTask))]
 [JsonSerializable(typeof(TurnstileSolution))]
+[JsonSerializable(typeof(ImageToTextTask))]
+[JsonSerializable(typeof(ImageToTextSolution))]
+[JsonSerializable(typeof(ImageToCoordinatesTask))]
+[JsonSerializable(typeof(ImageToCoordinatesSolution))]
 internal sealed partial class AntiCaptchaJsonContext : JsonSerializerContext
 {
 }
