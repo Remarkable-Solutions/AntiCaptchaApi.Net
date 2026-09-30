@@ -560,7 +560,7 @@ Tasks:
 
 ---
 
-## Phase 6: Observability
+## Phase 6: Observability [checkpoint: 9882a4f]
 Goal: `ActivitySource("AntiCaptcha")` and `Meter("AntiCaptcha")` telemetry, free of secrets.
 
 Tasks:
@@ -592,7 +592,7 @@ Tasks:
     - `Telemetry_AllTagValuesAndEvents_ContainNoKeyOrProxyPassword`, covering the success, retry, transient and fatal scenarios.
   - Commit: `test(security): assert telemetry carries no secrets`
 
-- [ ] Verification 6: Phase 6 checkpoint [checkpoint marker]
+- [x] Verification 6: Phase 6 checkpoint [9882a4f] — user confirmed 2026-09-30
   - Run the offline suite and coverage.
   - Add a probe command `telemetry`: registers `ActivityListener` and `MeterListener`, runs the `offline-solve` scenario, and prints activities and measurements.
   - Manual:
