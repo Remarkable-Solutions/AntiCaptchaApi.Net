@@ -128,7 +128,9 @@ namespace AntiCaptchaApi.Net
                ReportOutcome.IncorrectImageCaptcha => ApiMethod.ReportIncorrectImageCaptcha,
                ReportOutcome.IncorrectRecaptcha => ApiMethod.ReportIncorrectRecaptcha,
                ReportOutcome.CorrectRecaptcha => ApiMethod.ReportCorrectRecaptcha,
+#pragma warning disable CS0618 // Obsolete value kept working for existing 2.x callers; removed in 3.0.
                ReportOutcome.IncorrectHCaptcha => ApiMethod.ReportIncorrectHCaptcha,
+#pragma warning restore CS0618
                _ => throw new ArgumentOutOfRangeException(nameof(outcome), $"Unsupported report outcome: {outcome}")
            };
            return await ReportCaptcha(taskId, apiMethod, cancellationToken);
