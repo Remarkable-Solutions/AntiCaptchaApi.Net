@@ -405,7 +405,8 @@ Tasks:
 Goal: `WaitForResultAsync`, `TrySolveAsync` and `SolveAsync` with the per-type first-poll delay, poll interval, transient tolerance, retry with backoff and jitter, `MaxAttempts`, per-attempt `Timeout`, `MaxCostPerSolve` and correct cancellation, all proven with `FakeClock`.
 
 Tasks:
-- [ ] Task 4.1: `SolveOptions` and `Backoff` (TDD)
+- [x] Task 4.1: `SolveOptions` and `Backoff` (TDD) 9b44abc
+  - Done 2026-09-30: `SolveOptions.Validate(paramName)` is internal and returns the options; it throws `ArgumentOutOfRangeException` (message prefixed `SolveOptions.<Option>`) for non-positive `Timeout`/`PollInterval`/`RetryBaseDelay`/`RetryMaxDelay`, a negative `FirstPollDelay` (zero is allowed), `MaxAttempts < 1`, a negative `MaxConsecutivePollErrors` (0 = fail on the first transient poll error) and a negative `MaxCostPerSolve` (0 is allowed). The client constructor also validates `DefaultSolveOptions` (null or invalid → `ParamName = options`). `Backoff.Delay` applies the jitter after the cap (spec formula), so the maximum is `RetryMaxDelay × 1.2`. Extra tests: `Validate_Defaults_DoesNotThrow`, `Validate_ZeroFirstPollDelay_IsAllowed`, `Validate_NegativeMaxConsecutivePollErrors_Throws`, `Validate_ZeroMaxCost_IsAllowed`, `BackoffTests.Delay_JitterAppliesAfterTheCap`, and 2 rows in `Ctor_InvalidOptions_ThrowsArgumentException`.
   - Also add `AntiCaptchaClientOptions.DefaultSolveOptions = new()` (FR-5), deferred from Task 3.4, and extend `Options_Defaults_MatchSpec`.
   - Files: `SolveOptions.cs` (sealed record deriving from `CreateOptions`), `Internal/Pipeline/Backoff.cs` (`Delay(int attempt, TimeSpan baseDelay, TimeSpan max, Func<double> random)`).
   - Tests:
