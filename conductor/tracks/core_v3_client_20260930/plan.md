@@ -401,7 +401,7 @@ Tasks:
 
 ---
 
-## Phase 4: Solving pipeline
+## Phase 4: Solving pipeline [checkpoint: 5acd8ee]
 Goal: `WaitForResultAsync`, `TrySolveAsync` and `SolveAsync` with the per-type first-poll delay, poll interval, transient tolerance, retry with backoff and jitter, `MaxAttempts`, per-attempt `Timeout`, `MaxCostPerSolve` and correct cancellation, all proven with `FakeClock`.
 
 Tasks:
@@ -481,7 +481,7 @@ Tasks:
   - Green: delete `SolveOptions.MaxCostPerSolve`, its validation, the pipeline check and the commented spend `const`, plus the `CostLimitReached` code if nothing else uses it. Update XML docs.
   - Docs: in spec.md, mark R-6 and the MaxCostPerSolve requirement as removed (dated). Add a future-work note: a client-wide spend guard (running total of the reported `cost` across solves, e.g. `AntiCaptchaClientOptions.MaxTotalCost`), which does work because solved tasks report cost. In design-v3.md §4.4, replace "optional MaxCostPerSolve" with that note.
   - Commit: `refactor(pipeline)!: remove MaxCostPerSolve (cannot trigger; cost is only reported on success)`
-- [ ] Verification 4: Phase 4 checkpoint [checkpoint marker]
+- [x] Verification 4: Phase 4 checkpoint [5acd8ee] — user confirmed 2026-09-30
   - Run the offline suite and confirm the full suite takes under 30 s. Run coverage for `Internal/Pipeline/**` (≥ 80 %).
   - Add probe commands:
     - `offline-solve`: scripted processing → transient error → ready. Prints the `SolveResult` and the simulated timeline.
