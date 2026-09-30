@@ -628,7 +628,7 @@ Tasks:
 
 ## Baselines
 - 2.x at branch creation (77c8966): tests: 126 offline unit tests passing (net9.0 test TFM, roll-forward to .NET 10), warnings: 15 (all in the test project; core 0) (Task 1.1)
-- After Phase 1: tests: _?_, core warnings: 0 (Verification 1)
+- After Phase 1: tests: 16, core warnings: 0, test warnings: 0 (Verification 1, c751ad5)
 
 ## Deviations
 _Record any departures from spec/tech-stack here with a date (workflow step 7)._
