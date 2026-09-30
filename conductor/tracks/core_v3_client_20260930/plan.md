@@ -474,6 +474,12 @@ Tasks:
     - `NoLimit_DoesNotCheck`
   - Commit: `feat(pipeline): add optional MaxCostPerSolve budget`
 
+- [ ] Task 4.6: Remove `MaxCostPerSolve` (owner decision 2026-09-30)
+  - Why: anti-captcha reports and charges `cost` only for a ready (solved) task, and a ready task ends the solve. So every retry follows an unpaid attempt, and a limit checked before a retry always sees 0: `0` blocks all retries, any positive value never triggers (found in Task 4.5). The owner chose to remove it before 3.0 ships.
+  - Red: add a test asserting `SolveOptions` has no `MaxCostPerSolve` member (reflection) and that `AntiCaptchaErrorCode` has no `CostLimitReached` value, unless something else uses it. Remove `CostLimitTests.cs` and every cost-limit assertion elsewhere.
+  - Green: delete `SolveOptions.MaxCostPerSolve`, its validation, the pipeline check and the commented spend `const`, plus the `CostLimitReached` code if nothing else uses it. Update XML docs.
+  - Docs: in spec.md, mark R-6 and the MaxCostPerSolve requirement as removed (dated). Add a future-work note: a client-wide spend guard (running total of the reported `cost` across solves, e.g. `AntiCaptchaClientOptions.MaxTotalCost`), which does work because solved tasks report cost. In design-v3.md §4.4, replace "optional MaxCostPerSolve" with that note.
+  - Commit: `refactor(pipeline)!: remove MaxCostPerSolve (cannot trigger; cost is only reported on success)`
 - [ ] Verification 4: Phase 4 checkpoint [checkpoint marker]
   - Run the offline suite and confirm the full suite takes under 30 s. Run coverage for `Internal/Pipeline/**` (≥ 80 %).
   - Add probe commands:
