@@ -20,15 +20,7 @@
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageVersion>2.2.0</PackageVersion>
-    <PackageReleaseNotes>
-      2.2.0:
-      - Fixed: Amazon WAF task creation, reCAPTCHA v3 validation (IsEnterprise, MinScore 0.9), Turnstile proxy validation, Prosopo/Friendly Captcha/Amazon WAF result parsing, concurrent-solve race, proxy port 65535, polling through transient network errors, no retry of invalid requests, DI HTTP timeout, AntiGate HTMLsInBase64.
-      - Added: AntiGateRequest (AntiGateTask) and more AntiGateSolution fields.
-      - Security: clientKey and proxyPassword are redacted from RawPayload.
-      - Changed: dependency floors lowered to Microsoft.Extensions.Http 8.0.0 and Newtonsoft.Json 13.0.1.
-      - Deprecated: ReportOutcome.IncorrectHCaptcha, RecaptchaV3Request.MinScore 0.5 (removal in 3.0).
-      Full history: CHANGELOG.md - https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/blob/main/CHANGELOG.md
-    </PackageReleaseNotes>
+    <PackageReleaseNotes>See CHANGELOG.md</PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
@@ -36,23 +28,6 @@
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.0" />
   </ItemGroup>
 
-  <!-- 2.x sources stay on disk as reference but are not compiled (track core_v3_client_20260930 spec 7.3); deleted in Task 7.2. -->
-  <ItemGroup>
-    <Compile Remove="Requests/**" />
-    <Compile Remove="Responses/**" />
-    <Compile Remove="Models/**" />
-    <Compile Remove="Enums/**" />
-    <Compile Remove="Internal/Common/**" />
-    <Compile Remove="Internal/Converters/**" />
-    <Compile Remove="Internal/Extensions/**" />
-    <Compile Remove="Internal/Helpers/**" />
-    <Compile Remove="Internal/Models/**" />
-    <Compile Remove="Internal/Services/**" />
-    <Compile Remove="Internal/Validation/**" />
-    <Compile Remove="AnticaptchaClient.v2.cs" />
-    <Compile Remove="IAnticaptchaClient.v2.cs" />
-    <Compile Remove="AnticaptchaServiceCollectionExtensions.cs" />
-  </ItemGroup>
 
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
