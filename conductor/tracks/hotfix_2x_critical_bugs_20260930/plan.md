@@ -63,7 +63,7 @@ Tasks:
   - Green: `Internal/Extensions/ValidationResultExtensions.cs:65,89`: `>= 65535` → `> 65535`, and the message becomes "between 1 and 65535".
   - Commit: `fix(validation): accept proxy port 65535`
   - Red: 65535 rejected ("between 1 and 65534") in both methods; error cases failed on the old message text. Tests call the internal extension methods directly with a proxy that has an address (`ValidateOptionalProxy` skips all checks when the address is empty; unchanged, out of scope).
-- [ ] Task 1.7: Registry-completeness regression test (TDD guard, B12 / FR-12).
+- [x] Task 1.7: Registry-completeness regression test (TDD guard, B12 / FR-12). [99497cf]
   - Red: write `UnitTests/RegistryCompletenessTests.cs`:
     - `EveryRequestType_HasValidator`
     - `EveryRequestType_HasTaskName`
@@ -73,6 +73,7 @@ Tasks:
     Use reflection over `typeof(AnticaptchaClient).Assembly`, generic invocation via `MakeGenericMethod`, and unwrap `TargetInvocationException`. The messages name the type. To show the red state, temporarily remove the WAF name entry and the Prosopo converter, confirm that the failures name those types, then restore them. Record "red verified locally" here and do not commit the red state.
   - Green: already green after 1.2 and 1.3. Optional refactor: make the registry dictionaries `static readonly` (no behavior change).
   - Commit: `test(registry): guard that every request type has validator, task name and converter`
+  - Red verified locally (not committed): removing the `AmazonWafRequest` name, the `ProsopoSolution` converter and (extra) the `AmazonWafProxylessRequest` validator entry made 4 tests fail, naming `AmazonWafRequest`, `ProsopoSolution` + the 4 Prosopo/FriendlyCaptcha requests, and `AmazonWafProxylessRequest`. Restored. Also added `RequestTypeDiscovery_FindsKnownRequestTypes` (≥ 22 types discovered) so the guard cannot pass vacuously. Optional `static readonly` refactor skipped to keep this commit test-only (NFR-4, optional).
 - [ ] Verification: Phase 1 manual checks [checkpoint marker]
   - Run the offline suite (expect 27 + new tests, all green) and `dotnet build` (warnings ≤ 15).
   - Probe: create `AmazonWafProxylessRequest`, `RecaptchaV3Request` (URL+key only), `RecaptchaV3EnterpriseRequest`, and `TurnstileCaptchaRequest` without a proxy. Print each `createTask` body, or the returned validation error for Turnstile. Parse canned Prosopo/WAF `getTaskResult` JSON and print `CreateTimeUtc`.
