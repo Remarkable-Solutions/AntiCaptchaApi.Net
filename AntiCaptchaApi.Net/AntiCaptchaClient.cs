@@ -149,6 +149,11 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
         {
             throw new ArgumentOutOfRangeException(nameof(options), "RequestTimeout must be positive.");
         }
+        if (options.DefaultSolveOptions is null)
+        {
+            throw new ArgumentException("DefaultSolveOptions must not be null.", nameof(options));
+        }
+        options.DefaultSolveOptions.Validate(nameof(options));
         return options;
     }
 

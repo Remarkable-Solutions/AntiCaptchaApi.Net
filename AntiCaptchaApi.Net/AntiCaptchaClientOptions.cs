@@ -13,4 +13,10 @@ public sealed record AntiCaptchaClientOptions
     /// (a transient error). It must be positive. Defaults to 30 seconds.
     /// </summary>
     public TimeSpan RequestTimeout { get; init; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// The solve settings used when a call passes no <see cref="SolveOptions"/>. They are validated by the client
+    /// constructor. Defaults to <c>new SolveOptions()</c>.
+    /// </summary>
+    public SolveOptions DefaultSolveOptions { get; init; } = new();
 }

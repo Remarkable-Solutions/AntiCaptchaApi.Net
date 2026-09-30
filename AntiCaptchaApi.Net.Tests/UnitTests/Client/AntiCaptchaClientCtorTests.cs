@@ -103,6 +103,8 @@ public class AntiCaptchaClientCtorTests
         new AntiCaptchaClientOptions { RequestTimeout = TimeSpan.FromSeconds(-1) },
         new AntiCaptchaClientOptions { BaseAddress = new Uri("/relative", UriKind.Relative) },
         new AntiCaptchaClientOptions { BaseAddress = null! },
+        new AntiCaptchaClientOptions { DefaultSolveOptions = null! },
+        new AntiCaptchaClientOptions { DefaultSolveOptions = new SolveOptions { MaxAttempts = 0 } },
     };
 
     [Theory]
@@ -132,6 +134,7 @@ public class AntiCaptchaClientCtorTests
 
         Assert.Equal(new Uri("https://api.anti-captcha.com/"), options.BaseAddress);
         Assert.Equal(TimeSpan.FromSeconds(30), options.RequestTimeout);
+        Assert.Equal(new SolveOptions(), options.DefaultSolveOptions);
     }
 
     [Fact]
