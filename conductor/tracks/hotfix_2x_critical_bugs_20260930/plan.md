@@ -104,7 +104,7 @@ Tasks:
   - Green: new `Internal/Helpers/PayloadRedactor.cs` (internal static). `HttpHelper.cs`: compute `var redacted = PayloadRedactor.Redact(payload)` once and assign it at all 5 `RawPayload` sites (lines 75, 87, 96, 106, 115).
   - Commit: `fix(security): redact clientKey and proxyPassword from RawPayload`
   - Red: redactor tests failed against a pass-through stub; client tests found `"test-key"` in `RawPayload` on every path. Added the `UnexpectedError` path too (spec FR-7 lists it); cancellation is simulated by a handler-thrown `TaskCanceledException`. Redacted output keeps the previous (indented) `JObject.ToString()` formatting; `null` payload stays `null`.
-- [ ] Task 2.3: Keep polling on transient errors (TDD, B8 / FR-8).
+- [x] Task 2.3: Keep polling on transient errors (TDD, B8 / FR-8). [359316b]
   - Red: `UnitTests/WaitForTaskResultTests.cs`, with `ClientConfig { DelayTimeBetweenCheckingTaskResultMs = 1 }`:
     - `Wait_TransientErrorThenReady_ReturnsSolution` (`[throw, processing, throw, ready]`)
     - `Wait_ThreeConsecutiveTransientErrors_ReturnsLastErrorAfterThreePolls`
@@ -115,6 +115,7 @@ Tasks:
     - `Wait_MaxWaitExceeded_ReturnsTimeout` (always processing, small `MaxWaitForTaskResultTimeMs`)
   - Green: new `Internal/Common/TransportErrorCodes.cs` (`HttpError`, `JsonError`, `UnexpectedError`, `Cancelled`), used by `HttpHelper`. In `AnticaptchaClient.WaitForTaskResultAsync` (lines 279-306), a `consecutiveTransientErrors` counter with an internal const limit of 3. A transient error with `!cancellationToken.IsCancellationRequested` → `continue`; any valid status resets the counter.
   - Commit: `fix(polling): keep polling a paid task through transient HTTP errors`
+  - Red: 5 tests failed (Status null after the first failed poll; the 3-consecutive test stopped after 1 call). `Wait_ApiError_ReturnsImmediately`, `Wait_CallerCancelled_StopsPolling` and `Wait_MaxWaitExceeded_ReturnsTimeout` were already green (regression guards). Extra test: `Wait_InvalidJsonThenReady_ReturnsSolution` (JsonError is transient). The limit is `AnticaptchaClient.MaxConsecutiveTransientPollErrors` (internal const 3); the transient check lives in `TransportErrorCodes.IsTransient`.
 - [ ] Task 2.4: Do not retry local validation failures (TDD, B9 / FR-9).
   - Red: `UnitTests/SolveCaptchaAsyncTests.cs`:
     - `Solve_InvalidRequest_DoesNotRetryAndSendsNoHttp` (`SolveAsyncRetries = 3`; handler `RequestCount == 0`; `ErrorCode == "BadRequest"`)
