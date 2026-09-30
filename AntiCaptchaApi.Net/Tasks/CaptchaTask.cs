@@ -28,4 +28,10 @@ public abstract record CaptchaTask
 
     /// <summary>How long to wait after <c>createTask</c> before the first <c>getTaskResult</c> poll.</summary>
     internal abstract TimeSpan ResolvedFirstPollDelay { get; }
+
+    /// <summary>
+    /// Whether the flattened proxy includes <c>proxyType</c>. Only <c>AntiGateTask</c> omits it: its API documents no
+    /// such field (spec Q-1), and the 2.x request did not send one.
+    /// </summary>
+    internal virtual bool IncludesProxyType => true;
 }

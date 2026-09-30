@@ -15,58 +15,49 @@ namespace AntiCaptchaApi.Net.Tests.UnitTests.Tasks;
 /// </summary>
 public class LegacyParityTests
 {
-    public enum ParityStatus
-    {
-        Mapped,
-
-        // The 3.0 task type does not exist yet. Parity is skipped until its catalog task (2.6–2.12) switches the entry
-        // to Mapped. Task 2.12 removes this status, so that from then on every legacy file must be mapped.
-        Pending,
-    }
-
     /// <summary>Every legacy wire file → the 3.0 snapshot (<c>&lt;Type&gt;.&lt;case&gt;</c>) that must contain its keys.</summary>
-    public static IReadOnlyList<(string LegacyFile, string Target, ParityStatus Status)> Map { get; } = new[]
+    public static IReadOnlyList<(string LegacyFile, string Target)> Map { get; } = new[]
     {
-        ("AmazonWafProxylessRequest.full", "AmazonWafTask.full", ParityStatus.Mapped),
-        ("AmazonWafProxylessRequest.minimal", "AmazonWafTask.minimal", ParityStatus.Mapped),
-        ("AmazonWafRequest.proxy", "AmazonWafTask.proxy", ParityStatus.Mapped),
-        ("AntiGateRequest.full", "AntiGateTask.full", ParityStatus.Pending),
-        ("AntiGateRequest.minimal", "AntiGateTask.minimal", ParityStatus.Pending),
-        ("AntiGateRequest.proxy", "AntiGateTask.proxy", ParityStatus.Pending),
-        ("FriendlyCaptchaProxylessRequest.full", "FriendlyCaptchaTask.full", ParityStatus.Mapped),
-        ("FriendlyCaptchaProxylessRequest.minimal", "FriendlyCaptchaTask.minimal", ParityStatus.Mapped),
-        ("FriendlyCaptchaRequest.proxy", "FriendlyCaptchaTask.proxy", ParityStatus.Mapped),
-        ("FunCaptchaProxylessRequest.full", "FunCaptchaTask.full", ParityStatus.Mapped),
-        ("FunCaptchaProxylessRequest.minimal", "FunCaptchaTask.minimal", ParityStatus.Mapped),
-        ("FunCaptchaRequest.proxy", "FunCaptchaTask.proxy", ParityStatus.Mapped),
-        ("GeeTestV3ProxylessRequest.full", "GeeTestV3Task.full", ParityStatus.Mapped),
-        ("GeeTestV3ProxylessRequest.minimal", "GeeTestV3Task.minimal", ParityStatus.Mapped),
-        ("GeeTestV3Request.proxy", "GeeTestV3Task.proxy", ParityStatus.Mapped),
-        ("GeeTestV4ProxylessRequest.full", "GeeTestV4Task.full", ParityStatus.Mapped),
-        ("GeeTestV4ProxylessRequest.minimal", "GeeTestV4Task.minimal", ParityStatus.Mapped),
-        ("GeeTestV4Request.proxy", "GeeTestV4Task.proxy", ParityStatus.Mapped),
-        ("ImageToCoordinatesRequest.full", "ImageToCoordinatesTask.full", ParityStatus.Mapped),
-        ("ImageToCoordinatesRequest.minimal", "ImageToCoordinatesTask.minimal", ParityStatus.Mapped),
-        ("ImageToTextRequest.full", "ImageToTextTask.full", ParityStatus.Mapped),
-        ("ImageToTextRequest.minimal", "ImageToTextTask.minimal", ParityStatus.Mapped),
-        ("ProsopoProxylessRequest.full", "ProsopoTask.full", ParityStatus.Mapped),
-        ("ProsopoProxylessRequest.minimal", "ProsopoTask.minimal", ParityStatus.Mapped),
-        ("ProsopoRequest.proxy", "ProsopoTask.proxy", ParityStatus.Mapped),
-        ("RecaptchaV2EnterpriseProxylessRequest.full", "RecaptchaV2EnterpriseTask.full", ParityStatus.Mapped),
-        ("RecaptchaV2EnterpriseProxylessRequest.minimal", "RecaptchaV2EnterpriseTask.minimal", ParityStatus.Mapped),
-        ("RecaptchaV2EnterpriseRequest.proxy", "RecaptchaV2EnterpriseTask.proxy", ParityStatus.Mapped),
-        ("RecaptchaV2ProxylessRequest.full", "RecaptchaV2Task.full", ParityStatus.Mapped),
-        ("RecaptchaV2ProxylessRequest.minimal", "RecaptchaV2Task.minimal", ParityStatus.Mapped),
-        ("RecaptchaV2Request.proxy", "RecaptchaV2Task.proxy", ParityStatus.Mapped),
+        ("AmazonWafProxylessRequest.full", "AmazonWafTask.full"),
+        ("AmazonWafProxylessRequest.minimal", "AmazonWafTask.minimal"),
+        ("AmazonWafRequest.proxy", "AmazonWafTask.proxy"),
+        ("AntiGateRequest.full", "AntiGateTask.full"),
+        ("AntiGateRequest.minimal", "AntiGateTask.minimal"),
+        ("AntiGateRequest.proxy", "AntiGateTask.proxy"),
+        ("FriendlyCaptchaProxylessRequest.full", "FriendlyCaptchaTask.full"),
+        ("FriendlyCaptchaProxylessRequest.minimal", "FriendlyCaptchaTask.minimal"),
+        ("FriendlyCaptchaRequest.proxy", "FriendlyCaptchaTask.proxy"),
+        ("FunCaptchaProxylessRequest.full", "FunCaptchaTask.full"),
+        ("FunCaptchaProxylessRequest.minimal", "FunCaptchaTask.minimal"),
+        ("FunCaptchaRequest.proxy", "FunCaptchaTask.proxy"),
+        ("GeeTestV3ProxylessRequest.full", "GeeTestV3Task.full"),
+        ("GeeTestV3ProxylessRequest.minimal", "GeeTestV3Task.minimal"),
+        ("GeeTestV3Request.proxy", "GeeTestV3Task.proxy"),
+        ("GeeTestV4ProxylessRequest.full", "GeeTestV4Task.full"),
+        ("GeeTestV4ProxylessRequest.minimal", "GeeTestV4Task.minimal"),
+        ("GeeTestV4Request.proxy", "GeeTestV4Task.proxy"),
+        ("ImageToCoordinatesRequest.full", "ImageToCoordinatesTask.full"),
+        ("ImageToCoordinatesRequest.minimal", "ImageToCoordinatesTask.minimal"),
+        ("ImageToTextRequest.full", "ImageToTextTask.full"),
+        ("ImageToTextRequest.minimal", "ImageToTextTask.minimal"),
+        ("ProsopoProxylessRequest.full", "ProsopoTask.full"),
+        ("ProsopoProxylessRequest.minimal", "ProsopoTask.minimal"),
+        ("ProsopoRequest.proxy", "ProsopoTask.proxy"),
+        ("RecaptchaV2EnterpriseProxylessRequest.full", "RecaptchaV2EnterpriseTask.full"),
+        ("RecaptchaV2EnterpriseProxylessRequest.minimal", "RecaptchaV2EnterpriseTask.minimal"),
+        ("RecaptchaV2EnterpriseRequest.proxy", "RecaptchaV2EnterpriseTask.proxy"),
+        ("RecaptchaV2ProxylessRequest.full", "RecaptchaV2Task.full"),
+        ("RecaptchaV2ProxylessRequest.minimal", "RecaptchaV2Task.minimal"),
+        ("RecaptchaV2Request.proxy", "RecaptchaV2Task.proxy"),
         // 2.x RecaptchaV3EnterpriseRequest is RecaptchaV3Task { IsEnterprise = true }. Its minimal file (isEnterprise
         // true, minScore 0.3) maps to the extra "enterprise" sample; both 2.x full files equal RecaptchaV3Task.full.
-        ("RecaptchaV3EnterpriseRequest.full", "RecaptchaV3Task.full", ParityStatus.Mapped),
-        ("RecaptchaV3EnterpriseRequest.minimal", "RecaptchaV3Task.enterprise", ParityStatus.Mapped),
-        ("RecaptchaV3Request.full", "RecaptchaV3Task.full", ParityStatus.Mapped),
-        ("RecaptchaV3Request.minimal", "RecaptchaV3Task.minimal", ParityStatus.Mapped),
-        ("TurnstileCaptchaProxylessRequest.full", "TurnstileTask.full", ParityStatus.Mapped),
-        ("TurnstileCaptchaProxylessRequest.minimal", "TurnstileTask.minimal", ParityStatus.Mapped),
-        ("TurnstileCaptchaRequest.proxy", "TurnstileTask.proxy", ParityStatus.Mapped),
+        ("RecaptchaV3EnterpriseRequest.full", "RecaptchaV3Task.full"),
+        ("RecaptchaV3EnterpriseRequest.minimal", "RecaptchaV3Task.enterprise"),
+        ("RecaptchaV3Request.full", "RecaptchaV3Task.full"),
+        ("RecaptchaV3Request.minimal", "RecaptchaV3Task.minimal"),
+        ("TurnstileCaptchaProxylessRequest.full", "TurnstileTask.full"),
+        ("TurnstileCaptchaProxylessRequest.minimal", "TurnstileTask.minimal"),
+        ("TurnstileCaptchaRequest.proxy", "TurnstileTask.proxy"),
     };
 
     /// <summary>
@@ -84,7 +75,7 @@ public class LegacyParityTests
         get
         {
             var data = new TheoryData<string>();
-            foreach (var entry in Map.Where(e => e.Status == ParityStatus.Mapped))
+            foreach (var entry in Map)
             {
                 data.Add(entry.LegacyFile);
             }
@@ -131,20 +122,20 @@ public class LegacyParityTests
 
         Assert.Equal(38, onDisk.Count);
         Assert.Equal(onDisk, listed);
-        var unknownTargets = Map.Where(e => e.Status == ParityStatus.Mapped && !File.Exists(SnapshotFile("Tasks", e.Target)))
+        var unknownTargets = Map.Where(e => !File.Exists(SnapshotFile("Tasks", e.Target)))
             .Select(e => $"{e.LegacyFile} → {e.Target}");
         Assert.Empty(unknownTargets);
     }
 
+    // Every 3.0 task type replaces at least one 2.x request type (spec §8), so each must be the target of a legacy file.
     [Fact]
-    public void LegacyParity_PendingEntries_HaveNoImplementedTaskType()
+    public void LegacyParity_EveryConcreteTaskType_IsTargeted()
     {
-        var implemented = TaskSnapshotTests.ConcreteTaskTypes.Select(t => t.Name).ToHashSet();
+        var targeted = Map.Select(e => TypeOf(e.Target)).ToHashSet();
 
-        var stale = Map.Where(e => e.Status == ParityStatus.Pending && implemented.Contains(TypeOf(e.Target)))
-            .Select(e => $"{e.LegacyFile} → {e.Target}");
+        var untargeted = TaskSnapshotTests.ConcreteTaskTypes.Select(t => t.Name).Where(name => !targeted.Contains(name));
 
-        Assert.True(!stale.Any(), "Switch these entries to Mapped: " + string.Join(", ", stale));
+        Assert.Empty(untargeted);
     }
 
     [Fact]
@@ -153,10 +144,6 @@ public class LegacyParityTests
         var unused = DocumentedDeviations.Where(d =>
         {
             var entry = Map.Single(e => e.LegacyFile == d.LegacyFile);
-            if (entry.Status != ParityStatus.Mapped)
-            {
-                return false;
-            }
             var legacy = Load("Legacy2x", d.LegacyFile);
             var current = Load("Tasks", entry.Target);
             return !legacy.ContainsKey(d.Key)

@@ -44,6 +44,8 @@ public class TaskSnapshotTests
     {
         Assert.Contains(typeof(TurnstileTask), ConcreteTaskTypes);
         Assert.DoesNotContain(typeof(OptionalTestTask), ConcreteTaskTypes);
+        Assert.Equal(13, ConcreteTaskTypes.Count()); // the spec FR-3 catalog
+
     }
 
     [Fact]

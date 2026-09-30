@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Nodes;
 using AntiCaptchaApi.Net.Tasks;
 
 namespace AntiCaptchaApi.Net.Tests.UnitTests.Tasks;
@@ -132,6 +133,11 @@ internal static class TaskSamples
 
         var friendlyCaptchaFull = new FriendlyCaptchaTask(WebsiteUrl, WebsiteKey) { UserAgent = UserAgent };
         Add(samples, new FriendlyCaptchaTask(WebsiteUrl, WebsiteKey), friendlyCaptchaFull, friendlyCaptchaFull with { Proxy = Proxy });
+
+        var antiGateMinimal = new AntiGateTask(WebsiteUrl, "Sign-in and wait for control text",
+            new JsonObject { ["login_input_css"] = "#login", ["login_input_value"] = "user" });
+        var antiGateFull = antiGateMinimal with { DomainsOfInterest = new[] { "example.com", "auth.example.com" } };
+        Add(samples, antiGateMinimal, antiGateFull, antiGateFull with { Proxy = Proxy });
 
         return samples;
     }

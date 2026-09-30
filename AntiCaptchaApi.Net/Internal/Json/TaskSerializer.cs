@@ -29,14 +29,17 @@ internal static class TaskSerializer
 
         if (task.Proxy is { } proxy)
         {
-            AddProxy(result, proxy);
+            AddProxy(result, proxy, task.IncludesProxyType);
         }
         return result;
     }
 
-    private static void AddProxy(JsonObject target, Proxy proxy)
+    private static void AddProxy(JsonObject target, Proxy proxy, bool includeType)
     {
-        target["proxyType"] = JsonSerializer.SerializeToNode(proxy.Type, AntiCaptchaJsonContext.Default.ProxyType);
+        if (includeType)
+        {
+            target["proxyType"] = JsonSerializer.SerializeToNode(proxy.Type, AntiCaptchaJsonContext.Default.ProxyType);
+        }
         target["proxyAddress"] = proxy.Address;
         target["proxyPort"] = proxy.Port;
         if (proxy.Login is not null)
