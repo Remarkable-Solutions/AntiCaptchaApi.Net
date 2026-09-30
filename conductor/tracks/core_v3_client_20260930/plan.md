@@ -133,7 +133,8 @@ Tasks:
     - `Errors_AreReadOnly`
   - Commit: `feat(validation): add fluent Validator and AntiCaptchaValidationException`
 
-- [~] Task 2.3: `CaptchaTask`, `CaptchaTask<TSolution>`, `ProxyMode`, `Solution` (TDD)
+- [x] Task 2.3: `CaptchaTask`, `CaptchaTask<TSolution>`, `ProxyMode`, `Solution` (TDD) 4a77310
+  - Done 2026-09-30: the test-only records and their `TestSolution` live in `UnitTests/Tasks/TestTasks.cs`. `RunValidation()` throws `AntiCaptchaValidationException`. Proxy error fields are `Proxy`, `Proxy.Address`, `Proxy.Port` and `Proxy.Type`. On a `None` type with a proxy only `Proxy: not supported by <Type>` is reported for the proxy (its fields are not checked). `Solution` also has a `private protected` ctor. 3 extra tests: `Validate_ValidTask_DoesNotThrow`, `Validate_ErrorMessage_DoesNotContainProxyPassword`, `ToString_WithProxy_RedactsPassword`.
   - Files:
     - `Tasks/CaptchaTask.cs`: `private protected` ctor; `Proxy`; internal abstract `ResolveTypeName()`, `RunValidation()`, `ResolvedFirstPollDelay`.
     - `Tasks/CaptchaTaskOfT.cs`: the design members, plus mode-based name resolution and proxy validation before the per-type `Validate`.
@@ -154,7 +155,7 @@ Tasks:
     - `FirstPollDelay_Default_Is10Seconds`
   - Commit: `feat(tasks): add CaptchaTask base with ProxyMode type naming and proxy validation`
 
-- [ ] Task 2.4: `TaskSerializer` and the first catalog entry `TurnstileTask` (TDD)
+- [~] Task 2.4: `TaskSerializer` and the first catalog entry `TurnstileTask` (TDD)
   - Files: `Internal/Json/TaskSerializer.cs`, `Tasks/TurnstileTask.cs`, `Tasks/Solutions/TurnstileSolution.cs`, and registration of both in the context.
   - Tests `UnitTests/Tasks/TaskSerializerTests.cs`:
     - `ToJsonObject_WithoutProxy_WritesTypeProxyless_AndNoProxyFields`
