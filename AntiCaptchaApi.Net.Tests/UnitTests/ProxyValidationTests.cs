@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AntiCaptchaApi.Net.Enums;
 using AntiCaptchaApi.Net.Internal;
+using AntiCaptchaApi.Net.Internal.Extensions;
 using AntiCaptchaApi.Net.Internal.Validation;
 using AntiCaptchaApi.Net.Models;
 using AntiCaptchaApi.Net.Requests;
@@ -108,6 +109,45 @@ public class ProxyValidationTests
 
         var error = Assert.Single(result.Errors);
         Assert.Equal(nameof(ProxyConfig), error.PropertyName);
+    }
+
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(65535, true)]
+    [InlineData(0, false)]
+    [InlineData(65536, false)]
+    [InlineData(null, false)]
+    public void ValidateProxy_Port(int? port, bool expectedValid)
+    {
+        var result = new ValidationResult().ValidateProxy(CreateProxy(port));
+
+        AssertPortValidation(result, expectedValid);
+    }
+
+    [Theory]
+    [InlineData(1, true)]
+    [InlineData(65535, true)]
+    [InlineData(0, false)]
+    [InlineData(65536, false)]
+    [InlineData(null, false)]
+    public void ValidateOptionalProxy_Port(int? port, bool expectedValid)
+    {
+        var result = new ValidationResult().ValidateOptionalProxy(CreateProxy(port));
+
+        AssertPortValidation(result, expectedValid);
+    }
+
+    private static void AssertPortValidation(ValidationResult result, bool expectedValid)
+    {
+        if (expectedValid)
+        {
+            Assert.True(result.IsValid, string.Join("; ", result.Errors));
+            return;
+        }
+
+        var error = Assert.Single(result.Errors);
+        Assert.Equal(nameof(ProxyConfig.ProxyPort), error.PropertyName);
+        Assert.Equal("must have value between 1 and 65535", error.ErrorMessage);
     }
 
     private static ProxyConfig CreateProxy(int? port) => new()
