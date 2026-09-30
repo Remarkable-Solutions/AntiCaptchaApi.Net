@@ -22,6 +22,7 @@ public class ErrorClassifierTests
         { Api(AntiCaptchaErrorCode.IpBlocked), false },
         { Api(AntiCaptchaErrorCode.SolveTimeout), false },
         { Api(AntiCaptchaErrorCode.Unknown), false },
+        { Api(AntiCaptchaErrorCode.AccessDenied), false },
         { Http(400), false },
     };
 
@@ -40,6 +41,7 @@ public class ErrorClassifierTests
         { Api(AntiCaptchaErrorCode.ZeroBalance), false },
         { Api(AntiCaptchaErrorCode.SolveTimeout), false },
         { Api(AntiCaptchaErrorCode.Unknown), false },
+        { Api(AntiCaptchaErrorCode.AccessDenied), false },
     };
 
     [Theory]

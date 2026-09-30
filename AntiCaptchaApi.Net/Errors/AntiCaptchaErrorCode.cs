@@ -2,7 +2,8 @@ namespace AntiCaptchaApi.Net;
 
 /// <summary>
 /// The reason an anti-captcha call failed. API codes carry the documented <c>errorId</c> as their numeric value
-/// (see https://anti-captcha.com/apidoc/errors); client-side codes start at 1000. A code this library does not know
+/// (see https://anti-captcha.com/apidoc/errors); API codes without a documented <c>errorId</c> start at 900, and
+/// client-side codes start at 1000. A code this library does not know
 /// is reported as <see cref="Unknown"/>, and the raw string stays in <see cref="AntiCaptchaError.RawCode"/>.
 /// </summary>
 public enum AntiCaptchaErrorCode
@@ -114,6 +115,14 @@ public enum AntiCaptchaErrorCode
 
     /// <summary><c>ERROR_TASK_CANCELED</c>: The AntiGate task was canceled by the worker.</summary>
     TaskCanceled = 57,
+
+    // API codes that a method page names but the errors reference does not list, so they have no documented errorId.
+    /// <summary>
+    /// <c>ERROR_ACCESS_DENIED</c>: The client key may not access the requested data (for example <c>getAppStats</c> for an
+    /// application the account does not own). Its <c>errorId</c> is not documented; the one the API sent is in
+    /// <see cref="AntiCaptchaError.ErrorId"/>.
+    /// </summary>
+    AccessDenied = 900,
 
     // Client-side codes (no API errorId).
     /// <summary>The HTTP call failed: a network failure (no <see cref="AntiCaptchaError.RawCode"/>) or a non-2xx status (the status number is the raw code). Network failures, 408, 429 and 5xx are transient.</summary>

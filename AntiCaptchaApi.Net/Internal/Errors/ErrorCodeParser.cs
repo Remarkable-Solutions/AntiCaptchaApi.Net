@@ -42,6 +42,7 @@ internal static class ErrorCodeParser
         ["ERROR_ACCOUNT_SUSPENDED"] = AntiCaptchaErrorCode.AccountSuspended,
         ["ERROR_TEMPLATE_NOT_FOUND"] = AntiCaptchaErrorCode.TemplateNotFound,
         ["ERROR_TASK_CANCELED"] = AntiCaptchaErrorCode.TaskCanceled,
+        ["ERROR_ACCESS_DENIED"] = AntiCaptchaErrorCode.AccessDenied,
     };
 
     public static AntiCaptchaErrorCode Parse(string? rawCode) =>

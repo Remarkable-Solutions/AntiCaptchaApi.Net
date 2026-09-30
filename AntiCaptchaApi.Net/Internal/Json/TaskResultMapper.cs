@@ -2,13 +2,14 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using AntiCaptchaApi.Net.Internal.Json.Envelopes;
+using AntiCaptchaApi.Net.Internal.Time;
 using AntiCaptchaApi.Net.Tasks;
 
 namespace AntiCaptchaApi.Net.Internal.Json;
 
 /// <summary>
 /// Turns a <c>getTaskResult</c> payload into a <see cref="TaskStatus{TSolution}"/>. A ready task without a usable solution,
-/// or an unknown status, is an <see cref="AntiCaptchaErrorCode.InvalidResponse"/>.
+/// an out-of-range <c>createTime</c>/<c>endTime</c>, or an unknown status, is an <see cref="AntiCaptchaErrorCode.InvalidResponse"/>.
 /// </summary>
 internal static class TaskResultMapper
 {
@@ -27,8 +28,8 @@ internal static class TaskResultMapper
                     solution,
                     response.Cost,
                     response.Ip,
-                    FromUnixSeconds(response.CreateTime),
-                    FromUnixSeconds(response.EndTime),
+                    FromUnixSeconds(response.CreateTime, taskId, "createTime"),
+                    FromUnixSeconds(response.EndTime, taskId, "endTime"),
                     response.SolveCount);
             default:
                 throw InvalidResponse(taskId, "the response has an unknown task status.");
@@ -55,8 +56,16 @@ internal static class TaskResultMapper
         }
     }
 
-    private static DateTimeOffset? FromUnixSeconds(long? seconds) =>
-        seconds is { } value ? DateTimeOffset.FromUnixTimeSeconds(value) : null;
+    private static DateTimeOffset? FromUnixSeconds(long? seconds, int taskId, string field)
+    {
+        if (seconds is not { } value)
+        {
+            return null;
+        }
+        return UnixTime.TryFromSeconds(value, out var time)
+            ? time
+            : throw InvalidResponse(taskId, $"the response has an invalid {field}.");
+    }
 
     private static AntiCaptchaException InvalidResponse(int taskId, string reason) =>
         new(new AntiCaptchaError(AntiCaptchaErrorCode.InvalidResponse, null, "getTaskResult: " + reason, null), taskId, 0);

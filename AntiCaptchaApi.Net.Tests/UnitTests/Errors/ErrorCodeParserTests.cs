@@ -55,6 +55,23 @@ public class ErrorCodeParserTests
         Assert.Equal(errorId, (int)code);
     }
 
+    // Codes named on a method page but absent from the errors reference, so their errorId is not documented.
+    public static TheoryData<string, AntiCaptchaErrorCode> CodesWithoutDocumentedErrorId => new()
+    {
+        { "ERROR_ACCESS_DENIED", AntiCaptchaErrorCode.AccessDenied }, // https://anti-captcha.com/apidoc/methods/getAppStats
+    };
+
+    [Theory]
+    [MemberData(nameof(CodesWithoutDocumentedErrorId))]
+    public void Parse_CodeWithoutDocumentedErrorId_MapsEnumOutsideDocumentedAndClientRanges(string raw, AntiCaptchaErrorCode expected)
+    {
+        var code = ErrorCodeParser.Parse(raw);
+
+        Assert.Equal(expected, code);
+        Assert.DoesNotContain(DocumentedCodes, row => (int)row[2] == (int)code);
+        Assert.InRange((int)code, 900, 999);
+    }
+
     [Fact]
     public void Parse_UnknownCode_ReturnsUnknownAndKeepsRaw()
     {

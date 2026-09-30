@@ -274,11 +274,11 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
         for (var i = 0; i < days.Length; i++)
         {
             if (data[i] is not { DateFrom: { } from, DateTill: { } till, Volume: { } volume, Money: { } money }
-                || !IsUnixSeconds(from) || !IsUnixSeconds(till))
+                || !UnixTime.TryFromSeconds(from, out var dateFrom) || !UnixTime.TryFromSeconds(till, out var dateTill))
             {
                 throw InvalidResponse(Method, "a data record lacks dateFrom, dateTill, volume or money, or has an invalid time.");
             }
-            days[i] = new DailySpending(DateTimeOffset.FromUnixTimeSeconds(from), DateTimeOffset.FromUnixTimeSeconds(till), volume, money);
+            days[i] = new DailySpending(dateFrom, dateTill, volume, money);
         }
         return new SpendingStats(days);
     }
@@ -324,9 +324,6 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
     // A successful envelope that lacks a required field. The body is not included (it could echo request data).
     private static AntiCaptchaException InvalidResponse(string method, string reason) =>
         new(new AntiCaptchaError(AntiCaptchaErrorCode.InvalidResponse, null, method + ": " + reason, null), taskId: null, attempts: 0);
-
-    // The range DateTimeOffset.FromUnixTimeSeconds accepts (years 0001 to 9999).
-    private static bool IsUnixSeconds(long seconds) => seconds >= -62_135_596_800L && seconds <= 253_402_300_799L;
 
     private SolveOptions ResolveSolveOptions(SolveOptions? o) =>
         o is null ? Options.DefaultSolveOptions : o.Validate(nameof(o));

@@ -100,12 +100,26 @@ public class AppStatsTests
     [Fact]
     public async Task GetAppStats_ApiError_Throws()
     {
+        _context.Handler.RespondJson("getAppStats", ClientTestContext.ApiError(1, "ERROR_KEY_DOES_NOT_EXIST", "Account authorization key not found in the system"));
+
+        var exception = await Assert.ThrowsAsync<AntiCaptchaException>(() => _context.Client.GetAppStatsAsync(UserSoftId));
+
+        Assert.Equal(AntiCaptchaErrorCode.KeyDoesNotExist, exception.Error.Code);
+        Assert.Equal("ERROR_KEY_DOES_NOT_EXIST", exception.Error.RawCode);
+    }
+
+    [Fact]
+    public async Task GetAppStats_AccessDenied_MapsToAccessDenied()
+    {
+        // The getAppStats page names ERROR_ACCESS_DENIED for non-owners but documents no errorId; 20 is an arbitrary id.
         _context.Handler.RespondJson("getAppStats", ClientTestContext.ApiError(20, "ERROR_ACCESS_DENIED", "Access denied"));
 
         var exception = await Assert.ThrowsAsync<AntiCaptchaException>(() => _context.Client.GetAppStatsAsync(UserSoftId));
 
-        // ERROR_ACCESS_DENIED is named on the getAppStats page but not in the errors reference, so it maps to Unknown.
-        Assert.Equal(AntiCaptchaErrorCode.Unknown, exception.Error.Code);
+        Assert.Equal(AntiCaptchaErrorCode.AccessDenied, exception.Error.Code);
         Assert.Equal("ERROR_ACCESS_DENIED", exception.Error.RawCode);
+        Assert.Equal(20, exception.Error.ErrorId);
+        Assert.False(exception.Error.IsRetryable);
+        Assert.False(exception.Error.IsTransient);
     }
 }

@@ -109,6 +109,29 @@ public class GetTaskResultTests
         Assert.Equal(TaskId, exception.TaskId);
     }
 
+    // Just outside the range DateTimeOffset accepts (years 0001 to 9999), and the long extremes.
+    [Theory]
+    [InlineData("createTime", 253_402_300_800L)]
+    [InlineData("createTime", long.MaxValue)]
+    [InlineData("createTime", -62_135_596_801L)]
+    [InlineData("createTime", long.MinValue)]
+    [InlineData("endTime", 253_402_300_800L)]
+    [InlineData("endTime", long.MaxValue)]
+    [InlineData("endTime", -62_135_596_801L)]
+    [InlineData("endTime", long.MinValue)]
+    public async Task GetTaskResult_OutOfRangeUnixTime_ThrowsInvalidResponse(string field, long seconds)
+    {
+        var createTime = field == "createTime" ? seconds : 1472205564;
+        var endTime = field == "endTime" ? seconds : 1472205570;
+        _context.Handler.RespondJson("getTaskResult",
+            $"{{\"errorId\":0,\"status\":\"ready\",\"solution\":{{\"token\":\"T\"}},\"createTime\":{createTime},\"endTime\":{endTime}}}");
+
+        var exception = await Assert.ThrowsAsync<AntiCaptchaException>(() => _context.Client.GetTaskResultAsync<TurnstileSolution>(TaskId));
+
+        Assert.Equal(AntiCaptchaErrorCode.InvalidResponse, exception.Error.Code);
+        Assert.Equal(TaskId, exception.TaskId);
+    }
+
     [Fact]
     public void EverySolutionType_HasReadyFixture()
     {

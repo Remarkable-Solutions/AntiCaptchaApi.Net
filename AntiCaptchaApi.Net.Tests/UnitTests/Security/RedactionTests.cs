@@ -205,4 +205,51 @@ public class RedactionTests
         AssertNoSecrets(result.ToString(), "SolveResult.ToString()");
         AssertNoSecrets(result.Error!.Description, "SolveResult.Error.Description");
     }
+
+    private const string KeyEcho = "invalid clientKey " + Key;
+
+    // Account and task-management methods: the API method each one calls, and how to call it.
+    private static readonly IReadOnlyDictionary<string, (string Endpoint, Func<AntiCaptchaClient, Task> Call)> AccountMethods =
+        new Dictionary<string, (string, Func<AntiCaptchaClient, Task>)>
+        {
+            ["GetBalance"] = ("getBalance", c => c.GetBalanceAsync()),
+            ["GetQueueStats"] = ("getQueueStats", c => c.GetQueueStatsAsync(QueueType.ImageToTextEng)),
+            ["Report"] = ("reportIncorrectImageCaptcha", c => c.ReportAsync(7, Report.IncorrectImageCaptcha)),
+            ["PushAntiGateVariable"] = ("pushAntiGateVariable", c => c.PushAntiGateVariableAsync(7, "code", "value")),
+            ["GetSpendingStats"] = ("getSpendingStats", c => c.GetSpendingStatsAsync()),
+            ["GetAppStats"] = ("getAppStats", c => c.GetAppStatsAsync(123)),
+        };
+
+    public static TheoryData<string, string> AccountMethodFailures()
+    {
+        var data = new TheoryData<string, string>();
+        foreach (var method in AccountMethods.Keys)
+        {
+            foreach (var failure in new[] { "api-error-echo", "network-failure-echo", "invalid-json-echo" })
+            {
+                data.Add(method, failure);
+            }
+        }
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(AccountMethodFailures))]
+    public async Task AccountMethods_ErrorPaths_ContainNoSecrets(string method, string failure)
+    {
+        var context = new ClientTestContext(Key);
+        var (endpoint, call) = AccountMethods[method];
+        _ = failure switch
+        {
+            "api-error-echo" => context.Handler.RespondJson(endpoint, ClientTestContext.ApiError(1, "ERROR_KEY_DOES_NOT_EXIST", KeyEcho)),
+            "network-failure-echo" => context.Handler.Throw(endpoint, new HttpRequestException(KeyEcho, new InvalidOperationException(KeyEcho))),
+            "invalid-json-echo" => context.Handler.RespondJson(endpoint, "<html>" + KeyEcho + "</html>"),
+            _ => throw new ArgumentOutOfRangeException(nameof(failure)),
+        };
+
+        var exception = await Assert.ThrowsAsync<AntiCaptchaException>(() => call(context.Client));
+
+        Assert.Single(context.Handler.RequestsFor(endpoint));
+        AssertExceptionHasNoSecrets(exception);
+    }
 }
