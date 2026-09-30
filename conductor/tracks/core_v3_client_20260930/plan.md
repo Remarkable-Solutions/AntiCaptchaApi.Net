@@ -509,7 +509,7 @@ Tasks:
     - `QueueType_Values_MatchLegacyNumbers` (asserts that the 2.x numeric ids from `public-api.txt` and the enum values are equal, honouring the `RecaptchaB2*` → `RecaptchaV2*` renames)
   - Commit: `feat(client): add GetQueueStatsAsync`
 
-- [ ] Task 5.3: `ReportAsync` and `Report` (TDD)
+- [x] Task 5.3: `ReportAsync` and `Report` (TDD) [2903674]
   - Tests `UnitTests/Client/ReportTests.cs`:
     - `Report_MapsToEndpoint` (Theory: IncorrectImageCaptcha → `reportIncorrectImageCaptcha`, IncorrectRecaptcha → `reportIncorrectRecaptcha`, CorrectRecaptcha → `reportCorrectRecaptcha`)
     - `Report_SendsClientKeyAndTaskId`
