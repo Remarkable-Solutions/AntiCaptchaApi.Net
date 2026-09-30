@@ -105,7 +105,9 @@ internal sealed class ApiTransport
         }
         if (envelope.ErrorId != 0)
         {
-            throw Failure(ErrorCodeParser.FromApi(envelope.ErrorId, envelope.ErrorCode, redactor.Redact(envelope.ErrorDescription)));
+            // The code is mapped from the original string; an unknown raw code is kept, so it is redacted like the description.
+            var error = ErrorCodeParser.FromApi(envelope.ErrorId, envelope.ErrorCode, envelope.ErrorDescription);
+            throw Failure(error with { RawCode = redactor.Redact(error.RawCode), Description = redactor.Redact(error.Description) });
         }
         return response ?? throw InvalidResponse(method);
     }
