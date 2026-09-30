@@ -88,7 +88,7 @@ Tasks:
     - `AntiCaptchaJsonContextTests.Serialize_CreateTaskRequest_AlwaysContainsSoftId1023`: `CreateTaskRequest` gets `SoftId` from `SoftId.Value` and cannot be set by callers.
   - Commit: `feat(json): add source-generated JSON context and API envelopes`
 
-- [~] Task 1.6: Console probe (no red phase — tooling)
+- [x] Task 1.6: Console probe (no red phase — tooling) 9eb1698
   - Create `tools/AntiCaptchaApi.Net.Probe/AntiCaptchaApi.Net.Probe.csproj` (net10.0, `IsPackable=false`) and add it to `AntiCaptchaApi.Net.sln`.
   - `Program.cs` with the command `info`: prints the core assembly version, TFM and referenced assemblies. Later phases add commands. Live commands read `ClientKey` from the environment and exist only for the user to run.
   - Commit: `chore(probe): add console probe for manual verification`
