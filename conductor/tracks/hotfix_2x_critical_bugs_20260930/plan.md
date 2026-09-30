@@ -116,12 +116,13 @@ Tasks:
   - Green: new `Internal/Common/TransportErrorCodes.cs` (`HttpError`, `JsonError`, `UnexpectedError`, `Cancelled`), used by `HttpHelper`. In `AnticaptchaClient.WaitForTaskResultAsync` (lines 279-306), a `consecutiveTransientErrors` counter with an internal const limit of 3. A transient error with `!cancellationToken.IsCancellationRequested` → `continue`; any valid status resets the counter.
   - Commit: `fix(polling): keep polling a paid task through transient HTTP errors`
   - Red: 5 tests failed (Status null after the first failed poll; the 3-consecutive test stopped after 1 call). `Wait_ApiError_ReturnsImmediately`, `Wait_CallerCancelled_StopsPolling` and `Wait_MaxWaitExceeded_ReturnsTimeout` were already green (regression guards). Extra test: `Wait_InvalidJsonThenReady_ReturnsSolution` (JsonError is transient). The limit is `AnticaptchaClient.MaxConsecutiveTransientPollErrors` (internal const 3); the transient check lives in `TransportErrorCodes.IsTransient`.
-- [ ] Task 2.4: Do not retry local validation failures (TDD, B9 / FR-9).
+- [x] Task 2.4: Do not retry local validation failures (TDD, B9 / FR-9). [fc3d027]
   - Red: `UnitTests/SolveCaptchaAsyncTests.cs`:
     - `Solve_InvalidRequest_DoesNotRetryAndSendsNoHttp` (`SolveAsyncRetries = 3`; handler `RequestCount == 0`; `ErrorCode == "BadRequest"`)
     - `Solve_TaskErrorStatus_RetriesUpToConfiguredCount` (current behavior kept)
   - Green: in `AnticaptchaClient.SolveCaptchaAsync` (lines 162-174), `break` when `createTaskResponse.ErrorCode == HttpStatusCode.BadRequest.ToString()`, before the next iteration. The existing error-copy tail stays.
   - Commit: `fix(solve): stop retrying requests that fail local validation`
+  - Deviation: with `SolveAsyncRetries = 3`, the retry of a local failure is not observable through the public API (0 HTTP requests and `BadRequest` before and after the fix), so `Solve_InvalidRequest_DoesNotRetryAndSendsNoHttp` was already green. Added `Solve_InvalidRequestWithHugeRetryCount_ReturnsWithoutRetrying` (`SolveAsyncRetries = int.MaxValue`, must return within 2 s) as the deterministic red: it timed out before the fix and takes a few ms after. `Solve_TaskErrorStatus_RetriesUpToConfiguredCount` (3 createTask + 3 getTaskResult) was green before and after.
 - [ ] Task 2.5: DI uses a named client with `MaxHttpRequestTimeMs` (TDD, B10 / FR-10).
   - Red: `UnitTests/ServiceCollectionExtensionsTests.cs`:
     - `AddAnticaptcha_ConfiguresNamedClientTimeout` (12345 ms)
