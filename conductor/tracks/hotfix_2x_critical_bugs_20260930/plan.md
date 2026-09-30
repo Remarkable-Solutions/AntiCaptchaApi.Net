@@ -50,13 +50,14 @@ Tasks:
   - Verify that the existing V3 serialization tests stay green (no `isEnterprise` key when null).
   - Commit: `fix(recaptcha-v3): treat null IsEnterprise as false and accept MinScore 0.9`
   - Red: default V3 and V3 Enterprise failed with "IsEnterprise must not be null!"; 0.9 rejected ("Correct values: 0.3,0.5,0.7"). `Validate_MinScore_Rejected` also asserts the error is on `MinScore` and lists all 4 accepted values. `RecaptchaV3RequestSerializationTest_OnlyRequiredArguments` (no `isEnterprise` key) stays green.
-- [ ] Task 1.5: Validate the Turnstile proxy with the proxy validator, without newly requiring a UA (TDD, B3 / FR-3).
+- [x] Task 1.5: Validate the Turnstile proxy with the proxy validator, without newly requiring a UA (TDD, B3 / FR-3). [6f7d560]
   - Red: `UnitTests/ProxyValidationTests.cs`:
     - `Validate_TurnstileRequestWithoutProxy_ReturnsProxyConfigError`
     - `Validate_TurnstileRequestWithProxyNoUserAgent_IsValid`
     - Table-driven `[Theory]` over the proxy-required types (`RecaptchaV2Request`, `RecaptchaV2EnterpriseRequest`, `GeeTestV3Request`, `GeeTestV4Request`, `TurnstileCaptchaRequest`, `ProsopoRequest`, `FriendlyCaptchaRequest`). With all other required fields set and `ProxyConfig = null`, assert an error on `ProxyConfig`.
   - Green: `CreateCaptchaRequestHelper.cs:34` → `new TurnstileRequestValidator().Validate(request as TurnstileCaptchaRequest)`. Change `TurnstileRequestValidator` to take a `TurnstileCaptchaRequest` overload, or keep the override with a safe `as` cast. It validates base + `ValidateProxy` only; the UA requirement at line 14 is removed. Fix the `TurnstileCaptchaRequest.UserAgent` XML doc to say "[Optional]".
   - Commit: `fix(turnstile): validate proxy for TurnstileTask and keep UserAgent optional`
+  - Red: Turnstile without proxy / with `ProxyPort = 0` → no errors; the theory failed only for `TurnstileCaptchaRequest`. Kept the existing override with a safe `as` cast. Added `Validate_TurnstileRequestWithProxyPortZero_ReturnsProxyPortError` (FR-3 acceptance). The theory is `Validate_ProxyRequiredRequestWithoutProxy_ReturnsProxyConfigError(string requestType)`.
 - [ ] Task 1.6: Accept proxy port 65535 (TDD, B6 / FR-6).
   - Red: in `UnitTests/ProxyValidationTests.cs`, add `[Theory] ValidateProxy_Port(1 ok, 65535 ok, 0 err, 65536 err, null err)`, and the same for `ValidateOptionalProxy`.
   - Green: `Internal/Extensions/ValidationResultExtensions.cs:65,89`: `>= 65535` → `> 65535`, and the message becomes "between 1 and 65535".
