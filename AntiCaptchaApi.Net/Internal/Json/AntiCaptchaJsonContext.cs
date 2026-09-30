@@ -25,6 +25,7 @@ namespace AntiCaptchaApi.Net.Internal.Json;
 [JsonSerializable(typeof(ImageToCoordinatesSolution))]
 [JsonSerializable(typeof(RecaptchaV2Task))]
 [JsonSerializable(typeof(RecaptchaV2EnterpriseTask))]
+[JsonSerializable(typeof(RecaptchaV3Task))]
 [JsonSerializable(typeof(RecaptchaSolution))]
 internal sealed partial class AntiCaptchaJsonContext : JsonSerializerContext
 {

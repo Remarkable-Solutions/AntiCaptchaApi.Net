@@ -16,6 +16,9 @@ internal static class TaskSamples
     public const string Full = "full";
     public const string ProxyCase = "proxy";
 
+    // Extra case of RecaptchaV3Task: the 2.x RecaptchaV3EnterpriseRequest minimal file (isEnterprise true, default score).
+    public const string EnterpriseCase = "enterprise";
+
     public const string WebsiteUrl = "https://example.com/login";
     public const string WebsiteKey = "SITE_KEY";
     public const string UserAgent = "Mozilla/5.0 (probe)";
@@ -80,8 +83,21 @@ internal static class TaskSamples
         Add(samples, new RecaptchaV2EnterpriseTask(WebsiteUrl, WebsiteKey), recaptchaV2EnterpriseFull,
             recaptchaV2EnterpriseFull with { Proxy = Proxy });
 
+        var recaptchaV3 = new RecaptchaV3Task(WebsiteUrl, WebsiteKey);
+        Add(samples, recaptchaV3, new RecaptchaV3Task(WebsiteUrl, WebsiteKey)
+        {
+            MinScore = MinScore.Score07,
+            PageAction = "login",
+            IsEnterprise = true,
+            ApiDomain = "www.recaptcha.net",
+        });
+        AddCase(samples, EnterpriseCase, recaptchaV3 with { IsEnterprise = true });
+
         return samples;
     }
+
+    private static void AddCase(Dictionary<Type, IReadOnlyList<(string Case, CaptchaTask Task)>> samples, string caseName, CaptchaTask task) =>
+        samples[task.GetType()] = samples[task.GetType()].Append((caseName, task)).ToList();
 
     private static void Add<TTask>(Dictionary<Type, IReadOnlyList<(string Case, CaptchaTask Task)>> samples, TTask minimal, TTask full, TTask? proxy = null)
         where TTask : CaptchaTask

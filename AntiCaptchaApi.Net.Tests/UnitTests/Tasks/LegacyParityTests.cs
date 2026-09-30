@@ -58,12 +58,12 @@ public class LegacyParityTests
         ("RecaptchaV2ProxylessRequest.full", "RecaptchaV2Task.full", ParityStatus.Mapped),
         ("RecaptchaV2ProxylessRequest.minimal", "RecaptchaV2Task.minimal", ParityStatus.Mapped),
         ("RecaptchaV2Request.proxy", "RecaptchaV2Task.proxy", ParityStatus.Mapped),
-        // 2.x RecaptchaV3EnterpriseRequest is RecaptchaV3Task { IsEnterprise = true }. Its minimal case (isEnterprise
-        // true, minScore 0.3) needs its own sample; Task 2.8 decides the final target.
-        ("RecaptchaV3EnterpriseRequest.full", "RecaptchaV3Task.full", ParityStatus.Pending),
-        ("RecaptchaV3EnterpriseRequest.minimal", "RecaptchaV3Task.minimal", ParityStatus.Pending),
-        ("RecaptchaV3Request.full", "RecaptchaV3Task.full", ParityStatus.Pending),
-        ("RecaptchaV3Request.minimal", "RecaptchaV3Task.minimal", ParityStatus.Pending),
+        // 2.x RecaptchaV3EnterpriseRequest is RecaptchaV3Task { IsEnterprise = true }. Its minimal file (isEnterprise
+        // true, minScore 0.3) maps to the extra "enterprise" sample; both 2.x full files equal RecaptchaV3Task.full.
+        ("RecaptchaV3EnterpriseRequest.full", "RecaptchaV3Task.full", ParityStatus.Mapped),
+        ("RecaptchaV3EnterpriseRequest.minimal", "RecaptchaV3Task.enterprise", ParityStatus.Mapped),
+        ("RecaptchaV3Request.full", "RecaptchaV3Task.full", ParityStatus.Mapped),
+        ("RecaptchaV3Request.minimal", "RecaptchaV3Task.minimal", ParityStatus.Mapped),
         ("TurnstileCaptchaProxylessRequest.full", "TurnstileTask.full", ParityStatus.Mapped),
         ("TurnstileCaptchaProxylessRequest.minimal", "TurnstileTask.minimal", ParityStatus.Mapped),
         ("TurnstileCaptchaRequest.proxy", "TurnstileTask.proxy", ParityStatus.Mapped),
