@@ -8,7 +8,7 @@
 | JSON | Newtonsoft.Json 13.0.4 |
 | HTTP | `HttpClient` / `IHttpClientFactory` via Microsoft.Extensions.Http 10.0.12 (in core package) |
 | Tests | xUnit 2.9, coverlet.collector; project `AntiCaptchaApi.Net.Tests` (net9.0). `UnitTests/` offline (27 tests); `IntegrationTests/` hit the live paid API |
-| CI | GitHub Actions: `publish-nuget.yml` (main → GitHub Packages, `v*` tag → nuget.org), `auto-dependency-update.yml` (daily cron, auto-bump + tag) |
+| CI | GitHub Actions: `publish-nuget.yml` (main → GitHub Packages, `v*` tag → nuget.org). Dependabot (`.github/dependabot.yml`, weekly `nuget` + `github-actions`; the library's runtime dependencies are ignored so their floors stay low). *Changed 2026-09-30 (track `hotfix_2x_critical_bugs_20260930`): the daily `auto-dependency-update.yml` cron (auto-bump + tag) was removed.* |
 
 ## Target (3.0)
 | Area | Choice | Notes |
