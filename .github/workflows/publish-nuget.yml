@@ -29,9 +29,10 @@ jobs:
     - name: Build
       run: dotnet build AntiCaptchaApi.Net.sln --configuration Release --no-restore
 
-    # Optional: Run tests
-    # - name: Test
-    #   run: dotnet test AntiCaptchaApi.Net.sln --configuration Release --no-build
+    # Offline unit tests only. IntegrationTests call the paid live API and are excluded.
+    # A failure here stops the job before anything is packed or published.
+    - name: Test (offline unit tests)
+      run: dotnet test AntiCaptchaApi.Net.sln --configuration Release --no-build --filter "FullyQualifiedName~UnitTests"
 
     - name: Determine Package Version
       id: package_version
