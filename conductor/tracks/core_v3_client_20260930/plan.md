@@ -587,7 +587,7 @@ Tasks:
     - `Retry_CountsEachCreatedTask`
   - Commit: `feat(diagnostics): add task, failure, cost and duration metrics`
 
-- [~] Task 6.4: Telemetry redaction (TDD)
+- [x] Task 6.4: Telemetry redaction (TDD) [f896645]
   - Tests:
     - `Telemetry_AllTagValuesAndEvents_ContainNoKeyOrProxyPassword`, covering the success, retry, transient and fatal scenarios.
   - Commit: `test(security): assert telemetry carries no secrets`
