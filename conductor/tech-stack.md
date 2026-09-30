@@ -26,6 +26,12 @@
 | Coverage | `dotnet test --collect:"XPlat Code Coverage"` + report | target ≥ 80% on new code |
 | CI | build + offline tests on every PR; publish only on `v*` tag; Dependabot PRs instead of auto-release cron | |
 
+*Note 2026-09-30 (track `core_v3_client_20260930`, Task 1.3):*
+- The core targets `netstandard2.0;net8.0` with System.Text.Json 8.0.5 (netstandard2.0 only). Newtonsoft.Json and Microsoft.Extensions.Http were removed, and 2.x sources are excluded from compilation until Task 7.2.
+- For this track the test project targets **net10.0 only** (the only local runtime). The net8.0 test TFM in the table above is deferred to the CI track.
+- Time is abstracted by an internal `ISystemClock`, **not** `TimeProvider`: on netstandard2.0, `TimeProvider` would need `Microsoft.Bcl.TimeProvider` (spec R-5).
+- `GeneratePackageOnBuild` was removed from the core csproj. It made `dotnet pack` skip the build and pack stale DLLs. Packing is now an explicit `dotnet build -c Release` + `dotnet pack --no-build` (or plain `dotnet pack`).
+
 ## Constraints
 - Do not push to `main` directly: pushes to `main` publish CI packages to GitHub Packages.
 - Live integration tests (`IntegrationTests/`) require a paid API key — never run them in automated task loops; filter with `--filter "FullyQualifiedName~UnitTests"`.

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
 
         <IsPackable>false</IsPackable>
@@ -33,6 +33,29 @@
 
     <ItemGroup>
       <Folder Include="Properties\" />
+    </ItemGroup>
+
+    <!-- 2.x tests: kept on disk as reference, not compiled (track core_v3_client_20260930 spec 7.3); deleted in Task 7.2. -->
+    <ItemGroup>
+      <Compile Remove="IntegrationTests/**" />
+      <Compile Remove="Helpers/**" />
+      <Compile Remove="Models/**" />
+      <Compile Remove="TestEnvironment.cs" />
+      <Compile Remove="UnitTests/AmazonWafClientTests.cs" />
+      <Compile Remove="UnitTests/AntiGateClientTests.cs" />
+      <Compile Remove="UnitTests/AntiGateRequestValidatorTests.cs" />
+      <Compile Remove="UnitTests/FakeHttpMessageHandlerTests.cs" />
+      <Compile Remove="UnitTests/PayloadRedactorTests.cs" />
+      <Compile Remove="UnitTests/ProxyValidationTests.cs" />
+      <Compile Remove="UnitTests/RawPayloadRedactionTests.cs" />
+      <Compile Remove="UnitTests/RecaptchaV3RequestValidatorTests.cs" />
+      <Compile Remove="UnitTests/RegistryCompletenessTests.cs" />
+      <Compile Remove="UnitTests/ReportOutcomeTests.cs" />
+      <Compile Remove="UnitTests/RequestSerializationTests.cs" />
+      <Compile Remove="UnitTests/ServiceCollectionExtensionsTests.cs" />
+      <Compile Remove="UnitTests/SolveCaptchaAsyncTests.cs" />
+      <Compile Remove="UnitTests/TaskResultConverterTests.cs" />
+      <Compile Remove="UnitTests/WaitForTaskResultTests.cs" />
     </ItemGroup>
 
     <ItemGroup>

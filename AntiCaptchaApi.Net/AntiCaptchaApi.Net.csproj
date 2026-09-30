@@ -1,12 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0;netstandard2.1;</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <WarningsAsErrors>nullable;CS1591</WarningsAsErrors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Version>2.2.0</Version>
     <Authors>RemarkableSolutions</Authors>
     <PackageProjectUrl>https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net</PackageProjectUrl>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net</RepositoryUrl>
     <PackageTags>AntiCaptcha Captcha Recaptcha GeeCaptcha RecaptchaV2 Anti-captcha RemarkableSolutions CaptchaSolver Solver</PackageTags>
     <Title>Anticaptcha.NetStandard</Title>
@@ -27,9 +30,26 @@
       Full history: CHANGELOG.md - https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/blob/main/CHANGELOG.md
     </PackageReleaseNotes>
   </PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+  <!-- 2.x sources stay on disk as reference but are not compiled (track core_v3_client_20260930 spec 7.3); deleted in Task 7.2. -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <Compile Remove="Requests/**" />
+    <Compile Remove="Responses/**" />
+    <Compile Remove="Models/**" />
+    <Compile Remove="Enums/**" />
+    <Compile Remove="Internal/Common/**" />
+    <Compile Remove="Internal/Converters/**" />
+    <Compile Remove="Internal/Extensions/**" />
+    <Compile Remove="Internal/Helpers/**" />
+    <Compile Remove="Internal/Models/**" />
+    <Compile Remove="Internal/Services/**" />
+    <Compile Remove="Internal/Validation/**" />
+    <Compile Remove="AnticaptchaClient.cs" />
+    <Compile Remove="IAnticaptchaClient.cs" />
+    <Compile Remove="AnticaptchaServiceCollectionExtensions.cs" />
   </ItemGroup>
 
   <ItemGroup>
