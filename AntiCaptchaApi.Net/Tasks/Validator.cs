@@ -85,6 +85,10 @@ public sealed class Validator
         return this;
     }
 
+    /// <summary>Requires a user agent whenever <paramref name="proxy"/> is set (browser-based tasks; 2.x parity).</summary>
+    internal Validator UserAgentWhenProxy(Proxy? proxy, string? userAgent) =>
+        proxy is null ? this : Must(!string.IsNullOrWhiteSpace(userAgent), "UserAgent", "required when Proxy is set");
+
     /// <summary>Throws <see cref="AntiCaptchaValidationException"/> when any check failed.</summary>
     internal void ThrowIfInvalid()
     {

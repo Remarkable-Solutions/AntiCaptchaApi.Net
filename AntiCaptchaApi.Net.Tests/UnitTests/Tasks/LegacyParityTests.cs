@@ -52,12 +52,12 @@ public class LegacyParityTests
         ("ProsopoProxylessRequest.full", "ProsopoTask.full", ParityStatus.Pending),
         ("ProsopoProxylessRequest.minimal", "ProsopoTask.minimal", ParityStatus.Pending),
         ("ProsopoRequest.proxy", "ProsopoTask.proxy", ParityStatus.Pending),
-        ("RecaptchaV2EnterpriseProxylessRequest.full", "RecaptchaV2EnterpriseTask.full", ParityStatus.Pending),
-        ("RecaptchaV2EnterpriseProxylessRequest.minimal", "RecaptchaV2EnterpriseTask.minimal", ParityStatus.Pending),
-        ("RecaptchaV2EnterpriseRequest.proxy", "RecaptchaV2EnterpriseTask.proxy", ParityStatus.Pending),
-        ("RecaptchaV2ProxylessRequest.full", "RecaptchaV2Task.full", ParityStatus.Pending),
-        ("RecaptchaV2ProxylessRequest.minimal", "RecaptchaV2Task.minimal", ParityStatus.Pending),
-        ("RecaptchaV2Request.proxy", "RecaptchaV2Task.proxy", ParityStatus.Pending),
+        ("RecaptchaV2EnterpriseProxylessRequest.full", "RecaptchaV2EnterpriseTask.full", ParityStatus.Mapped),
+        ("RecaptchaV2EnterpriseProxylessRequest.minimal", "RecaptchaV2EnterpriseTask.minimal", ParityStatus.Mapped),
+        ("RecaptchaV2EnterpriseRequest.proxy", "RecaptchaV2EnterpriseTask.proxy", ParityStatus.Mapped),
+        ("RecaptchaV2ProxylessRequest.full", "RecaptchaV2Task.full", ParityStatus.Mapped),
+        ("RecaptchaV2ProxylessRequest.minimal", "RecaptchaV2Task.minimal", ParityStatus.Mapped),
+        ("RecaptchaV2Request.proxy", "RecaptchaV2Task.proxy", ParityStatus.Mapped),
         // 2.x RecaptchaV3EnterpriseRequest is RecaptchaV3Task { IsEnterprise = true }. Its minimal case (isEnterprise
         // true, minScore 0.3) needs its own sample; Task 2.8 decides the final target.
         ("RecaptchaV3EnterpriseRequest.full", "RecaptchaV3Task.full", ParityStatus.Pending),

@@ -19,6 +19,7 @@ internal static class TaskSamples
     public const string WebsiteUrl = "https://example.com/login";
     public const string WebsiteKey = "SITE_KEY";
     public const string UserAgent = "Mozilla/5.0 (probe)";
+    public const string Cookies = "cookie1=value1; cookie2=value2";
     public const string ImageBody = "iVBORw0KGgoAAAANSUhEUg==";
 
     public static readonly Proxy Proxy = new(ProxyType.Socks5, "203.0.113.10", 1080) { Login = "proxyUser", Password = "proxyPass" };
@@ -59,6 +60,25 @@ internal static class TaskSamples
             Mode = ImageToCoordinatesMode.Rectangles,
             WebsiteUrl = WebsiteUrl,
         });
+
+        var recaptchaV2Full = new RecaptchaV2Task(WebsiteUrl, WebsiteKey)
+        {
+            RecaptchaDataSValue = "DATA_S_VALUE",
+            IsInvisible = true,
+            UserAgent = UserAgent,
+            Cookies = Cookies,
+        };
+        Add(samples, new RecaptchaV2Task(WebsiteUrl, WebsiteKey), recaptchaV2Full, recaptchaV2Full with { Proxy = Proxy });
+
+        var recaptchaV2EnterpriseFull = new RecaptchaV2EnterpriseTask(WebsiteUrl, WebsiteKey)
+        {
+            EnterprisePayload = new Dictionary<string, string> { ["s"] = "ENTERPRISE_S_VALUE" },
+            ApiDomain = "www.recaptcha.net",
+            UserAgent = UserAgent,
+            Cookies = Cookies,
+        };
+        Add(samples, new RecaptchaV2EnterpriseTask(WebsiteUrl, WebsiteKey), recaptchaV2EnterpriseFull,
+            recaptchaV2EnterpriseFull with { Proxy = Proxy });
 
         return samples;
     }

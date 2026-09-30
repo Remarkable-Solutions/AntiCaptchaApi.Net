@@ -35,10 +35,6 @@ public sealed record TurnstileTask(
     /// <inheritdoc />
     protected override void Validate(Validator v)
     {
-        v.Url(WebsiteUrl).NotEmpty(WebsiteKey);
-        if (Proxy is not null)
-        {
-            v.Must(!string.IsNullOrWhiteSpace(UserAgent), nameof(UserAgent), "required when Proxy is set");
-        }
+        v.Url(WebsiteUrl).NotEmpty(WebsiteKey).UserAgentWhenProxy(Proxy, UserAgent);
     }
 }
