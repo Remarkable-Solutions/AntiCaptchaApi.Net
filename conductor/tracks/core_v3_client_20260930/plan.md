@@ -266,7 +266,8 @@ Tasks:
   - Snapshots: `{minimal,full,proxy}` for both.
   - Commit: `feat(tasks): add GeeTest v3 and v4 tasks`
 
-- [ ] Task 2.11: `AmazonWafTask`, `ProsopoTask`, `FriendlyCaptchaTask`, solutions
+- [x] Task 2.11: `AmazonWafTask`, `ProsopoTask`, `FriendlyCaptchaTask`, solutions 22f24e8
+  - Done 2026-09-30: `AmazonWafTask` validates `Iv` and `Context` in both proxy modes (2.x `AmazonWafRequestValidator` skipped them with a proxy), and `Validate_EmptyIvOrContext_Fails` is a Theory over with/without proxy. AmazonWaf has no `UserAgent` (none in 2.x or spec FR-3), so its `full` sample equals the 2.x file. The Prosopo and FriendlyCaptcha `full` samples set `UserAgent` (the 2.x proxyless files have no optional fields). 3 extra tests: `AmazonWafTaskTests.Validate_ProxyWithoutUserAgent_Passes`, `ProsopoTaskTests.TypeName_ProxylessAndProxy`, `FriendlyCaptchaTaskTests.TypeName_ProxylessAndProxy`.
   - Tests:
     - `AmazonWafTaskTests.TypeName_AmazonTaskProxylessAndAmazonTask` (the 2.x `KeyNotFoundException` regression)
     - `AmazonWafTaskTests.Validate_EmptyIvOrContext_Fails`
