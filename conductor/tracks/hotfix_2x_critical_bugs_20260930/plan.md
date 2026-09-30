@@ -188,7 +188,7 @@ Tasks:
   - Optional live check (user): run one inexpensive AntiGate template (e.g. "Wait for control appearance") against a test page.
   - Wait for user confirmation → `conductor(checkpoint): Checkpoint end of Phase 3`.
 
-## Phase 4: Release hygiene and docs
+## Phase 4: Release hygiene and docs [checkpoint: 2d3f723]
 Goal: releases are intentional, CI runs the offline tests, dependency floors are minimal, the docs are accurate, and the package is versioned 2.2.0 locally (not published).
 
 Tasks:
@@ -236,7 +236,7 @@ Tasks:
   - Check: `dotnet pack AntiCaptchaApi.Net/AntiCaptchaApi.Net.csproj -c Release -o <scratchpad>` produces `AntiCaptchaApi.Net.2.2.0.nupkg`. Inspect the nuspec release notes and dependency ranges (`>= 8.0.0`, `>= 13.0.1`).
   - Commit: `chore(release): prepare 2.2.0 with CHANGELOG.md`
   - No red phase (release metadata). 2.2.0 is dated 2026-09-30 and marked "(unreleased)" until the user tags it. Fixed lists B1-B6, B8-B10 and Task 3.4 (HTMLsInBase64). B7 is under Security, next to the Newtonsoft floor. Added: `AntiGateRequest`, the 4 new `AntiGateSolution` fields and the `OnResultParsed` hook. Extra Deprecated entry: the protected `TaskResultConverter<T>.jObject` field (obsolete since Task 2.1). `git diff v2.1.5 v2.1.18` confirmed that 2.1.6-2.1.18 changed only csproj versions and CI, so the collapsed "dependency updates only" entry is accurate. Checks: build 15 warnings, 126/126 offline tests, `dotnet pack -c Release -o <scratchpad>/nupkg` → `AntiCaptchaApi.Net.2.2.0.nupkg` (+ snupkg). Nuspec: `<version>2.2.0</version>`, the short release notes with the CHANGELOG link, and for each of the 3 TFM groups `Microsoft.Extensions.Http` `8.0.0` and `Newtonsoft.Json` `13.0.1` (nuspec bare version = ≥). The `PackageReleaseNotes` link points to `blob/main/CHANGELOG.md`, which resolves once this branch is merged.
-- [ ] Verification: Phase 4 manual checks and release readiness [checkpoint marker]
+- [x] Verification: Phase 4 manual checks and release readiness [2d3f723] — user confirmed 2026-09-30. Note: 'dotnet pack' skips the build because of GeneratePackageOnBuild=True; always build Release first (follow-up for 3.0: remove GeneratePackageOnBuild).
   - Full offline suite (Release and Debug), `dotnet build` warnings ≤ 15 (report the final count), and coverage report ≥ 80% on changed code.
   - Probe against the **packed** 2.2.0 nupkg: a local feed in the scratchpad, `dotnet add package AntiCaptchaApi.Net --version 2.2.0 --source <scratchpad feed>` in a net8.0 console app. Re-run the Phase 1-3 probe scenarios and confirm that NuGet resolves `Microsoft.Extensions.Http` 8.0.x when the app has no other reference.
   - Review `git diff --name-only <phase-1 base> HEAD`: every changed code file has tests. Confirm that `tracks.md` is untouched and nothing was pushed or tagged.
