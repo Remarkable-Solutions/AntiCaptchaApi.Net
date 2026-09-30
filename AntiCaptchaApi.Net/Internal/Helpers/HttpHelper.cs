@@ -57,6 +57,8 @@ internal class HttpHelper : IHttpHelper
             var httpClient = _httpClient ?? _httpClientFactory?.CreateClient() ?? throw new InvalidOperationException("HttpClient or IHttpClientFactory must be provided.");
 
             T response = null; // Initialize response to null
+            // RawPayload is exposed to callers (and often logged), so it never carries the client key or proxy password.
+            var redactedPayload = PayloadRedactor.Redact(payload);
             var responseContent = string.Empty;
             
             try
@@ -80,7 +82,7 @@ internal class HttpHelper : IHttpHelper
 
                 // Populate raw data regardless of deserialization success
                 response.RawResponse = responseContent;
-                response.RawPayload = payload;
+                response.RawPayload = redactedPayload;
 
                 // If deserialization yielded a result but it indicates an API error, keep it.
                 // If deserialization failed but we got here, the response object is likely partially populated or just new T().
@@ -92,7 +94,7 @@ internal class HttpHelper : IHttpHelper
                  response ??= new T(); // Ensure response exists
                  response.ErrorDescription = $"JSON Deserialization Error: {jsonEx.Message}";
                  response.RawResponse = responseContent; // Include raw response for debugging
-                 response.RawPayload = payload;
+                 response.RawPayload = redactedPayload;
                  response.ErrorCode = "JsonError";
                  return response;
             }
@@ -101,7 +103,7 @@ internal class HttpHelper : IHttpHelper
                  response ??= new T(); // Ensure response exists
                  response.ErrorDescription = $"HTTP Request Error: {httpEx.Message}";
                  response.RawResponse = responseContent;
-                response.RawPayload = payload;
+                response.RawPayload = redactedPayload;
                 // HttpRequestException doesn't have StatusCode directly. Use a generic code.
                 response.ErrorCode = "HttpError";
                 return response;
@@ -111,7 +113,7 @@ internal class HttpHelper : IHttpHelper
                  response ??= new T(); // Ensure response exists
                  response.ErrorDescription = "Operation was canceled.";
                  response.RawResponse = responseContent;
-                 response.RawPayload = payload;
+                 response.RawPayload = redactedPayload;
                  response.ErrorCode = "Cancelled";
                  return response;
             }
@@ -120,7 +122,7 @@ internal class HttpHelper : IHttpHelper
                 response ??= new T(); // Ensure response exists
                 response.ErrorDescription = $"An unexpected error occurred: {ex.Message}";
                 response.RawResponse = responseContent;
-                response.RawPayload = payload;
+                response.RawPayload = redactedPayload;
                 response.ErrorCode = "UnexpectedError";
                 return response;
             }
