@@ -6,6 +6,7 @@ using System.Net.Http; // Add missing using for IHttpClientFactory
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using AntiCaptchaApi.Net.Internal.Common;
 using AntiCaptchaApi.Net.Internal.Converters;
 using AntiCaptchaApi.Net.Models.Solutions;
 using AntiCaptchaApi.Net.Responses;
@@ -16,7 +17,7 @@ namespace AntiCaptchaApi.Net.Internal.Helpers
 {
 internal class HttpHelper : IHttpHelper
 {
-        private static readonly List<JsonConverter> Converters = new List<JsonConverter>()
+        private static readonly JsonConverter[] ConverterArray =
         {
             new TaskResultConverter<FunCaptchaSolution>(),
             new AntiGateTaskResultConverter(),
@@ -26,7 +27,15 @@ internal class HttpHelper : IHttpHelper
             new TaskResultConverter<ImageToTextSolution>(),
             new TaskResultConverter<ImageToCoordinatesSolution>(),
             new TaskResultConverter<TurnstileSolution>(),
+            new TaskResultConverter<ProsopoSolution>(),
+            new TaskResultConverter<AmazonWafSolution>(),
         };
+
+        /// <summary>
+        /// Result converters registered for every concrete <see cref="BaseSolution"/> type.
+        /// Internal (read-only) so the registry-completeness tests can inspect it.
+        /// </summary>
+        internal static readonly IReadOnlyList<JsonConverter> Converters = Array.AsReadOnly(ConverterArray);
         
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly HttpClient _httpClient;
@@ -46,9 +55,11 @@ internal class HttpHelper : IHttpHelper
         public async Task<T> PostAsync<T>(Uri url, string payload, CancellationToken cancellationToken)
             where T : BaseResponse, new()
         {
-            var httpClient = _httpClient ?? _httpClientFactory?.CreateClient() ?? throw new InvalidOperationException("HttpClient or IHttpClientFactory must be provided.");
+            var httpClient = _httpClient ?? _httpClientFactory?.CreateClient(AnticaptchaServiceCollectionExtensions.HttpClientName) ?? throw new InvalidOperationException("HttpClient or IHttpClientFactory must be provided.");
 
             T response = null; // Initialize response to null
+            // RawPayload is exposed to callers (and often logged), so it never carries the client key or proxy password.
+            var redactedPayload = PayloadRedactor.Redact(payload);
             var responseContent = string.Empty;
             
             try
@@ -64,7 +75,7 @@ internal class HttpHelper : IHttpHelper
                 responseContent = await httpResponseMessage.Content.ReadAsStringAsync();
                 
                 // Attempt deserialization
-                response = JsonConvert.DeserializeObject<T>(responseContent, Converters.ToArray());
+                response = JsonConvert.DeserializeObject<T>(responseContent, ConverterArray);
                 
                 // Handle case where deserialization might return null for valid JSON (e.g., "null")
                 // or if the response structure doesn't match T perfectly but doesn't throw.
@@ -72,7 +83,7 @@ internal class HttpHelper : IHttpHelper
 
                 // Populate raw data regardless of deserialization success
                 response.RawResponse = responseContent;
-                response.RawPayload = payload;
+                response.RawPayload = redactedPayload;
 
                 // If deserialization yielded a result but it indicates an API error, keep it.
                 // If deserialization failed but we got here, the response object is likely partially populated or just new T().
@@ -84,8 +95,8 @@ internal class HttpHelper : IHttpHelper
                  response ??= new T(); // Ensure response exists
                  response.ErrorDescription = $"JSON Deserialization Error: {jsonEx.Message}";
                  response.RawResponse = responseContent; // Include raw response for debugging
-                 response.RawPayload = payload;
-                 response.ErrorCode = "JsonError";
+                 response.RawPayload = redactedPayload;
+                 response.ErrorCode = TransportErrorCodes.JsonError;
                  return response;
             }
             catch (HttpRequestException httpEx) // Catch specific HTTP errors
@@ -93,9 +104,9 @@ internal class HttpHelper : IHttpHelper
                  response ??= new T(); // Ensure response exists
                  response.ErrorDescription = $"HTTP Request Error: {httpEx.Message}";
                  response.RawResponse = responseContent;
-                response.RawPayload = payload;
+                response.RawPayload = redactedPayload;
                 // HttpRequestException doesn't have StatusCode directly. Use a generic code.
-                response.ErrorCode = "HttpError";
+                response.ErrorCode = TransportErrorCodes.HttpError;
                 return response;
            }
             catch (OperationCanceledException) // Catch cancellation (TaskCanceledException or OperationCanceledException)
@@ -103,8 +114,8 @@ internal class HttpHelper : IHttpHelper
                  response ??= new T(); // Ensure response exists
                  response.ErrorDescription = "Operation was canceled.";
                  response.RawResponse = responseContent;
-                 response.RawPayload = payload;
-                 response.ErrorCode = "Cancelled";
+                 response.RawPayload = redactedPayload;
+                 response.ErrorCode = TransportErrorCodes.Cancelled;
                  return response;
             }
             catch (Exception ex) // Catch broader exceptions
@@ -112,8 +123,8 @@ internal class HttpHelper : IHttpHelper
                 response ??= new T(); // Ensure response exists
                 response.ErrorDescription = $"An unexpected error occurred: {ex.Message}";
                 response.RawResponse = responseContent;
-                response.RawPayload = payload;
-                response.ErrorCode = "UnexpectedError";
+                response.RawPayload = redactedPayload;
+                response.ErrorCode = TransportErrorCodes.UnexpectedError;
                 return response;
             }
         }

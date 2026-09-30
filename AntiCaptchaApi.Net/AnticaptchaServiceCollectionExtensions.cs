@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net.Http;
 using AntiCaptchaApi.Net.Internal.Helpers; // Added this line
 using AntiCaptchaApi.Net.Internal.Services;
@@ -13,6 +13,11 @@ namespace AntiCaptchaApi.Net
     /// </summary>
     public static class AnticaptchaServiceCollectionExtensions
     {
+        /// <summary>
+        /// Name of the <see cref="HttpClient"/> registered by <see cref="AddAnticaptcha"/> and used by the client.
+        /// </summary>
+        internal const string HttpClientName = "AntiCaptchaApi.Net";
+
         /// <summary>
         /// Adds the <see cref="IAnticaptchaClient"/> and related services to the specified <see cref="IServiceCollection"/>.
         /// This method configures the necessary HttpClient instances using <see cref="IHttpClientFactory"/>.
@@ -34,12 +39,16 @@ namespace AntiCaptchaApi.Net
                 throw new ArgumentNullException(nameof(clientKey));
             }
 
-            // Ensure HttpClientFactory is available
+            // Ensure HttpClientFactory is available (unnamed client kept for backward compatibility)
             services.AddHttpClient();
 
             // Configure ClientConfig
             var clientConfig = new ClientConfig();
             configureClient?.Invoke(clientConfig);
+
+            // Named client so ClientConfig.MaxHttpRequestTimeMs applies without touching the app's default client
+            services.AddHttpClient(HttpClientName, httpClient =>
+                httpClient.Timeout = TimeSpan.FromMilliseconds(clientConfig.MaxHttpRequestTimeMs));
             services.TryAddSingleton(clientConfig); // Register ClientConfig as singleton
 
             // Register HttpHelper with explicit factory selection

@@ -62,9 +62,9 @@ namespace AntiCaptchaApi.Net.Internal.Extensions
                 result.ValidateIsNotNullOrEmpty(nameof(proxyConfig.ProxyAddress), proxyConfig.ProxyAddress);
                 if(proxyConfig is ProxyConfig ProxyConfig)
                     result.ValidateIsNotNull(nameof(ProxyConfig.ProxyType), ProxyConfig.ProxyType);
-                if (proxyConfig.ProxyPort is null || proxyConfig.ProxyPort < 1 || proxyConfig.ProxyPort >= 65535)
+                if (proxyConfig.ProxyPort is null || proxyConfig.ProxyPort < 1 || proxyConfig.ProxyPort > 65535)
                 {
-                    result.Errors.Add(new ValidationError(nameof(proxyConfig.ProxyPort), "must have value between 1 and 65534"));
+                    result.Errors.Add(new ValidationError(nameof(proxyConfig.ProxyPort), "must have value between 1 and 65535"));
                 }
             }
 
@@ -86,9 +86,9 @@ namespace AntiCaptchaApi.Net.Internal.Extensions
                 result.ValidateIsNotNullOrEmpty(nameof(proxyConfig.ProxyAddress), proxyConfig.ProxyAddress);
                 if(proxyConfig is ProxyConfig ProxyConfig)
                     result.ValidateIsNotNull(nameof(ProxyConfig.ProxyType), ProxyConfig.ProxyType);
-                if (proxyConfig.ProxyPort is null || proxyConfig.ProxyPort < 1 || proxyConfig.ProxyPort >= 65535)
+                if (proxyConfig.ProxyPort is null || proxyConfig.ProxyPort < 1 || proxyConfig.ProxyPort > 65535)
                 {
-                    result.Errors.Add(new ValidationError(nameof(proxyConfig.ProxyPort), "must have value between 1 and 65534"));
+                    result.Errors.Add(new ValidationError(nameof(proxyConfig.ProxyPort), "must have value between 1 and 65535"));
                 }
             }
 

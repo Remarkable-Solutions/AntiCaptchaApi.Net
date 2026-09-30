@@ -1,0 +1,7 @@
+{
+  "id": "hotfix_2x_critical_bugs_20260930",
+  "description": "2.x critical hotfix -> release 2.2.0: fix verified defects (Amazon WAF task names, reCAPTCHA v3 validation, Turnstile proxy validation, missing converters, converter thread-safety, port 65535, RawPayload secret redaction, resilient polling, no retry of local validation failures, DI HTTP timeout), add AntiGateRequest, registry-completeness test, release hygiene (Dependabot, CI unit tests, lower dependency floors) and docs/CHANGELOG. Non-breaking.",
+  "type": "bug",
+  "created_at": "2026-09-30",
+  "status": "complete"
+}

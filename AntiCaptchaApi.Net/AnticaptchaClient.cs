@@ -24,6 +24,11 @@ namespace AntiCaptchaApi.Net
     /// </summary>
     public class AnticaptchaClient : IAnticaptchaClient
     {
+        /// <summary>
+        /// Number of consecutive transient transport failures after which polling gives up.
+        /// </summary>
+        internal const int MaxConsecutiveTransientPollErrors = 3;
+
         /// <inheritdoc />
         public ClientConfig ClientConfig { get; private set; }
 
@@ -123,7 +128,9 @@ namespace AntiCaptchaApi.Net
                ReportOutcome.IncorrectImageCaptcha => ApiMethod.ReportIncorrectImageCaptcha,
                ReportOutcome.IncorrectRecaptcha => ApiMethod.ReportIncorrectRecaptcha,
                ReportOutcome.CorrectRecaptcha => ApiMethod.ReportCorrectRecaptcha,
+#pragma warning disable CS0618 // Obsolete value kept working for existing 2.x callers; removed in 3.0.
                ReportOutcome.IncorrectHCaptcha => ApiMethod.ReportIncorrectHCaptcha,
+#pragma warning restore CS0618
                _ => throw new ArgumentOutOfRangeException(nameof(outcome), $"Unsupported report outcome: {outcome}")
            };
            return await ReportCaptcha(taskId, apiMethod, cancellationToken);
@@ -162,6 +169,9 @@ namespace AntiCaptchaApi.Net
             for (var tries = 0; tries < ClientConfig.SolveAsyncRetries; ++tries)
             {
                 createTaskResponse = await CreateCaptchaTaskAsync<TSolution>(request, languagePool, callbackUrl, cancellationToken);
+                // A local validation/build failure cannot succeed on retry.
+                if (createTaskResponse.ErrorCode == HttpStatusCode.BadRequest.ToString())
+                    break;
                 if (!createTaskResponse.IsErrorResponse && createTaskResponse.TaskId.HasValue)
                 {
                     taskResult = await WaitForTaskResultAsync<TSolution>(createTaskResponse, cancellationToken);
@@ -275,6 +285,7 @@ namespace AntiCaptchaApi.Net
             {
                 CreateTaskResponse = createTaskResponse
             };
+            var consecutiveTransientErrors = 0;
 
             while (timer.ElapsedMilliseconds <= ClientConfig.MaxWaitForTaskResultTimeMs)
             {
@@ -286,12 +297,20 @@ namespace AntiCaptchaApi.Net
                 // If status is null, it indicates an unexpected response format or error not captured earlier.
                 if (!status.HasValue)
                 {
+                    // The task is still running (and paid for) on anti-captcha's side: a transport blip must not abandon it.
+                    if (TransportErrorCodes.IsTransient(taskResultResponse.ErrorCode, cancellationToken.IsCancellationRequested)
+                        && ++consecutiveTransientErrors < MaxConsecutiveTransientPollErrors)
+                    {
+                        continue;
+                    }
+
                     // Ensure error details are set if not already present from GetTaskResultAsync
                     taskResultResponse.ErrorCode ??= HttpStatusCode.InternalServerError.ToString();
                     taskResultResponse.ErrorDescription ??= "Received an unexpected null status from the API.";
                     return taskResultResponse;
                 }
                 
+                consecutiveTransientErrors = 0;
                 switch (status.Value) // Use status.Value now that we know it HasValue
                 {
                     case TaskStatusType.Processing:

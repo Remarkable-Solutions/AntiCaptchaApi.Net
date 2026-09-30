@@ -34,7 +34,10 @@ namespace AntiCaptchaApi.Net.Internal.Helpers
                 { typeof(ProsopoProxylessRequest), "ProsopoTaskProxyless" },
                 { typeof(ProsopoRequest), "ProsopoTask" },
                 { typeof(FriendlyCaptchaProxylessRequest), "FriendlyCaptchaTaskProxyless" },
-                { typeof(FriendlyCaptchaRequest), "FriendlyCaptchaTask" }
+                { typeof(FriendlyCaptchaRequest), "FriendlyCaptchaTask" },
+                { typeof(AmazonWafProxylessRequest), "AmazonTaskProxyless" },
+                { typeof(AmazonWafRequest), "AmazonTask" },
+                { typeof(AntiGateRequest), "AntiGateTask" }
             };
             return @switch[request.GetType()];
         }

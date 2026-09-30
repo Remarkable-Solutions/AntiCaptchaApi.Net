@@ -31,7 +31,7 @@ namespace AntiCaptchaApi.Net.Internal
                 { typeof(RecaptchaV3Request), () => new RecaptchaV3RequestValidator().Validate(request as RecaptchaV3Request) },
                 { typeof(RecaptchaV3EnterpriseRequest), () => new RecaptchaV3RequestValidator().Validate(request as RecaptchaV3EnterpriseRequest) },
                 { typeof(TurnstileCaptchaProxylessRequest), () => new TurnstileProxylessRequestValidator().Validate(request as TurnstileCaptchaProxylessRequest) },
-                { typeof(TurnstileCaptchaRequest), () => new TurnstileProxylessRequestValidator().Validate(request as TurnstileCaptchaProxylessRequest) },
+                { typeof(TurnstileCaptchaRequest), () => new TurnstileRequestValidator().Validate(request as TurnstileCaptchaRequest) },
                 { typeof(ImageToCoordinatesRequest), () => new ImageToCoordinatesRequestValidator().Validate(request as ImageToCoordinatesRequest) },
                 { typeof(ProsopoProxylessRequest), () => new ProsopoProxylessRequestValidator().Validate(request as ProsopoProxylessRequest) },
                 { typeof(ProsopoRequest), () => new ProsopoRequestValidator().Validate(request as ProsopoRequest) },
@@ -39,6 +39,7 @@ namespace AntiCaptchaApi.Net.Internal
                 { typeof(FriendlyCaptchaRequest), () => new FriendlyCaptchaRequestValidator().Validate(request as FriendlyCaptchaRequest) },
                 { typeof(AmazonWafProxylessRequest), () => new AmazonWafProxylessRequestValidator().Validate(request as AmazonWafProxylessRequest) },
                 { typeof(AmazonWafRequest), () => new AmazonWafRequestValidator().Validate(request as AmazonWafRequest) },
+                { typeof(AntiGateRequest), () => new AntiGateRequestValidator().Validate(request as AntiGateRequest) },
             };
             return @switch[request.GetType()];
         }
@@ -99,6 +100,10 @@ namespace AntiCaptchaApi.Net.Internal
                     serialized["proxyPassword"] = serialized["proxyConfig"]?["proxyPassword"];
 
                 serialized.Remove("proxyConfig");
+
+                // AntiGateTask documents no proxyType field (proxies must be HTTPS by IP), so none is sent.
+                if (request is AntiGateRequest)
+                    serialized.Remove("proxyType");
             }
         
             return serialized;

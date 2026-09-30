@@ -1,0 +1,19 @@
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # Runtime dependencies of the published library. Their versions are
+      # minimum floors (NuGet ">= X"), kept low on purpose so consumers are not
+      # forced onto newer Microsoft.Extensions.* / Newtonsoft.Json releases.
+      # Raising a floor is a deliberate, changelog-worthy decision.
+      # Known vulnerabilities still surface as Dependabot alerts.
+      - dependency-name: "Microsoft.Extensions.Http"
+      - dependency-name: "Newtonsoft.Json"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

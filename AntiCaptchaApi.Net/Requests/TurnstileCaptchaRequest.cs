@@ -29,9 +29,9 @@ namespace AntiCaptchaApi.Net.Requests
         public ProxyConfig ProxyConfig { get; set; }
     
         /// <summary>
-        /// [Required]
-        /// Browser's User-Agent used in emulation.
-        /// You must use a modern-browser signature; otherwise, Google will ask you to "update your browser".
+        /// [Optional]
+        /// Browser's User-Agent used in emulation. A custom User-Agent is not needed for Turnstile;
+        /// when set, it is sent with the task.
         /// </summary>
         /// 
         public string UserAgent { get; set; }

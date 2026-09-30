@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net8.0;net9.0;netstandard2.1;</TargetFrameworks>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Version>2.1.18</Version>
+    <Version>2.2.0</Version>
     <Authors>RemarkableSolutions</Authors>
     <PackageProjectUrl>https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net</PackageProjectUrl>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -16,48 +16,20 @@
     <PublishRepositoryUrl>True</PublishRepositoryUrl>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PackageVersion>2.1.18</PackageVersion>
+    <PackageVersion>2.2.0</PackageVersion>
     <PackageReleaseNotes>
-      2.1.18:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.12).
-      2.1.17:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.11).
-      2.1.16:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.10).
-      2.1.15:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.9).
-      2.1.14:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.8).
-      2.1.13:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.7).
-      2.1.12:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.6).
-      2.1.11:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.5).
-      2.1.10:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.4).
-      2.1.9:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.3).
-      2.1.8:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.2).
-      2.1.7:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.1).
-      2.1.6:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 10.0.0).
-      2.1.5:
-      - Updated package dependencies to latest versions (Microsoft.Extensions.Http 9.0.10, Newtonsoft.Json 13.0.4).
-      2.1.4:
-      - Fixed dependency injection ambiguity issue with HttpHelper constructor selection.
-      2.1.3:
-      - Added Amazon WAF captcha support (AmazonTaskProxyless and AmazonTask).
-      2.1.2:
-      - Added a public constructor to AnticaptchaClient to allow manual instantiation without dependency injection.
-      - Modified HttpHelper to accept an HttpClient in its constructor to support manual instantiation.
+      2.2.0:
+      - Fixed: Amazon WAF task creation, reCAPTCHA v3 validation (IsEnterprise, MinScore 0.9), Turnstile proxy validation, Prosopo/Friendly Captcha/Amazon WAF result parsing, concurrent-solve race, proxy port 65535, polling through transient network errors, no retry of invalid requests, DI HTTP timeout, AntiGate HTMLsInBase64.
+      - Added: AntiGateRequest (AntiGateTask) and more AntiGateSolution fields.
+      - Security: clientKey and proxyPassword are redacted from RawPayload.
+      - Changed: dependency floors lowered to Microsoft.Extensions.Http 8.0.0 and Newtonsoft.Json 13.0.1.
+      - Deprecated: ReportOutcome.IncorrectHCaptcha, RecaptchaV3Request.MinScore 0.5 (removal in 3.0).
+      Full history: CHANGELOG.md - https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/blob/main/CHANGELOG.md
     </PackageReleaseNotes>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.12" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>

@@ -863,5 +863,154 @@ namespace AntiCaptchaApi.Net.Tests.UnitTests
             AssertSame(expectedPayload, Payload);
         }
 
+        [Fact]
+        public void AmazonWafProxylessRequestSerializationTest()
+        {
+            var expectedPayload = new JObject
+            {
+                ["type"] = "AmazonTaskProxyless",
+                ["websiteURL"] = "https://example.com/waf",
+                ["websiteKey"] = "AQIDAHjcYu/GjX+QlghicBgQ/7bFaQZ+m5FKCMDnO+vTbNg96AF5H1K/siwSLK7RfstKtN5bAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMLp9uHaj",
+                ["iv"] = "CgAHbCe2GgAAAAAj",
+                ["context"] = "9BUgmlm48F92WUoqv97a49ZuEJJ50TCk9MVr3C7WMtQ0X6flVbufM4n8mjFLmbLVAPgaQ1Jydeaja94iAS49ljb",
+                ["captchaScript"] = "https://example.token.awswaf.com/captcha.js",
+                ["challengeScript"] = "https://example.token.awswaf.com/challenge.js",
+            };
+
+            var request = new AmazonWafProxylessRequest
+            {
+                WebsiteUrl = expectedPayload["websiteURL"]!.ToString(),
+                WebsiteKey = expectedPayload["websiteKey"]!.ToString(),
+                Iv = expectedPayload["iv"]!.ToString(),
+                Context = expectedPayload["context"]!.ToString(),
+                CaptchaScript = expectedPayload["captchaScript"]!.ToString(),
+                ChallengeScript = expectedPayload["challengeScript"]!.ToString(),
+            };
+
+            var Payload = CreateCaptchaRequestHelper.Build(request);
+            AssertSame(expectedPayload, Payload);
+        }
+
+        [Fact]
+        public void AmazonWafRequestSerializationTest()
+        {
+            var expectedPayload = new JObject
+            {
+                ["type"] = "AmazonTask",
+                ["websiteURL"] = "https://example.com/waf",
+                ["websiteKey"] = "AQIDAHjcYu/GjX+QlghicBgQ/7bFaQZ+m5FKCMDnO+vTbNg96AF5H1K",
+                ["iv"] = "CgAHbCe2GgAAAAAj",
+                ["context"] = "9BUgmlm48F92WUoqv97a49ZuEJJ50TCk9MVr3C7WMtQ0X6flVbufM4n8mjFLmbLVAPgaQ1Jydeaja94iAS49ljb",
+                ["proxyType"] = "http",
+                ["proxyAddress"] = "proxyAddressTest",
+                ["proxyPort"] = 1080,
+                ["proxyLogin"] = "proxyLoginTest",
+                ["proxyPassword"] = "proxyPasswordTest",
+            };
+
+            var request = new AmazonWafRequest
+            {
+                WebsiteUrl = expectedPayload["websiteURL"]!.ToString(),
+                WebsiteKey = expectedPayload["websiteKey"]!.ToString(),
+                Iv = expectedPayload["iv"]!.ToString(),
+                Context = expectedPayload["context"]!.ToString(),
+                ProxyConfig = new ProxyConfig
+                {
+                    ProxyType = ProxyTypeOption.Http,
+                    ProxyAddress = expectedPayload["proxyAddress"]!.ToString(),
+                    ProxyLogin = expectedPayload["proxyLogin"]!.ToString(),
+                    ProxyPassword = expectedPayload["proxyPassword"]!.ToString(),
+                    ProxyPort = int.Parse(expectedPayload["proxyPort"]!.ToString()),
+                }
+            };
+
+            var Payload = CreateCaptchaRequestHelper.Build(request);
+            AssertSame(expectedPayload, Payload);
+        }
+
+        [Fact]
+        public void AntiGateRequestSerializationTest()
+        {
+            var expectedPayload = new JObject
+            {
+                ["type"] = "AntiGateTask",
+                ["websiteURL"] = "https://anti-captcha.com/tutorials/v2-textarea",
+                ["templateName"] = "Sign-in and wait for control text",
+                ["variables"] = new JObject
+                {
+                    ["login_input_css"] = "#login",
+                    ["login_input_value"] = "the login",
+                    ["nested"] = new JObject { ["Key_With_Case"] = 1 },
+                },
+                ["domainsOfInterest"] = new JArray("anti-captcha.com", "example.com"),
+                ["proxyAddress"] = "1.2.3.4",
+                ["proxyPort"] = 3128,
+                ["proxyLogin"] = "proxyLoginTest",
+                ["proxyPassword"] = "proxyPasswordTest",
+            };
+
+            var request = new AntiGateRequest
+            {
+                WebsiteUrl = expectedPayload["websiteURL"]!.ToString(),
+                TemplateName = expectedPayload["templateName"]!.ToString(),
+                Variables = (JObject)expectedPayload["variables"]!.DeepClone(),
+                DomainsOfInterest = new List<string> { "anti-captcha.com", "example.com" },
+                ProxyConfig = new ProxyConfig
+                {
+                    ProxyType = ProxyTypeOption.Http,
+                    ProxyAddress = expectedPayload["proxyAddress"]!.ToString(),
+                    ProxyPort = 3128,
+                    ProxyLogin = expectedPayload["proxyLogin"]!.ToString(),
+                    ProxyPassword = expectedPayload["proxyPassword"]!.ToString(),
+                }
+            };
+
+            var Payload = CreateCaptchaRequestHelper.Build(request);
+            AssertSame(expectedPayload, Payload);
+        }
+
+        [Fact]
+        public void AntiGateRequestSerializationTest_OnlyRequiredArguments()
+        {
+            var expectedPayload = new JObject
+            {
+                ["type"] = "AntiGateTask",
+                ["websiteURL"] = "https://anti-captcha.com/tutorials/v2-textarea",
+                ["templateName"] = "Wait for control appearance",
+                ["variables"] = new JObject { ["css_selector"] = "#x" },
+            };
+
+            var request = new AntiGateRequest
+            {
+                WebsiteUrl = expectedPayload["websiteURL"]!.ToString(),
+                TemplateName = expectedPayload["templateName"]!.ToString(),
+                Variables = JObject.FromObject(new { css_selector = "#x" }),
+            };
+
+            var Payload = CreateCaptchaRequestHelper.Build(request);
+            AssertSame(expectedPayload, Payload);
+        }
+
+        [Fact]
+        public void AntiGateRequest_CopyConstructor_CopiesAllProperties()
+        {
+            var source = new AntiGateRequest
+            {
+                WebsiteUrl = "https://example.com",
+                TemplateName = "template",
+                Variables = new JObject { ["a"] = "b" },
+                DomainsOfInterest = new List<string> { "example.com" },
+                ProxyConfig = new ProxyConfig { ProxyAddress = "1.2.3.4", ProxyPort = 80 },
+            };
+
+            var copy = new AntiGateRequest(source);
+
+            Assert.Equal(source.WebsiteUrl, copy.WebsiteUrl);
+            Assert.Equal(source.TemplateName, copy.TemplateName);
+            Assert.Same(source.Variables, copy.Variables);
+            Assert.Same(source.DomainsOfInterest, copy.DomainsOfInterest);
+            Assert.Same(source.ProxyConfig, copy.ProxyConfig);
+        }
+
     }
 }
