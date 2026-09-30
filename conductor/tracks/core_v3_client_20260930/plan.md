@@ -354,7 +354,8 @@ Tasks:
     - `Options_Defaults_MatchSpec`
   - Commit: `feat(client): add AntiCaptchaClient constructors with shared handler`
 
-- [ ] Task 3.5: `CreateTaskAsync` and `CreateOptions` (TDD)
+- [x] Task 3.5: `CreateTaskAsync` and `CreateOptions` (TDD) 9fb0de2
+  - Done 2026-09-30: argument checks come first (null task → `ArgumentNullException(task)`, relative `CallbackUrl` → `ArgumentException(o)`), then `RunValidation()`, then HTTP. `CallbackUrl` is sent as `Uri.AbsoluteUri`. The per-call redactor is `Redactor.With(task.Proxy?.Password)` (internal `RedactorFor`). `UnitTests/Client/ClientTestContext.cs` wires the client to the fake handler, `FakeClock` and random 0.5 for the client tests. 4 extra tests: `CreateTaskAsync_WithoutCreateOptions_OmitsLanguagePoolAndCallbackUrl`, `CreateTaskAsync_RelativeCallbackUrl_ThrowsArgument_AndSendsNoRequest`, `CreateTaskAsync_ApiErrorEchoesProxyPassword_IsRedacted`, `CreateTaskAsync_ThroughInterface_IsAvailable`.
   - Files: `CreateOptions.cs` (non-sealed record, because `SolveOptions` derives from it in Phase 4).
   - Tests `UnitTests/Client/CreateTaskTests.cs`:
     - `CreateTaskAsync_InvalidTask_ThrowsValidation_AndSendsNoRequest`
