@@ -143,7 +143,7 @@ Tasks:
   - Optional live check (user): one `ImageToTextRequest` solve with the network briefly toggled during polling; inspect `RawPayload` in the output.
   - Wait for user confirmation → `conductor(checkpoint): Checkpoint end of Phase 2`.
 
-## Phase 3: AntiGate feature
+## Phase 3: AntiGate feature [checkpoint: 1d7d6dc]
 Goal: AntiGate templates can be solved end to end, using the existing solution, converter and `PushAntiGateVariableAsync`.
 
 Tasks:
@@ -182,7 +182,7 @@ Tasks:
   - Green: look up `HTMLsInBase64` first, then fall back to `htmlsInBase64`. Remove the `//TODO: Check if works.` comment on the property and add an XML doc.
   - Commit: `fix(antigate): parse HTMLsInBase64 using the documented key casing`
   - Red: `SolveCaptchaAsync_AntiGate_ParsesHTMLsInBase64` failed (expected `PGh0bWw+`, actual null); the legacy lowercase test already passed. Green: documented key first, `htmlsInBase64` fallback; TODO removed, XML doc added. 124/124 green, 15 warnings.
-- [ ] Verification: Phase 3 manual checks [checkpoint marker]
+- [x] Verification: Phase 3 manual checks [1d7d6dc] — user confirmed 2026-09-30
   - Run the offline suite (all green, including `RegistryCompletenessTests` with `AntiGateRequest` discovered) and `dotnet build` (warnings ≤ 15).
   - Probe: build an `AntiGateRequest` with `JObject.FromObject(new { css_selector = "#x" })` and a proxy. Print the `createTask` body (type `AntiGateTask`, redacted `RawPayload`). Feed a canned ready response and print the cookies.
   - Optional live check (user): run one inexpensive AntiGate template (e.g. "Wait for control appearance") against a test page.
