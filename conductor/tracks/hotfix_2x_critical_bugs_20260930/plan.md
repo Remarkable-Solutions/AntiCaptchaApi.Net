@@ -80,7 +80,7 @@ Tasks:
   - Optional live check (user, own key): solve one `RecaptchaV3Request` without `IsEnterprise`, and one Amazon WAF on a known test page.
   - Wait for user confirmation → checkpoint commit `conductor(checkpoint): Checkpoint end of Phase 1`.
 
-## Phase 2: Resilience and security
+## Phase 2: Resilience and security [checkpoint: 70b9883]
 Goal: concurrent solves are safe, secrets never leak through `RawPayload`, a paid task survives transient errors, pointless retries stop, and DI honors the timeout.
 
 Tasks:
@@ -132,7 +132,7 @@ Tasks:
   - Green: internal const `HttpClientName = "AntiCaptchaApi.Net"`. `services.AddHttpClient(HttpClientName, c => c.Timeout = TimeSpan.FromMilliseconds(clientConfig.MaxHttpRequestTimeMs))`. `HttpHelper(IHttpClientFactory)` → `CreateClient(HttpClientName)` at `HttpHelper.cs:49`. The `AddAnticaptcha` signature is unchanged.
   - Commit: `fix(di): use named HttpClient honoring ClientConfig.MaxHttpRequestTimeMs`
   - Red: the named client's timeout was the 100 s default; the resolved client used the unnamed client (named fake got 0 requests). The test also stubs the unnamed default client with a fake handler so the red run never touches the network, and asserts it gets 0 requests. `HttpClientName` lives on `AnticaptchaServiceCollectionExtensions` (internal). No test package reference was needed (`ServiceCollection` is transitive).
-- [ ] Verification: Phase 2 manual checks [checkpoint marker]
+- [x] Verification: Phase 2 manual checks [70b9883] — user confirmed 2026-09-30
   - Run the offline suite (all green) and `dotnet build` (warnings ≤ 15). Coverage run: new and changed code ≥ 80%.
   - Probe:
     - A `StubHandler` that fails the 1st and 3rd `getTaskResult` → the solve still returns Ready.
