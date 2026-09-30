@@ -55,7 +55,7 @@ internal class HttpHelper : IHttpHelper
         public async Task<T> PostAsync<T>(Uri url, string payload, CancellationToken cancellationToken)
             where T : BaseResponse, new()
         {
-            var httpClient = _httpClient ?? _httpClientFactory?.CreateClient() ?? throw new InvalidOperationException("HttpClient or IHttpClientFactory must be provided.");
+            var httpClient = _httpClient ?? _httpClientFactory?.CreateClient(AnticaptchaServiceCollectionExtensions.HttpClientName) ?? throw new InvalidOperationException("HttpClient or IHttpClientFactory must be provided.");
 
             T response = null; // Initialize response to null
             // RawPayload is exposed to callers (and often logged), so it never carries the client key or proxy password.
