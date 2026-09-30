@@ -156,7 +156,7 @@ Tasks:
   - Green: new `AntiCaptchaApi.Net/Requests/AntiGateRequest.cs`, `public class AntiGateRequest : CaptchaRequest<AntiGateSolution>, IAntiGateRequest`, with `TemplateName`, `JObject Variables`, `List<string> DomainsOfInterest`, `ProxyConfig`, a parameterless constructor and a copy constructor. It has full XML docs with a docs link. Add a `RequestTaskNameHelper` entry `{ typeof(AntiGateRequest), "AntiGateTask" }`. In `Build()`, strip `proxyType` for AntiGate only if the pre-step says so.
   - Commit: `feat(antigate): add AntiGateRequest for AntiGateTask`
   - Red: compile failure first (type missing); with the class alone both snapshot tests failed with `KeyNotFoundException` for `AntiGateRequest` in `RequestTaskNameHelper`. Green: name entry + `proxyType` stripped in `Build()` for `AntiGateRequest`. Extra test: `AntiGateRequest_CopyConstructor_CopiesAllProperties`; the full snapshot also checks that nested `variables` keys are not camel-cased. As planned, `RegistryCompletenessTests.EveryRequestType_HasValidator` stays red (AntiGateRequest has no validator) until Task 3.2; 104/105 green at this commit.
-- [ ] Task 3.2: `AntiGateRequestValidator` and registry wiring (TDD).
+- [x] Task 3.2: `AntiGateRequestValidator` and registry wiring (TDD). [30ed89f]
   - Red: `UnitTests/AntiGateRequestValidatorTests.cs`:
     - `Validate_Minimal_IsValid`
     - `Validate_MissingTemplateName_Error`
@@ -168,6 +168,7 @@ Tasks:
     Run them through `CreateCaptchaRequestHelper.Validate`. `RegistryCompletenessTests` goes red until wired.
   - Green: new internal `Internal/Validation/Validators/AntiGateRequestValidator.cs` (`CaptchaRequestValidator<AntiGateRequest, AntiGateSolution>`) with a null-tolerant proxy check (`ProxyConfig == null ? result : result.ValidateProxy(...)`). Register it in `CreateCaptchaRequestHelper`.
   - Commit: `feat(antigate): validate AntiGateRequest and register it`
+  - Red: all 12 new cases and `RegistryCompletenessTests.EveryRequestType_HasValidator` failed with `KeyNotFoundException` for `AntiGateRequest`. Green: 117/117. Extra tests: `Validate_ValidProxy_IsValid`, `Validate_ProxyWithoutAddress_Error`; the missing-template/URL and invalid-port tests are theories (null/"" and null/0/65536). Interpretation: "non-empty" `Variables` means non-null; an empty `{}` object is accepted (not rejected locally, to avoid over-rejecting templates without variables). The validator is `internal` (the existing validators are public; this one is new, so it stays off the public surface).
 - [ ] Task 3.3: End-to-end AntiGate solve and push variable (TDD).
   - Red: `UnitTests/AntiGateClientTests.cs`:
     - `SolveCaptchaAsync_AntiGate_ReturnsParsedSolution` (fake: createTask `{taskId}`, then ready JSON with `url`, `domain`, `cookies`, `localStorage`, `fingerprint`); assert all fields.
