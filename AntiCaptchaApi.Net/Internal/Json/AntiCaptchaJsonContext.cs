@@ -14,6 +14,7 @@ namespace AntiCaptchaApi.Net.Internal.Json;
 [JsonSerializable(typeof(ApiErrorEnvelope))]
 [JsonSerializable(typeof(CreateTaskRequest))]
 [JsonSerializable(typeof(CreateTaskResponse))]
+[JsonSerializable(typeof(ProxyType))]
 internal sealed partial class AntiCaptchaJsonContext : JsonSerializerContext
 {
 }
