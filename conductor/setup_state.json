@@ -1,0 +1,12 @@
+{
+  "project_type": "brownfield",
+  "created_at": "2026-09-30",
+  "last_successful_step": "complete",
+  "source_of_context": "Code review session 2026-09-29/30 + conductor/design-v3.md",
+  "settings": {
+    "coverage_target": 80,
+    "commit_strategy": "per_task",
+    "git_notes": false,
+    "parallel_agents": "worktree"
+  }
+}

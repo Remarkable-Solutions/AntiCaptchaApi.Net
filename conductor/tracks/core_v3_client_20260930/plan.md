@@ -1,0 +1,633 @@
+# Implementation Plan: Core 3.0 client
+
+Track: `core_v3_client_20260930`. Spec: `./spec.md`. Design: `conductor/design-v3.md` §4.
+
+## Overview
+There are 7 phases, in build order: foundation → task model and catalog → transport and errors → pipeline → account endpoints → observability → removal and docs. Each phase leaves the solution building with all offline tests green.
+
+Conventions for every task (see `conductor/workflow.md`):
+- Red → Green → Refactor. Run the listed tests red first and confirm they fail for the right reason. Then run the full offline suite:
+  `DOTNET_ROLL_FORWARD=Major dotnet test AntiCaptchaApi.Net.sln --filter "FullyQualifiedName~UnitTests"`
+- All new tests live under the namespace `AntiCaptchaApi.Net.Tests.UnitTests.*` so that the filter picks them up. Live tests live under `AntiCaptchaApi.Net.Tests.LiveTests.*` and are **never** run in task loops.
+- The test project targets **net10.0** (the only local runtime). Tests exercise the core `net8.0` asset. `netstandard2.0` is verified by building only, and by the NFR-1 API rules.
+- Commit per task: `<type>(<scope>): <description>`. The body is a summary, the files changed and the reason, plus the trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Then mark `[x] <sha7>` in this file and make a separate `conductor(plan): Mark task '<name>' as complete` commit.
+- Quality gates: 0 new warnings (the core project has `WarningsAsErrors=nullable;CS1591`), XML docs on every public member, coverage ≥ 80 % on new code, no secrets in messages/`ToString`/telemetry.
+- Paths: core = `AntiCaptchaApi.Net/`, tests = `AntiCaptchaApi.Net.Tests/`, probe = `tools/AntiCaptchaApi.Net.Probe/`.
+- Never push, tag or publish.
+
+---
+
+## Phase 1: Foundation (branch, legacy capture, TFMs, JSON, test infra)
+Goal: branch `v3` exists and the 2.x wire contract and public API are frozen into checked-in files. After that, the core targets `netstandard2.0;net8.0` with STJ and no Newtonsoft/M.E.Http, 2.x code is excluded from compilation, and the test project (net10.0) has fakes, snapshot tooling and the probe.
+
+Tasks:
+- [ ] Task 1.1: Create branch and record baseline (no red phase — setup)
+  - Precondition: `hotfix_2x_critical_bugs_20260930` is complete. Run `git switch fix/2x-critical-bugs && git switch -c v3`.
+  - Run build and offline tests. Record the test count and warning count under "Baselines" at the end of this file.
+  - Commit: none (only the plan update `conductor(plan): Record v3 baseline`).
+
+- [ ] Task 1.2: Capture 2.x wire contract and public API (TDD: characterization)
+  - Add `AntiCaptchaApi.Net.Tests/UnitTests/Legacy/LegacyContractCapture.cs`. It is temporary and uses 2.x `CreateCaptchaRequestHelper.Build` and Newtonsoft.
+  - `Capture_EveryLegacyRequestType_WritesWireSnapshot` (Theory over every concrete 2.x request type, **including the hotfix `AntiGateRequest`**) writes `Snapshots/Legacy2x/<RequestType>.<case>.json` in compact form with sorted keys:
+    - Proxyless classes get the cases `minimal` and `full`. Proxy classes get `proxy`.
+    - Use the canonical sample values that `TaskSamples` will reuse in Phase 2: url `https://example.com/login`, key `SITE_KEY`, proxy `Socks5 203.0.113.10:1080 proxyUser/proxyPass`, UA `Mozilla/5.0 (probe)`.
+  - `Capture_LegacyPublicApi_WritesList` reflects over the 2.x assembly and writes `Snapshots/Legacy2x/public-api.txt`, one line per public type and per public member (`Type` and `Type.Member(params)`), sorted. Include enum member numeric values; Task 5.2 uses them.
+  - Red: run the capture with the files absent. The test writes them and fails with "snapshot created — review". Green: rerun; the files match.
+  - If a 2.x type throws during serialization (for example `ImageToCoordinatesRequest` duplicate `websiteURL`, unless the hotfix fixed it), write that file by hand from the 2.x properties and note it under "Deviations" at the end of this file.
+  - Commit: `test(legacy): capture 2.x createTask wire contract and public API`
+
+- [ ] Task 1.3: Retarget core and drop 2.x dependencies (TDD)
+  - Red: `UnitTests/Packaging/CoreAssemblyTests.cs`:
+    - `CoreAssembly_DoesNotReferenceNewtonsoftOrMicrosoftExtensions` (checks `GetReferencedAssemblies()` of `typeof(SoftId).Assembly`)
+    - `SoftId_Value_Is1023`
+  - Green, in `AntiCaptchaApi.Net/AntiCaptchaApi.Net.csproj`:
+    - `TargetFrameworks=netstandard2.0;net8.0`, `LangVersion=latest`, `Nullable=enable`, `GenerateDocumentationFile=true`, `WarningsAsErrors=nullable;CS1591`.
+    - Remove the `Newtonsoft.Json` and `Microsoft.Extensions.Http` references. Add `System.Text.Json 8.0.5` with `Condition="'$(TargetFramework)'=='netstandard2.0'"`.
+    - Add `<Compile Remove>` for `Requests/**; Responses/**; Models/**; Enums/**; Internal/{Common,Converters,Extensions,Helpers,Models,Services,Validation}/**; AnticaptchaClient.cs; IAnticaptchaClient.cs; AnticaptchaServiceCollectionExtensions.cs`.
+    - Keep `InternalsVisibleTo AntiCaptchaApi.Net.Tests`.
+    - Add `Internal/SoftId.cs` (`internal static class SoftId { internal const int Value = 1023; }`).
+    - Add `Internal/Polyfills/IsExternalInit.cs`, `CallerArgumentExpressionAttribute.cs` and `NullableAttributes.cs`, all internal and wrapped in `#if !NET5_0_OR_GREATER`.
+  - Test project in the same task: `TargetFramework=net10.0`. Add `<Compile Remove>` for `UnitTests/RequestSerializationTests.cs; IntegrationTests/**; Helpers/**; Models/**; TestEnvironment.cs`. Delete `UnitTests/Legacy/LegacyContractCapture.cs`; its output is checked in.
+  - Update `conductor/tech-stack.md` with a dated note: test TFM is net10.0 only for this track, and `ISystemClock` is used instead of `TimeProvider`.
+  - Verify: `dotnet build` shows 0 warnings for both TFMs, and `dotnet pack` shows the nuspec dependencies for ns2.0 = STJ only and net8.0 = none.
+  - Commit: `chore(core)!: target netstandard2.0/net8.0 with System.Text.Json; exclude 2.x sources`
+
+- [ ] Task 1.4: Test infrastructure (TDD)
+  - Core: `Internal/Time/ISystemClock.cs` (`DateTimeOffset UtcNow`, `Task Delay(TimeSpan, CancellationToken)`) and `Internal/Time/SystemClock.cs`.
+  - `UnitTests/Infrastructure/FakeHttpMessageHandler.cs`:
+    - Scripted responses per API method (a queue of `Func<HttpRequestMessage, Task<HttpResponseMessage>>` or exceptions).
+    - Records requests as (method name, body JSON).
+    - Throws `InvalidOperationException` on an unscripted call.
+  - `UnitTests/Infrastructure/FakeClock.cs`: `Delay` advances `UtcNow`, records every delay, returns immediately and honours cancellation.
+  - `UnitTests/Infrastructure/SnapshotAssert.cs`:
+    - Compares JSON semantically, independent of key order.
+    - On a mismatch, prints missing, extra and changed keys.
+    - With `UPDATE_SNAPSHOTS=1`, writes the source file located via `[CallerFilePath]` and still fails with "snapshot updated — review".
+  - Test csproj: `<None Include="Snapshots/**;Fixtures/**" CopyToOutputDirectory="PreserveNewest" />`.
+  - Red, then green:
+    - `FakeHttpMessageHandlerTests.Send_UnscriptedMethod_Throws`
+    - `FakeHttpMessageHandlerTests.Send_RecordsMethodAndBody`
+    - `FakeClockTests.Delay_AdvancesUtcNow_AndRecordsDelay`
+    - `FakeClockTests.Delay_CancelledToken_ThrowsOperationCanceled`
+    - `SnapshotAssertTests.Match_DifferentKeyOrder_Passes`
+    - `SnapshotAssertTests.Mismatch_ReportsMissingExtraChangedKeys`
+    - `SystemClockTests.Delay_Zero_CompletesImmediately`
+  - Commit: `test(infra): add fake HTTP handler, fake clock and snapshot assertions`
+
+- [ ] Task 1.5: JSON foundation (TDD)
+  - Add:
+    - `Internal/Json/AntiCaptchaJsonContext.cs`: `[JsonSourceGenerationOptions(DefaultIgnoreCondition=WhenWritingNull, WriteIndented=false, PropertyNamingPolicy=CamelCase)]`.
+    - `Internal/Json/LowerCaseEnumConverter.cs`: `JsonStringEnumConverter<T>` with camelCase.
+    - `Internal/Json/Envelopes/ApiErrorEnvelope.cs`: `errorId`, `errorCode`, `errorDescription`.
+    - `Internal/Json/Envelopes/CreateTaskRequest.cs`: `clientKey`, `task` (`JsonObject`), `softId`, `languagePool`, `callbackUrl`.
+    - `CreateTaskResponse.cs`: `taskId`.
+  - Red, then green:
+    - `AntiCaptchaJsonContextTests.Serialize_CreateTaskRequest_IsCompactAndOmitsNulls`
+    - `AntiCaptchaJsonContextTests.Deserialize_ErrorEnvelope_ReadsAllFields`
+    - `AntiCaptchaJsonContextTests.Serialize_CreateTaskRequest_AlwaysContainsSoftId1023`: `CreateTaskRequest` gets `SoftId` from `SoftId.Value` and cannot be set by callers.
+  - Commit: `feat(json): add source-generated JSON context and API envelopes`
+
+- [ ] Task 1.6: Console probe (no red phase — tooling)
+  - Create `tools/AntiCaptchaApi.Net.Probe/AntiCaptchaApi.Net.Probe.csproj` (net10.0, `IsPackable=false`) and add it to `AntiCaptchaApi.Net.sln`.
+  - `Program.cs` with the command `info`: prints the core assembly version, TFM and referenced assemblies. Later phases add commands. Live commands read `ClientKey` from the environment and exist only for the user to run.
+  - Commit: `chore(probe): add console probe for manual verification`
+
+- [ ] Verification 1: Phase 1 checkpoint [checkpoint marker]
+  - Run the offline suite. Record the new baselines (tests, warnings) at the end of this file.
+  - Manual:
+    1. `dotnet build AntiCaptchaApi.Net.sln` shows 0 core warnings for both TFMs.
+    2. `dotnet pack AntiCaptchaApi.Net -c Release -o <scratch>` then read the `.nuspec` inside the nupkg. The dependency groups are ns2.0 = System.Text.Json and net8.0 = empty.
+    3. `dotnet run --project tools/AntiCaptchaApi.Net.Probe -- info` does not list Newtonsoft.
+    4. Inspect `Snapshots/Legacy2x/` and confirm there is one file per 2.x request type and case, including AntiGate, plus `public-api.txt`.
+  - Wait for user confirmation, then follow the checkpoint protocol.
+
+---
+
+## Phase 2: Task model, validation, catalog, snapshots
+Goal: all 13 task records exist with validation. Their JSON is proven by reflection-discovered snapshot tests, and a parity test shows that no 2.x field is lost.
+
+Tasks:
+- [ ] Task 2.1: `Proxy` and `ProxyType` (TDD)
+  - Files: `Proxy.cs`, `ProxyType.cs` (with `[JsonConverter(typeof(LowerCaseEnumConverter<ProxyType>))]`).
+  - Tests `UnitTests/Tasks/ProxyTests.cs`:
+    - `ToString_WithPassword_RedactsPassword`
+    - `ToString_WithoutPassword_DoesNotPrintPlaceholder`
+    - `Equality_SameValues_AreEqual`
+    - `ProxyType_Serializes_Lowercase` (Theory: Http→`http`, Socks4→`socks4`, Socks5→`socks5`)
+  - Commit: `feat(tasks): add Proxy record with redacted ToString`
+
+- [ ] Task 2.2: `Validator`, `ValidationError`, `AntiCaptchaValidationException` (TDD)
+  - Files: `Tasks/Validator.cs`, `Errors/ValidationError.cs`, `Errors/AntiCaptchaValidationException.cs`.
+  - Tests `UnitTests/Tasks/ValidatorTests.cs`:
+    - `Url_Relative_AddsError`
+    - `Url_FtpScheme_AddsError`
+    - `Url_Https_NoError`
+    - `NotEmpty_Whitespace_AddsErrorNamedByCallerExpression`, which asserts the field `"WebsiteKey"` when called as `v.NotEmpty(WebsiteKey)`
+    - `Range_OutOfRange_AddsError`
+    - `OneOf_NotInSet_AddsError`
+    - `Chaining_CollectsAllErrors`
+  - Tests `UnitTests/Errors/AntiCaptchaValidationExceptionTests.cs`:
+    - `Message_ListsEveryFieldError`
+    - `Errors_AreReadOnly`
+  - Commit: `feat(validation): add fluent Validator and AntiCaptchaValidationException`
+
+- [ ] Task 2.3: `CaptchaTask`, `CaptchaTask<TSolution>`, `ProxyMode`, `Solution` (TDD)
+  - Files:
+    - `Tasks/CaptchaTask.cs`: `private protected` ctor; `Proxy`; internal abstract `ResolveTypeName()`, `RunValidation()`, `ResolvedFirstPollDelay`.
+    - `Tasks/CaptchaTaskOfT.cs`: the design members, plus mode-based name resolution and proxy validation before the per-type `Validate`.
+    - `Tasks/ProxyMode.cs`, `Tasks/Solution.cs`.
+  - Tests `UnitTests/Tasks/CaptchaTaskTests.cs` use test-only records in the test assembly: `NoneTestTask`, `OptionalTestTask`, `RequiredTestTask`, `SameNameTestTask`. This is allowed through `InternalsVisibleTo` + `private protected`.
+    - `TypeName_None_IsTypeBase`
+    - `TypeName_OptionalWithoutProxy_AppendsProxyless`
+    - `TypeName_OptionalWithProxy_IsTypeBase`
+    - `TypeName_Required_IsTypeBase`
+    - `TypeName_OptionalSameName_IgnoresProxy`
+    - `Validate_ProxyOnNoneType_FailsWithProxyNotSupported`
+    - `Validate_RequiredWithoutProxy_FailsWithProxyRequired`
+    - `Validate_ProxyPortOutOfRange_Fails` (Theory: 0, 65536)
+    - `Validate_ProxyPort65535_Passes`
+    - `Validate_ProxyEmptyAddress_Fails`
+    - `Validate_ProxyUndefinedType_Fails`
+    - `Validate_PerTypeRulesAndProxyRules_AreAllReported`
+    - `FirstPollDelay_Default_Is10Seconds`
+  - Commit: `feat(tasks): add CaptchaTask base with ProxyMode type naming and proxy validation`
+
+- [ ] Task 2.4: `TaskSerializer` and the first catalog entry `TurnstileTask` (TDD)
+  - Files: `Internal/Json/TaskSerializer.cs`, `Tasks/TurnstileTask.cs`, `Tasks/Solutions/TurnstileSolution.cs`, and registration of both in the context.
+  - Tests `UnitTests/Tasks/TaskSerializerTests.cs`:
+    - `ToJsonObject_WithoutProxy_WritesTypeProxyless_AndNoProxyFields`
+    - `ToJsonObject_WithProxy_FlattensAllFiveProxyFields`
+    - `ToJsonObject_ProxyWithoutCredentials_OmitsLoginAndPassword`
+    - `ToJsonObject_DoesNotEmitProxyObjectOrInternalMembers` (no `proxy`, `typeBase`, `proxyMode`, `firstPollDelay`)
+    - `ToJsonObject_UnregisteredType_ThrowsInvalidOperationWithTypeName` (uses `OptionalTestTask`)
+  - Tests `UnitTests/Tasks/TurnstileTaskTests.cs`:
+    - `Validate_InvalidUrlAndEmptyKey_ReportsBoth`
+    - `Validate_ProxyWithoutUserAgent_Fails`
+    - `Serialize_OptionalFields_UseActionCDataChlPageDataNames`
+  - Commit: `feat(tasks): add TaskSerializer and TurnstileTask`
+
+- [ ] Task 2.5: Reflection-discovered snapshot and parity tests (TDD)
+  - Files:
+    - `UnitTests/Tasks/TaskSamples.cs`: `IReadOnlyDictionary<Type, IReadOnlyList<(string Case, CaptchaTask Task)>>` using the Task 1.2 canonical values.
+    - `UnitTests/Tasks/TaskSnapshotTests.cs`
+    - `UnitTests/Tasks/LegacyParityTests.cs`: a table mapping each legacy file to its 3.0 file, plus the `DocumentedDeviations` allow-list from spec §9.
+  - Tests:
+    - `EveryConcreteTaskType_HasMinimalFullAndProxySamples`: `proxy` is not required for `ProxyMode.None`. Types are discovered via `typeof(CaptchaTask).Assembly.GetTypes()`, non-abstract.
+    - `EveryConcreteTaskType_AndItsSolution_AreRegisteredInJsonContext`. The failure message names the missing `[JsonSerializable]`.
+    - `EverySample_HasSnapshotFile`
+    - `Snapshot_MatchesExpectedJson` (Theory via `MemberData` over all samples)
+    - `EverySample_PassesValidation`
+    - `LegacyParity_EveryLegacyKeyPresentWithSameValue_ExceptDocumentedDeviations`
+    - `LegacyParity_EveryLegacyFile_IsMapped`
+  - Add `Snapshots/Tasks/TurnstileTask.{minimal,full,proxy}.json`.
+  - Legacy files for types that do not exist yet go in the mapping table with an explicit `Pending` status. Parity skips them, and "IsMapped" accepts only files that are listed. Task 2.12 deletes `Pending` support, so from then on any unmapped legacy file fails. The suite stays green after every task.
+  - Commit: `test(serialization): discover every task type and assert snapshots and 2.x parity`
+
+  Catalog tasks 2.6–2.12 all follow the same TDD recipe:
+  - **Red:**
+    1. Add the samples to `TaskSamples`.
+    2. Add the snapshot JSON by hand: start from the Legacy2x file and apply the spec §9 deviations and additions.
+    3. Add a `<Type>Tests` class with the listed validation tests.
+  - **Green:**
+    1. Add the record and solution files (XML `<summary>` links the anti-captcha docs page).
+    2. Register the task and its solution in the context.
+    3. Switch the legacy parity entries from `Pending` to mapped.
+  - **Solution deserialization** is tested in Phase 3 (Task 3.6).
+
+- [ ] Task 2.6: `ImageToTextTask`, `ImageToCoordinatesTask` (+ `NumericOption`, `ImageToCoordinatesMode`, solutions)
+  - Tests `ImageToTextTaskTests`:
+    - `FromFile_MissingFile_ThrowsFileNotFound`
+    - `FromFile_ExistingFile_SetsBase64Body` (temp file)
+    - `FromBytes_SetsBase64Body`
+    - `Validate_EmptyBody_Fails`
+    - `Validate_DataUriPrefix_Fails`
+    - `Validate_MinGreaterThanMax_Fails`
+    - `Validate_Proxy_FailsNotSupported`
+    - `TypeName_IsImageToTextTask`
+    - `FirstPollDelay_Is3Seconds`
+    - `Numeric_SerializesAsNumber`
+  - Tests `ImageToCoordinatesTaskTests`:
+    - `Mode_SerializesLowercaseString` (points/rectangles)
+    - `FromFile_MissingFile_ThrowsFileNotFound`
+    - `Validate_EmptyBody_Fails`
+    - `Validate_InvalidOptionalWebsiteUrl_Fails`
+    - `FirstPollDelay_Is3Seconds`
+  - Snapshots: `ImageToTextTask.{minimal,full}.json`, `ImageToCoordinatesTask.{minimal,full}.json`.
+  - Commit: `feat(tasks): add ImageToText and ImageToCoordinates tasks`
+
+- [ ] Task 2.7: `RecaptchaV2Task`, `RecaptchaV2EnterpriseTask`, `RecaptchaSolution`
+  - Tests:
+    - `RecaptchaV2TaskTests.TypeName_ProxylessAndProxy`
+    - `RecaptchaV2TaskTests.Validate_ProxyWithoutUserAgent_Fails`
+    - `RecaptchaV2TaskTests.Serialize_CookiesAndIsInvisible`
+    - `RecaptchaV2EnterpriseTaskTests.EnterprisePayload_SerializesAsObject`
+    - `RecaptchaV2EnterpriseTaskTests.Validate_ApiDomainNotAllowed_Fails`
+    - `RecaptchaV2EnterpriseTaskTests.Validate_ApiDomainRecaptchaNet_Passes`
+  - Snapshots: `{minimal,full,proxy}` for both.
+  - Commit: `feat(tasks): add RecaptchaV2 and RecaptchaV2Enterprise tasks`
+
+- [ ] Task 2.8: `RecaptchaV3Task` (+ `MinScore`, `MinScoreJsonConverter`)
+  - Tests:
+    - `MinScore_SerializesAsNumber` (Theory: 0.3, 0.7, 0.9)
+    - `MinScore_Default_Is03`
+    - `IsEnterprise_Default_FalseAndAlwaysSerialized`
+    - `TypeName_IsRecaptchaV3TaskProxyless`
+    - `Validate_Proxy_FailsNotSupported`
+    - `Validate_UndefinedMinScore_Fails`
+  - Snapshots: `{minimal,full}`; `full` has `IsEnterprise = true`.
+  - Parity: `RecaptchaV3Request.*` and `RecaptchaV3EnterpriseRequest.*` both map to `RecaptchaV3Task` samples.
+  - Commit: `feat(tasks): add RecaptchaV3 task with MinScore enum`
+
+- [ ] Task 2.9: `FunCaptchaTask`, `FunCaptchaSolution`
+  - Tests:
+    - `Serialize_ApiJsSubdomain_UsesFuncaptchaApiJSSubdomainName`
+    - `Validate_EmptyPublicKey_Fails`
+    - `Validate_ProxyWithoutUserAgent_Fails`
+  - Snapshots: `{minimal,full,proxy}`.
+  - Commit: `feat(tasks): add FunCaptcha task`
+
+- [ ] Task 2.10: `GeeTestV3Task`, `GeeTestV4Task`, solutions
+  - Tests:
+    - `GeeTestV3TaskTests.Serialize_Version3_AndTypeGeeTestTask`
+    - `GeeTestV3TaskTests.Validate_EmptyChallenge_Fails`
+    - `GeeTestV4TaskTests.Serialize_Version4_WithInitParametersObject`
+    - `GeeTestV4TaskTests.Validate_ChallengeOptional_Passes`
+    - `GeeTestV4TaskTests.Validate_ProxyWithoutUserAgent_Fails`
+  - Snapshots: `{minimal,full,proxy}` for both.
+  - Commit: `feat(tasks): add GeeTest v3 and v4 tasks`
+
+- [ ] Task 2.11: `AmazonWafTask`, `ProsopoTask`, `FriendlyCaptchaTask`, solutions
+  - Tests:
+    - `AmazonWafTaskTests.TypeName_AmazonTaskProxylessAndAmazonTask` (the 2.x `KeyNotFoundException` regression)
+    - `AmazonWafTaskTests.Validate_EmptyIvOrContext_Fails`
+    - `ProsopoTaskTests.Validate_ProxyWithoutUserAgent_Fails`
+    - `FriendlyCaptchaTaskTests.Validate_ProxyWithoutUserAgent_Fails`
+    - `FriendlyCaptchaTaskTests.Solution_IsFriendlyCaptchaSolution`
+  - Snapshots: `{minimal,full,proxy}` for each.
+  - Commit: `feat(tasks): add AmazonWaf, Prosopo and FriendlyCaptcha tasks`
+
+- [ ] Task 2.12: `AntiGateTask`, `AntiGateSolution`
+  - Resolve spec Q-1 against `Snapshots/Legacy2x/AntiGateRequest.*.json` (proxyType present or absent). Implement the internal override only if it is needed.
+  - Tests:
+    - `TypeName_AlwaysAntiGateTask_WithAndWithoutProxy`
+    - `Variables_SerializeAsNestedObject`
+    - `Validate_EmptyTemplateName_Fails`
+    - `Validate_NullVariables_Fails`
+    - `Proxy_FieldsMatchLegacyAntiGateContract`
+  - Snapshots: `{minimal,full,proxy}`.
+  - Remove `Pending` support from `LegacyParityTests`. `LegacyParity_EveryLegacyFile_IsMapped` must be green with no pending entries.
+  - Commit: `feat(tasks): add AntiGate task`
+
+- [ ] Verification 2: Phase 2 checkpoint [checkpoint marker]
+  - Run the offline suite and coverage for `Tasks/**` and `Internal/Json/**` (≥ 80 %).
+  - Add a probe command `serialize`: prints the compact JSON of every sample task, and prints the validation errors of `new TurnstileTask("not-a-url", "")`.
+  - Manual:
+    1. Run `dotnet run --project tools/AntiCaptchaApi.Net.Probe -- serialize`. The user eyeballs the JSON against the anti-captcha docs pages linked in the XML docs.
+    2. Confirm that `proxyPassword` shows only in JSON and never in `ToString()` output (the probe prints both).
+  - Wait for user confirmation, then follow the checkpoint protocol.
+
+---
+
+## Phase 3: Transport, errors, redaction, client skeleton
+Goal: typed errors and a hardened HTTP transport, plus the `AntiCaptchaClient` constructors, `CreateTaskAsync` and `GetTaskResultAsync`, all with no secret leakage.
+
+Tasks:
+- [ ] Task 3.1: `AntiCaptchaErrorCode`, `AntiCaptchaError`, parser and classifier (TDD)
+  - Files: `Errors/AntiCaptchaErrorCode.cs` (every documented `ERROR_*` code plus the client codes from spec FR-6), `Errors/AntiCaptchaError.cs`, `Internal/Errors/ErrorCodeParser.cs`, `Internal/Errors/ErrorClassifier.cs`.
+  - Tests:
+    - `ErrorCodeParserTests.Parse_KnownCode_MapsEnum` (Theory, one row per documented code)
+    - `Parse_UnknownCode_ReturnsUnknownAndKeepsRaw`
+    - `Parse_Null_ReturnsUnknown`
+    - `ErrorClassifierTests.IsRetryable` (Theory: NoSlotAvailable, CaptchaUnsolvable, ProxyConnectionRefused, HttpError-5xx → true; KeyDoesNotExist, ZeroBalance, IpBlocked, SolveTimeout, Unknown → false)
+    - `IsTransient` (Theory: HttpError-network/408/429/5xx, HttpTimeout, InvalidResponse → true; HttpError-400 → false)
+  - Commit: `feat(errors): add typed AntiCaptchaErrorCode with retry classification`
+
+- [ ] Task 3.2: `AntiCaptchaException` and `SecretRedactor` (TDD)
+  - Files: `Errors/AntiCaptchaException.cs`, `Internal/Errors/SecretRedactor.cs` (constructed with the key and a set of proxy passwords; `Redact(string?)`).
+  - Tests:
+    - `SecretRedactorTests.Redact_ReplacesKeyAndPasswords`
+    - `Redact_Null_ReturnsNull`
+    - `Redact_EmptySecret_IsIgnored`
+    - `AntiCaptchaExceptionTests.Message_ContainsCodeAndDescription`
+    - `Properties_ExposeErrorTaskIdAttempts`
+  - Commit: `feat(errors): add AntiCaptchaException and secret redaction`
+
+- [ ] Task 3.3: `ApiTransport` (TDD)
+  - File: `Internal/Http/ApiTransport.cs`, with `PostAsync<TReq,TRes>(string method, TReq body, JsonTypeInfo<TReq>, JsonTypeInfo<TRes>, SecretRedactor, CancellationToken)`. Use `#if NET5_0_OR_GREATER` for `ReadAsStringAsync(ct)`.
+  - Tests `UnitTests/Http/ApiTransportTests.cs` (fake handler):
+    - `PostAsync_PostsJsonToBaseAddressPlusMethod`
+    - `PostAsync_ErrorIdNonZero_ThrowsMappedAntiCaptchaException`
+    - `PostAsync_HttpRequestException_ThrowsTransientHttpError`
+    - `PostAsync_Status503_ThrowsTransientHttpError`
+    - `PostAsync_Status400_ThrowsFatalHttpError`
+    - `PostAsync_RequestTimeoutElapses_ThrowsHttpTimeout` (`RequestTimeout = 50 ms`, handler waits on ct)
+    - `PostAsync_HttpClientTimeout_ThrowsHttpTimeout` (the handler throws `TaskCanceledException` while the user ct is not cancelled)
+    - `PostAsync_UserCancels_ThrowsOperationCanceled_NotAntiCaptchaException`
+    - `PostAsync_InvalidJson_ThrowsInvalidResponse_WithoutBody`
+    - `PostAsync_ErrorDescriptionEchoesSecrets_IsRedacted`
+  - Commit: `feat(http): add ApiTransport with timeout/cancellation separation and error mapping`
+
+- [ ] Task 3.4: `AntiCaptchaClient` constructors, options, shared handler (TDD)
+  - Files: `IAntiCaptchaClient.cs` (declared empty here; methods are added as they are implemented), `AntiCaptchaClient.cs`, `AntiCaptchaClientOptions.cs`, `Internal/Http/SharedHandler.cs` (`#if NET8_0_OR_GREATER` `SocketsHttpHandler{PooledConnectionLifetime=2min}` `#else` `HttpClientHandler`). The internal ctor takes `ISystemClock` and `Func<double>`.
+  - Tests `UnitTests/Client/AntiCaptchaClientCtorTests.cs`:
+    - `Ctor_NullOrWhitespaceKey_ThrowsArgumentException` (Theory; the message never contains the value)
+    - `Ctor_KeyOnly_TwoInstances_ShareHandler` (internal accessor)
+    - `Ctor_WithHttpClient_DoesNotMutateTimeoutOrBaseAddress`
+    - `Ctor_NullHttpClient_ThrowsArgumentNull`
+    - `ToString_DoesNotContainKey`
+    - `Options_Defaults_MatchSpec`
+  - Commit: `feat(client): add AntiCaptchaClient constructors with shared handler`
+
+- [ ] Task 3.5: `CreateTaskAsync` and `CreateOptions` (TDD)
+  - Files: `CreateOptions.cs` (non-sealed record, because `SolveOptions` derives from it in Phase 4).
+  - Tests `UnitTests/Client/CreateTaskTests.cs`:
+    - `CreateTaskAsync_InvalidTask_ThrowsValidation_AndSendsNoRequest`
+    - `CreateTaskAsync_SendsClientKeySoftId1023AndTask`: snapshot `Snapshots/Envelopes/createTask.turnstile.json` with key `TEST_KEY`
+    - `CreateTaskAsync_WithCreateOptions_SendsLanguagePoolAndCallbackUrl`
+    - `CreateTaskAsync_Success_ReturnsTaskId`
+    - `CreateTaskAsync_ApiError_ThrowsAntiCaptchaException`
+    - `CreateTaskAsync_NullTask_ThrowsArgumentNull`
+  - Commit: `feat(client): add CreateTaskAsync`
+
+- [ ] Task 3.6: `GetTaskResultAsync` and `TaskStatus<T>`, plus solution deserialization for every type (TDD)
+  - Files: `TaskStatus.cs`, `Internal/Json/Envelopes/GetTaskResultRequest.cs` / `GetTaskResultResponse.cs` (solution as `JsonElement?`, then deserialized with `GetTypeInfo(typeof(TSolution))`; `cost` read from string; unix times).
+  - Fixtures: `Fixtures/TaskResults/<SolutionType>.ready.json`, one per solution type. Build them from anti-captcha doc examples and 2.x converter expectations; AmazonWaf uses `token` (spec Q-2).
+  - Tests `UnitTests/Client/GetTaskResultTests.cs`:
+    - `GetTaskResult_Processing_ReturnsNotReady`
+    - `GetTaskResult_Ready_MapsCostIpTimesSolveCount`
+    - `GetTaskResult_CostAsString_ParsesDecimal`
+    - `GetTaskResult_ApiError_Throws`
+    - `EverySolutionType_HasReadyFixture` (reflection)
+    - `EverySolutionType_DeserializesFromFixture` (Theory; asserts non-null required members)
+    - `AntiGateSolution_ReadsCookiesLocalStorageFingerprint`
+    - `ImageToCoordinatesSolution_ReadsNestedArrays`
+  - Commit: `feat(client): add GetTaskResultAsync with typed solutions`
+
+- [ ] Task 3.7: Redaction sweep (TDD)
+  - Tests `UnitTests/Security/RedactionTests.cs`, with key `SECRET_KEY_123` and proxy password `PX_PASS_456`:
+    - `AllTransportErrorPaths_ExceptionMessageAndToString_ContainNoSecrets` (Theory over the Task 3.3 scenarios through `CreateTaskAsync`)
+    - `AntiCaptchaError_ToString_ContainsNoSecrets`
+    - `Task_ToString_WithProxy_ContainsNoPassword` (every sample in `TaskSamples`)
+    - `ValidationException_Message_ContainsNoProxyPassword`
+  - Commit: `test(security): assert secrets never leak through errors or ToString`
+
+- [ ] Verification 3: Phase 3 checkpoint [checkpoint marker]
+  - Run the offline suite and coverage for `Errors/**`, `Internal/Http/**`, `Internal/Errors/**` and `AntiCaptchaClient.cs`.
+  - Add probe commands:
+    - `offline-create`: in-process scripted handler; shows the request JSON with the key masked, and runs an error scenario whose message is printed.
+    - `live-create-image` (the **user runs this** with `ClientKey` set): creates one ImageToText task from `AntiCaptchaApi.Net.Tests/Resources/captchaexample.png` and prints the taskId.
+    - Optional `live-amazon-shape` for Q-2 (user only).
+  - Manual: run `offline-create` and confirm that no `SECRET` string appears. Live commands are optional and run by the user.
+  - Wait for user confirmation, then follow the checkpoint protocol.
+
+---
+
+## Phase 4: Solving pipeline
+Goal: `WaitForResultAsync`, `TrySolveAsync` and `SolveAsync` with the per-type first-poll delay, poll interval, transient tolerance, retry with backoff and jitter, `MaxAttempts`, per-attempt `Timeout`, `MaxCostPerSolve` and correct cancellation, all proven with `FakeClock`.
+
+Tasks:
+- [ ] Task 4.1: `SolveOptions` and `Backoff` (TDD)
+  - Files: `SolveOptions.cs` (sealed record deriving from `CreateOptions`), `Internal/Pipeline/Backoff.cs` (`Delay(int attempt, TimeSpan baseDelay, TimeSpan max, Func<double> random)`).
+  - Tests:
+    - `SolveOptionsTests.Defaults_MatchSpec`
+    - `Validate_NonPositiveTimeoutOrPollInterval_Throws` (Theory)
+    - `Validate_MaxAttemptsZero_Throws`
+    - `Validate_NegativeMaxCost_Throws`
+    - `BackoffTests.Delay_GrowsExponentially` (random = 0.5, so no jitter)
+    - `Delay_CappedAtMax`
+    - `Delay_JitterWithinPlusMinus20Percent` (random = 0 and 1)
+  - Commit: `feat(pipeline): add SolveOptions and exponential backoff with jitter`
+
+- [ ] Task 4.2: `WaitForResultAsync` (TDD)
+  - File: `Internal/Pipeline/SolvePipeline.cs` (poll loop). Add `WaitForResultAsync` to the interface and the client.
+  - Tests `UnitTests/Pipeline/WaitForResultTests.cs` (`FakeClock` + fake handler):
+    - `Wait_ProcessingTwiceThenReady_ReturnsSolution_AndPollsThreeTimes`
+    - `Wait_DelaysArePollInterval` (asserts the `FakeClock.Delays` sequence)
+    - `Wait_DefaultFirstPollDelay_IsZeroForExistingTask`
+    - `Wait_TransientErrorsBelowLimit_KeepsPolling`
+    - `Wait_ConsecutiveTransientErrorsExceedLimit_ThrowsWithTaskId`
+    - `Wait_TransientCounterResetsAfterSuccessfulPoll`
+    - `Wait_TimeoutElapsed_ThrowsSolveTimeout`
+    - `Wait_FatalApiError_ThrowsImmediately`
+    - `Wait_ReadyWithoutSolution_ThrowsInvalidResponse`
+    - `Wait_CancelledDuringDelay_ThrowsOperationCanceled`
+  - Commit: `feat(pipeline): add WaitForResultAsync polling with transient-error tolerance`
+
+- [ ] Task 4.3: `TrySolveAsync` and `SolveAsync` happy path and result fields (TDD)
+  - Files: `SolveResult.cs`; add both methods to `IAntiCaptchaClient` and `AntiCaptchaClient`.
+  - Tests `UnitTests/Pipeline/SolveTests.cs`:
+    - `TrySolve_Success_ReturnsTaskIdSolutionCostSolveTimeWorkerIpAttempts1`
+    - `TrySolve_FirstDelay_UsesTaskFirstPollDelay` (Theory: Turnstile 10 s, ImageToText 3 s)
+    - `TrySolve_FirstPollDelayOverride_Wins`
+    - `TrySolve_UsesClientDefaultSolveOptions_WhenNullPassed`
+    - `TrySolve_PassesLanguagePoolAndCallbackUrl`
+    - `TrySolve_InvalidTask_ThrowsValidation_NoRequests`
+    - `Solve_Failure_ThrowsAntiCaptchaExceptionWithTaskIdAndAttempts`
+    - `SolveResult_IsSuccess_Semantics`
+  - Commit: `feat(client): add SolveAsync and TrySolveAsync`
+
+- [ ] Task 4.4: Retry and backoff behaviour (TDD)
+  - Tests `UnitTests/Pipeline/RetryTests.cs`:
+    - `NoSlotOnCreate_TwiceThenSuccess_Attempts3_WithGrowingDelays`
+    - `CaptchaUnsolvableWhilePolling_RetriesWithNewTask`
+    - `ProxyConnectionRefused_Retries`
+    - `TransientHttpOnCreate_Retries`
+    - `ZeroBalance_NoRetry_Attempts1`
+    - `KeyDoesNotExist_NoRetry`
+    - `SolveTimeout_NoRetry` (spec R-4)
+    - `RetryableUntilMaxAttempts_FailsWithLastError`
+    - `CancelledDuringBackoff_ThrowsOperationCanceled`
+    - `TrySolve_ApiFailure_ReturnsErrorResult_NotThrow`
+  - Commit: `feat(pipeline): retry retryable errors with backoff up to MaxAttempts`
+
+- [ ] Task 4.5: `MaxCostPerSolve` (TDD)
+  - Tests `UnitTests/Pipeline/CostLimitTests.cs`:
+    - `CostLimitReachedBeforeRetry_FailsWithCostLimitReached`
+    - `SolutionReceived_AlwaysReturned_EvenAboveLimit`
+    - `NoLimit_DoesNotCheck`
+  - Commit: `feat(pipeline): add optional MaxCostPerSolve budget`
+
+- [ ] Verification 4: Phase 4 checkpoint [checkpoint marker]
+  - Run the offline suite and confirm the full suite takes under 30 s. Run coverage for `Internal/Pipeline/**` (≥ 80 %).
+  - Add probe commands:
+    - `offline-solve`: scripted processing → transient error → ready. Prints the `SolveResult` and the simulated timeline.
+    - `offline-retry`: NoSlot ×2 → success.
+    - `live-solve-image` (user only): `SolveAsync(ImageToTextTask.FromFile(...))`, printing the text, cost and attempts.
+  - Manual: run both offline commands. Optionally, the user runs `live-solve-image`.
+  - Wait for user confirmation, then follow the checkpoint protocol.
+
+---
+
+## Phase 5: Account, report and stats endpoints
+Goal: every remaining 2.x API method has a 3.0 equivalent (spec FR-8), and the public surface is pinned.
+
+Tasks:
+- [ ] Task 5.1: `GetBalanceAsync` (TDD)
+  - Tests `UnitTests/Client/AccountTests.cs`:
+    - `GetBalance_SendsClientKey_ReturnsDecimal`
+    - `GetBalance_ApiError_Throws`
+  - Commit: `feat(client): add GetBalanceAsync`
+
+- [ ] Task 5.2: `GetQueueStatsAsync`, `QueueType`, `QueueStats` (TDD)
+  - Tests:
+    - `GetQueueStats_SendsQueueId` (Theory over every `QueueType` value)
+    - `GetQueueStats_MapsAllFields`
+    - `QueueType_Values_MatchLegacyNumbers` (asserts that the 2.x numeric ids from `public-api.txt` and the enum values are equal, honouring the `RecaptchaB2*` → `RecaptchaV2*` renames)
+  - Commit: `feat(client): add GetQueueStatsAsync`
+
+- [ ] Task 5.3: `ReportAsync` and `Report` (TDD)
+  - Tests `UnitTests/Client/ReportTests.cs`:
+    - `Report_MapsToEndpoint` (Theory: IncorrectImageCaptcha → `reportIncorrectImageCaptcha`, IncorrectRecaptcha → `reportIncorrectRecaptcha`, CorrectRecaptcha → `reportCorrectRecaptcha`)
+    - `Report_SendsClientKeyAndTaskId`
+    - `Report_UndefinedValue_ThrowsArgumentOutOfRange_NoRequest`
+    - `Report_ApiError_Throws`
+  - Commit: `feat(client): add ReportAsync`
+
+- [ ] Task 5.4: `PushAntiGateVariableAsync` (TDD)
+  - Tests:
+    - `Push_SupportedValueTypes_SerializeCorrectly` (Theory: string, bool, int, long, double, decimal, `JsonNode`)
+    - `Push_UnsupportedType_ThrowsArgumentException_NoRequest`
+    - `Push_ApiError_Throws`
+  - Commit: `feat(client): add PushAntiGateVariableAsync`
+
+- [ ] Task 5.5: `GetSpendingStatsAsync`, `SpendingQuery`, `SpendingStats`, `DailySpending` (TDD)
+  - Tests:
+    - `GetSpendingStats_NullQuery_SendsOnlyClientKey`
+    - `GetSpendingStats_DateSentAsUnixSeconds`
+    - `GetSpendingStats_SendsQueueSoftIdIp`
+    - `GetSpendingStats_ReadsDataArray`
+  - Commit: `feat(client): add GetSpendingStatsAsync`
+
+- [ ] Task 5.6: `GetAppStatsAsync`, `AppStatsMode`, `AppStats` (TDD)
+  - Tests:
+    - `GetAppStats_SendsSoftIdAndLowercaseMode` (Theory over every mode)
+    - `GetAppStats_NullMode_OmitsMode`
+    - `GetAppStats_ReadsFromToAndChartData`
+  - Commit: `feat(client): add GetAppStatsAsync`
+
+- [ ] Task 5.7: Public surface guard (TDD)
+  - Tests `UnitTests/Packaging/PublicApiTests.cs`:
+    - `IAntiCaptchaClient_Methods_MatchDesign`: expected signatures are hard-coded from spec FR-4, and every method has a trailing `CancellationToken ct = default`.
+    - `EveryPublicType_HasXmlDocs`: redundant with CS1591, kept as a guard in case the warning setting is removed.
+    - `PublicTypes_OnlyInAllowedNamespaces` (`AntiCaptchaApi.Net`, `AntiCaptchaApi.Net.Tasks`)
+    - `NoPublicMember_ExposesInternalOrThirdPartyJsonTypes`, except the documented `JsonObject`/`JsonNode`/`JsonElement` on AntiGate and AppStats
+  - Commit: `test(api): pin IAntiCaptchaClient surface and public namespaces`
+
+- [ ] Verification 5: Phase 5 checkpoint [checkpoint marker]
+  - Run the offline suite and coverage.
+  - Add probe commands (user runs the live ones with `ClientKey`): `live-balance`, `live-queue <QueueType>`, `live-appstats`, `live-spending`.
+  - Manual: offline tests green. Optionally, the user runs the live read-only commands; they have no cost.
+  - Wait for user confirmation, then follow the checkpoint protocol.
+
+---
+
+## Phase 6: Observability
+Goal: `ActivitySource("AntiCaptcha")` and `Meter("AntiCaptcha")` telemetry, free of secrets.
+
+Tasks:
+- [ ] Task 6.1: DiagnosticSource dependency and `AntiCaptchaDiagnostics` (TDD)
+  - Add `System.Diagnostics.DiagnosticSource 8.0.0` to the csproj (netstandard2.0 only). Add `AntiCaptchaDiagnostics.cs` (public constants) and `Internal/Diagnostics/Telemetry.cs` (static `ActivitySource`, `Meter`, instruments).
+  - Tests:
+    - `AntiCaptchaDiagnosticsTests.Names_AreAntiCaptcha`
+    - `Telemetry_Instruments_HaveSpecNamesAndUnits` (`MeterListener.InstrumentPublished`)
+  - Commit: `feat(diagnostics): add AntiCaptcha ActivitySource and Meter`
+
+- [ ] Task 6.2: Activities (TDD)
+  - Tests `UnitTests/Diagnostics/ActivityTests.cs` (`ActivityListener`):
+    - `Solve_Success_EmitsSolveActivityWithTypeTaskIdAttempts`
+    - `Solve_Failure_SetsErrorStatusAndErrorCode`
+    - `EachHttpCall_EmitsChildActivityNamedByMethod`
+    - `NoListener_NoActivityCreated`
+  - Commit: `feat(diagnostics): trace solves and API calls`
+
+- [ ] Task 6.3: Metrics (TDD)
+  - Tests `UnitTests/Diagnostics/MetricsTests.cs` (`MeterListener`):
+    - `CreateTask_IncrementsTasksCreated`
+    - `Solve_Success_RecordsSolvesDurationAndCost`
+    - `Solve_Failure_IncrementsFailuresByErrorCode`
+    - `Retry_CountsEachCreatedTask`
+  - Commit: `feat(diagnostics): add task, failure, cost and duration metrics`
+
+- [ ] Task 6.4: Telemetry redaction (TDD)
+  - Tests:
+    - `Telemetry_AllTagValuesAndEvents_ContainNoKeyOrProxyPassword`, covering the success, retry, transient and fatal scenarios.
+  - Commit: `test(security): assert telemetry carries no secrets`
+
+- [ ] Verification 6: Phase 6 checkpoint [checkpoint marker]
+  - Run the offline suite and coverage.
+  - Add a probe command `telemetry`: registers `ActivityListener` and `MeterListener`, runs the `offline-solve` scenario, and prints activities and measurements.
+  - Manual:
+    1. Run `telemetry` and confirm the names and tags, and that no secret appears.
+    2. Run `dotnet pack` and check that the nuspec ns2.0 group = STJ + DiagnosticSource and net8.0 = empty.
+  - Wait for user confirmation, then follow the checkpoint protocol.
+
+---
+
+## Phase 7: Live tests port, 2.x removal, docs, version
+Goal: 2.x code is gone and the live tests are ported (opt-in). MIGRATION, README and CHANGELOG are complete and the version is `3.0.0-preview.1`.
+
+Tasks:
+- [ ] Task 7.1: Opt-in live test infrastructure and port (TDD for the attribute only)
+  - Files: `LiveTests/LiveFactAttribute.cs` and `LiveTheoryAttribute.cs` (set `Skip` when `ClientKey` is unset; `[Trait("Category","Live")]`), `LiveTests/LiveEnvironment.cs` (`ClientKey`, `ProxyAddress`, `ProxyPort`, `ProxyLogin`, `ProxyPassword`, same env names as 2.x).
+  - Test `UnitTests/Live/LiveFactAttributeTests.cs`:
+    - `Skip_WhenClientKeyMissing_IsSet`
+  - Port each 2.x `IntegrationTests/*` class to `LiveTests/<Type>LiveTests.cs` using `SolveAsync`:
+    - FriendlyCaptcha, FunCaptcha, GeeTest v3/v4 (merge the duplicate 2.x GeeTest classes), ImageToCoordinates (Theory over modes), ImageToText, Prosopo, RecaptchaV2, RecaptchaV2Enterprise, RecaptchaV3 (enterprise and non-enterprise), Turnstile.
+    - Account: balance, queue stats, app stats.
+    - Proxy variants run only when the proxy env vars are set.
+    - Keep `Resources/captchaexample.png` and `Resources/cats.jpeg`, and the GeeTest helper models (ported to STJ).
+  - Verify: `dotnet test --filter "FullyQualifiedName~UnitTests"` does not run them. `dotnet test --filter "Category=Live"` **without** `ClientKey` reports all of them as skipped. **Never run with a key in a task loop.**
+  - Commit: `test(live): port 2.x integration tests to opt-in 3.0 live tests`
+
+- [ ] Task 7.2: Delete 2.x code (no red phase — removal; suite must stay green)
+  - Delete `Requests/`, `Responses/`, `Models/`, `Enums/`, the `Internal/{Common,Converters,Extensions,Helpers,Models,Services,Validation}/` folders, `AnticaptchaClient.cs`, `IAnticaptchaClient.cs` and `AnticaptchaServiceCollectionExtensions.cs`. Also delete the 2.x tests: `UnitTests/RequestSerializationTests.cs`, `IntegrationTests/`, `Helpers/`, `Models/` (after the port) and `TestEnvironment.cs`.
+  - Remove every `<Compile Remove>` entry from both csproj files.
+  - Keep `Snapshots/Legacy2x/**` and `LegacyParityTests` as a permanent contract regression.
+  - Verify: build with 0 warnings. Searching for `Newtonsoft` in `*.cs` and `*.csproj` returns nothing.
+  - Commit: `refactor(core)!: remove 2.x API surface`
+
+- [ ] Task 7.3: MIGRATION.md (TDD)
+  - Red: `UnitTests/Docs/MigrationGuideTests.cs`:
+    - `MigrationGuide_MentionsEveryLegacyPublicType`: every type in `Snapshots/Legacy2x/public-api.txt` appears in `MIGRATION.md`, located via `[CallerFilePath]` to the repo root.
+    - `MigrationGuide_MentionsEveryLegacyClientMethod`
+  - Green: `MIGRATION.md` containing:
+    - Overview and minimum-change example.
+    - Tables: client and ctor, config (`ClientConfig` → options), methods (spec §8), request class → task record (all 2.x request classes), responses and solutions, enums (`ProxyTypeOption` → `ProxyType`, `QueueType` renames, `ReportOutcome` → `Report` with IncorrectHCaptcha removed), errors (data → exceptions / `SolveResult`), removed items (`RawPayload`/`RawResponse`, `Configure`, `ClientKey`, public validators/converters/interfaces), DI ("coming in `AntiCaptchaApi.Net.DependencyInjection`; meanwhile use `new AntiCaptchaClient(key, httpClientFromFactory, options)`").
+    - Wire deviations (spec §9) and changed defaults (spec R-7).
+  - Commit: `docs(migration): add 2.x to 3.0 migration guide`
+
+- [ ] Task 7.4: README rewrite (no red phase — docs)
+  - `README.md` sections: badges; install; a 10-line quick start (`new AntiCaptchaClient(key)` + `SolveAsync(new TurnstileTask(...))`); `TrySolveAsync` example; one example per task type (13); proxy usage; `SolveOptions`/`AntiCaptchaClientOptions` table; errors and retry classification; cancellation vs timeout; `IHttpClientFactory` usage without the DI package; observability (source and meter names, OpenTelemetry snippet); troubleshooting; links to MIGRATION and CHANGELOG.
+  - Verify: each code snippet compiles. Copy them into a probe command `readme-snippets` that compiles against the library; running it is not required.
+  - Commit: `docs(readme): rewrite README for 3.0 core package`
+
+- [ ] Task 7.5: Version, package metadata, CHANGELOG (no red phase — release prep; no publishing)
+  - csproj:
+    - `Version` and `PackageVersion` = `3.0.0-preview.1`.
+    - `Title` = `AntiCaptchaApi.Net`.
+    - `Description` updated.
+    - `PackageReleaseNotes` = "See CHANGELOG.md".
+    - `PackageReadmeFile` = `README.md` (packed).
+    - Copyright year updated.
+    - Keep `IncludeSymbols` and `snupkg`.
+  - `CHANGELOG.md` (create or extend; the hotfix may have created it): a human-written `3.0.0-preview.1` entry with sections Added / Changed / Removed / Fixed, linking MIGRATION.md.
+  - Verify: `dotnet pack -c Release -o <scratch>` produces `AntiCaptchaApi.Net.3.0.0-preview.1.nupkg` with the README included and the nuspec deps from NFR-2. **No `dotnet nuget push`, no tag, no push.**
+  - Commit: `chore(release): prepare 3.0.0-preview.1`
+
+- [ ] Verification 7: Final checkpoint [checkpoint marker]
+  - Run the offline suite and a coverage report (≥ 80 % on new core code). Run `git diff --name-only <phase-6-checkpoint> HEAD` and confirm that every code change has tests.
+  - Manual:
+    1. `dotnet run --project tools/AntiCaptchaApi.Net.Probe -- info|serialize|offline-solve|telemetry`.
+    2. Read `README.md` and `MIGRATION.md`.
+    3. Inspect the nupkg contents.
+    4. Optionally, the user runs `ClientKey=... DOTNET_ROLL_FORWARD=Major dotnet test --filter "Category=Live&FullyQualifiedName~ImageToText"` for one paid smoke solve.
+  - Wait for user confirmation, then make the checkpoint commit. Updating `tracks.md` is left to the orchestrator.
+
+---
+
+## Baselines
+- 2.x at branch creation: tests: _?_, warnings: _?_ (Task 1.1)
+- After Phase 1: tests: _?_, core warnings: 0 (Verification 1)
+
+## Deviations
+_Record any departures from spec/tech-stack here with a date (workflow step 7)._
