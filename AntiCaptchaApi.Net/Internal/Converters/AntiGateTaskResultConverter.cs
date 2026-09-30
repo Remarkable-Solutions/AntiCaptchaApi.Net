@@ -14,18 +14,20 @@ namespace AntiCaptchaApi.Net.Internal.Converters
             throw new NotImplementedException();
         }
 
+        /// <inheritdoc />
+        /// <remarks>Kept for API compatibility; the AntiGate-specific parsing happens in <see cref="OnResultParsed"/>.</remarks>
         public override TaskResultResponse<AntiGateSolution> ReadJson(JsonReader reader, Type objectType, TaskResultResponse<AntiGateSolution> existingValue, bool hasExistingValue,
-            JsonSerializer serializer)
+            JsonSerializer serializer) =>
+            base.ReadJson(reader, objectType, existingValue, hasExistingValue, serializer);
+
+        /// <inheritdoc />
+        protected override void OnResultParsed(JObject source, TaskResultResponse<AntiGateSolution> response)
         {
-            var antiGateTaskResultResponse = base.ReadJson(reader, objectType, existingValue, hasExistingValue, serializer);
-        
-            if (antiGateTaskResultResponse is { Status: TaskStatusType.Ready })
+            if (response is { Status: TaskStatusType.Ready })
             {
-                antiGateTaskResultResponse.Solution ??= new AntiGateSolution();
-                ParseJObjects(jObject, antiGateTaskResultResponse);
+                response.Solution ??= new AntiGateSolution();
+                ParseJObjects(source, response);
             }
-        
-            return antiGateTaskResultResponse;
         }
 
         private static void ParseJObjects(JObject jObject, TaskResultResponse<AntiGateSolution> AntiGateTaskResultResponse)

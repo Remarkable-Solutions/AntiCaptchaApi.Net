@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using AntiCaptchaApi.Net.Enums;
 using AntiCaptchaApi.Net.Models.Solutions;
 using AntiCaptchaApi.Net.Responses;
@@ -10,6 +11,12 @@ namespace AntiCaptchaApi.Net.Internal.Converters
     public class TaskResultConverter<T> : JsonConverter<TaskResultResponse<T>>
         where T : BaseSolution, new()
     {
+        /// <summary>
+        /// No longer populated. Kept only for binary compatibility; converter instances are shared,
+        /// so per-call state in a field is not thread-safe. Override <see cref="OnResultParsed"/> instead.
+        /// </summary>
+        [Obsolete("Not thread-safe; no longer populated. Override OnResultParsed instead.")]
+        [EditorBrowsable(EditorBrowsableState.Never)]
         protected JObject jObject;
 
         public override void WriteJson(JsonWriter writer, TaskResultResponse<T> value, JsonSerializer serializer)
@@ -20,14 +27,13 @@ namespace AntiCaptchaApi.Net.Internal.Converters
             TaskResultResponse<T> existingValue, bool hasExistingValue,
             JsonSerializer serializer)
         {
-            jObject = JObject.Load(reader);
-            var taskResultResponse = jObject.ToObject<TaskResultResponse<T>>();
-
+            var source = JObject.Load(reader);
+            var taskResultResponse = source.ToObject<TaskResultResponse<T>>();
 
             if (taskResultResponse is { Status: TaskStatusType.Ready })
             {
-                var createTime = (double?)jObject["createTime"];
-                var endTime = (double?)jObject["endTime"];
+                var createTime = (double?)source["createTime"];
+                var endTime = (double?)source["endTime"];
                 taskResultResponse.CreateTimeUtc = UnixTimeStampToDateTime(createTime);
                 taskResultResponse.EndTimeUtc = UnixTimeStampToDateTime(endTime);
             }
@@ -37,7 +43,18 @@ namespace AntiCaptchaApi.Net.Internal.Converters
                 taskResultResponse.Status = TaskStatusType.Error;
             }
 
+            OnResultParsed(source, taskResultResponse);
             return taskResultResponse;
+        }
+
+        /// <summary>
+        /// Called after the base parsing, with the JSON object this call parsed, so derived converters can
+        /// read extra fields without keeping per-call state on the (shared) converter instance.
+        /// </summary>
+        /// <param name="source">The JSON object of the response being parsed.</param>
+        /// <param name="response">The parsed response (may be null for a JSON <c>null</c>).</param>
+        protected virtual void OnResultParsed(JObject source, TaskResultResponse<T> response)
+        {
         }
 
 
