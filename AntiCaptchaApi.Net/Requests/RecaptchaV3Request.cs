@@ -26,7 +26,9 @@ namespace AntiCaptchaApi.Net.Requests
     {
         /// <summary>
         /// [Required]
-        /// Filters workers with a particular score. It can have one of the following values: 0.3, 0.5, 0.7
+        /// Filters workers with a particular score. Use 0.3, 0.7 or 0.9 (anti-captcha's worker queues).
+        /// 0.5 is accepted for backward compatibility but is not an anti-captcha queue and is discouraged.
+        /// Default: 0.3.
         /// </summary>
         public decimal MinScore { get; set; } = 0.3m;
 
@@ -41,7 +43,7 @@ namespace AntiCaptchaApi.Net.Requests
         /// <summary>
         /// [Optional]
         /// Set this flag to "true" if you need this V3 solved with Enterprise API.
-        /// Default value is "false" and Recaptcha is solved with non-enterprise API.
+        /// null = false: the value is not sent and Recaptcha is solved with the non-enterprise API.
         /// Can be determined by a javascript call like in the following example:
         ///
         /// grecaptcha.enterprise.execute('site_key', {..})
