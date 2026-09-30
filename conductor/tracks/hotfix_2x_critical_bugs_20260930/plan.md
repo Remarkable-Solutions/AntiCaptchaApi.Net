@@ -58,10 +58,11 @@ Tasks:
   - Green: `CreateCaptchaRequestHelper.cs:34` → `new TurnstileRequestValidator().Validate(request as TurnstileCaptchaRequest)`. Change `TurnstileRequestValidator` to take a `TurnstileCaptchaRequest` overload, or keep the override with a safe `as` cast. It validates base + `ValidateProxy` only; the UA requirement at line 14 is removed. Fix the `TurnstileCaptchaRequest.UserAgent` XML doc to say "[Optional]".
   - Commit: `fix(turnstile): validate proxy for TurnstileTask and keep UserAgent optional`
   - Red: Turnstile without proxy / with `ProxyPort = 0` → no errors; the theory failed only for `TurnstileCaptchaRequest`. Kept the existing override with a safe `as` cast. Added `Validate_TurnstileRequestWithProxyPortZero_ReturnsProxyPortError` (FR-3 acceptance). The theory is `Validate_ProxyRequiredRequestWithoutProxy_ReturnsProxyConfigError(string requestType)`.
-- [ ] Task 1.6: Accept proxy port 65535 (TDD, B6 / FR-6).
+- [x] Task 1.6: Accept proxy port 65535 (TDD, B6 / FR-6). [2ea9dae]
   - Red: in `UnitTests/ProxyValidationTests.cs`, add `[Theory] ValidateProxy_Port(1 ok, 65535 ok, 0 err, 65536 err, null err)`, and the same for `ValidateOptionalProxy`.
   - Green: `Internal/Extensions/ValidationResultExtensions.cs:65,89`: `>= 65535` → `> 65535`, and the message becomes "between 1 and 65535".
   - Commit: `fix(validation): accept proxy port 65535`
+  - Red: 65535 rejected ("between 1 and 65534") in both methods; error cases failed on the old message text. Tests call the internal extension methods directly with a proxy that has an address (`ValidateOptionalProxy` skips all checks when the address is empty; unchanged, out of scope).
 - [ ] Task 1.7: Registry-completeness regression test (TDD guard, B12 / FR-12).
   - Red: write `UnitTests/RegistryCompletenessTests.cs`:
     - `EveryRequestType_HasValidator`
