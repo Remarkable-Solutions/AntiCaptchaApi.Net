@@ -602,7 +602,7 @@ Tasks:
 
 ---
 
-## Phase 7: Live tests port, 2.x removal, docs, version
+## Phase 7: Live tests port, 2.x removal, docs, version [checkpoint: 29e8654]
 Goal: 2.x code is gone and the live tests are ported (opt-in). MIGRATION, README and CHANGELOG are complete and the version is `3.0.0-preview.1`.
 
 Tasks:
@@ -653,7 +653,7 @@ Tasks:
   - Verify: `dotnet pack -c Release -o <scratch>` produces `AntiCaptchaApi.Net.3.0.0-preview.1.nupkg` with the README included and the nuspec deps from NFR-2. **No `dotnet nuget push`, no tag, no push.**
   - Commit: `chore(release): prepare 3.0.0-preview.1`
 
-- [ ] Verification 7: Final checkpoint [checkpoint marker]
+- [x] Verification 7: Final checkpoint [29e8654] — user confirmed 2026-09-30
   - Run the offline suite and a coverage report (≥ 80 % on new core code). Run `git diff --name-only <phase-6-checkpoint> HEAD` and confirm that every code change has tests.
   - Manual:
     1. `dotnet run --project tools/AntiCaptchaApi.Net.Probe -- info|serialize|offline-solve|telemetry`.
