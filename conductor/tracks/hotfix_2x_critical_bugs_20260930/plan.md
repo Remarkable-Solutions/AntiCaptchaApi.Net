@@ -205,11 +205,12 @@ Tasks:
   - Locally, run the same command with `DOTNET_ROLL_FORWARD=Major` in Release.
   - Commit: `chore(ci): run offline unit tests before packing`
   - No red phase (CI config). Local check of the CI sequence: `dotnet build -c Release` (15 warnings, 0 errors), then `DOTNET_ROLL_FORWARD=Major dotnet test AntiCaptchaApi.Net.sln --configuration Release --no-build --filter "FullyQualifiedName~UnitTests"` → 124/124 passed. The workflow YAML parses and step order was asserted (Build → Test → Determine Package Version). No `DOTNET_ROLL_FORWARD` in CI (it installs the 9.0 SDK, matching the net9.0 test project).
-- [ ] Task 4.3: Lower dependency floors (verification-driven; red = vulnerability/compat check).
+- [x] Task 4.3: Lower dependency floors (verification-driven; red = vulnerability/compat check). [6071e54]
   - `AntiCaptchaApi.Net.csproj:59-60`: `Microsoft.Extensions.Http` → `8.0.0`, `Newtonsoft.Json` → `13.0.1`.
   - Run `dotnet restore`, `dotnet build` (all 3 TFMs, warnings ≤ 15), `dotnet list AntiCaptchaApi.Net/AntiCaptchaApi.Net.csproj package --vulnerable --include-transitive`. If anything is flagged, raise to the lowest clean patch and note it in the spec. Run the offline suite.
   - Update the `tech-stack.md` "Current (2.x)" rows with a dated note, as workflow.md requires tech-stack changes to be documented first.
   - Commit: `chore(deps): lower dependency floors to Microsoft.Extensions.Http 8.0.0 and Newtonsoft.Json 13.0.1`
+  - No red phase in the TDD sense; the check is the verification. `dotnet restore` OK. `dotnet build --no-incremental` for all 3 TFMs has 15 warnings (all pre-existing, in the test project) and no NU warnings. `dotnet list ... package --vulnerable --include-transitive` (nuget.org): "no vulnerable packages"; every TFM resolves Microsoft.Extensions.* 8.0.0 transitively. Offline suite 124/124 (the test project now also runs against Microsoft.Extensions.Http 8.0.0). No floor needed raising, so there is no spec note. `tech-stack.md` JSON/HTTP rows updated with a dated floors note.
 - [ ] Task 4.4: Mark `ReportOutcome.IncorrectHCaptcha` obsolete (TDD).
   - Red: `UnitTests/ReportOutcomeTests.cs`, `IncorrectHCaptcha_IsObsolete` (reflection: `ObsoleteAttribute` present, not an error-level obsolete). `ReportTaskOutcomeAsync_IncorrectHCaptcha_StillCallsApi` (fake handler, URI ends with `reportIncorrectHCaptcha`) so existing callers keep working.
   - Green: add `[Obsolete("...removed in 3.0")]` on `Enums/ReportOutcome.cs:30` and `#pragma warning disable/restore CS0618` around `AnticaptchaClient.cs:126` (and in the test). The warning count must not grow.
