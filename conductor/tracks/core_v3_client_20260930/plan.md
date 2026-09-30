@@ -579,7 +579,7 @@ Tasks:
     - `NoListener_NoActivityCreated`
   - Commit: `feat(diagnostics): trace solves and API calls`
 
-- [~] Task 6.3: Metrics (TDD)
+- [x] Task 6.3: Metrics (TDD) [2298d3e]
   - Tests `UnitTests/Diagnostics/MetricsTests.cs` (`MeterListener`):
     - `CreateTask_IncrementsTasksCreated`
     - `Solve_Success_RecordsSolvesDurationAndCost`
