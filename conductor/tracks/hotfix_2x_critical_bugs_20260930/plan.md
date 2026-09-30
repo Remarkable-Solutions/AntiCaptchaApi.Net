@@ -84,7 +84,7 @@ Tasks:
 Goal: concurrent solves are safe, secrets never leak through `RawPayload`, a paid task survives transient errors, pointless retries stop, and DI honors the timeout.
 
 Tasks:
-- [ ] Task 2.1: Make `TaskResultConverter` stateless (TDD, B5 / FR-5).
+- [x] Task 2.1: Make `TaskResultConverter` stateless (TDD, B5 / FR-5). [e2e0ac4]
   - Red: in `UnitTests/TaskResultConverterTests.cs`, add:
     - `ReadJson_ParallelAntiGateResponses_EachResultUsesOwnJson`. 200 distinct ready AntiGate JSONs are deserialized with `Parallel.For` using the shared `HttpHelper.Converters`; assert that `Solution.Cookies["id"]` equals its own index.
     - `Converters_HaveNoMutableInstanceFields`: reflection over `TaskResultConverter<>` and `AntiGateTaskResultConverter`, ignoring `[Obsolete]` members.
@@ -92,6 +92,7 @@ Tasks:
     The race test is probabilistic, so the reflection test is the deterministic red.
   - Green: in `Internal/Converters/TaskResultConverter.cs`, use a local `var source = JObject.Load(reader)` and add `protected virtual void OnResultParsed(JObject source, TaskResultResponse<T> response) { }`, called before returning. Keep `protected JObject jObject` with `[Obsolete(...)]` and `[EditorBrowsable(EditorBrowsableState.Never)]`, never assigned (binary compatibility). `AntiGateTaskResultConverter` overrides `OnResultParsed` instead of overriding `ReadJson` and reading the field.
   - Commit: `fix(converters): make TaskResultConverter stateless to fix concurrent-solve race`
+  - Red: the reflection test named `TaskResultConverter`1.jObject`; the parallel test also reproduced the race (cookie id mismatch). Green: deterministic (no shared state left). Deviation: `AntiGateTaskResultConverter.ReadJson` override kept as a pass-through to base so the public surface is unchanged; the AntiGate logic moved to `OnResultParsed`.
 - [ ] Task 2.2: Redact secrets in `RawPayload` (TDD, B7 / FR-7).
   - Red: `UnitTests/PayloadRedactorTests.cs`:
     - `Redact_ClientKey_Masked`
