@@ -40,7 +40,7 @@ Tasks:
   - Green: add `new TaskResultConverter<ProsopoSolution>()` and `new TaskResultConverter<AmazonWafSolution>()` to `Internal/Helpers/HttpHelper.cs:19-29`. Change the list to `internal static readonly IReadOnlyList<JsonConverter> Converters` (it is also passed as an array to `DeserializeObject`; cache the array).
   - Commit: `fix(converters): register TaskResultConverter for Prosopo and AmazonWaf solutions`
   - Red: Prosopo/WAF ready → `CreateTimeUtc` null; `errorId 12` → `Status` null (Turnstile control green). Converters exposed as `internal static readonly IReadOnlyList<JsonConverter> Converters` wrapping a cached `ConverterArray` passed to `DeserializeObject`.
-- [ ] Task 1.4: reCAPTCHA v3: `IsEnterprise` null means false, and MinScore accepts 0.9 (TDD, B2 / FR-2).
+- [x] Task 1.4: reCAPTCHA v3: `IsEnterprise` null means false, and MinScore accepts 0.9 (TDD, B2 / FR-2). [ff51d9e]
   - Red: `UnitTests/RecaptchaV3RequestValidatorTests.cs`:
     - `Validate_DefaultRequest_IsValid`
     - `Validate_EnterpriseRequestWithoutIsEnterprise_IsValid` (through `CreateCaptchaRequestHelper.Validate`)
@@ -49,6 +49,7 @@ Tasks:
   - Green: in `Internal/Validation/Validators/RecaptchaV3RequestValidator.cs`, remove `.ValidateIsNotNull(IsEnterprise)` and change the whitelist to `{0.3m, 0.5m, 0.7m, 0.9m}`. Update the XML doc of `RecaptchaV3Request.MinScore` ("0.3, 0.7 or 0.9; 0.5 is accepted for backward compatibility but is not an anti-captcha queue") and of `IsEnterprise` ("null = false").
   - Verify that the existing V3 serialization tests stay green (no `isEnterprise` key when null).
   - Commit: `fix(recaptcha-v3): treat null IsEnterprise as false and accept MinScore 0.9`
+  - Red: default V3 and V3 Enterprise failed with "IsEnterprise must not be null!"; 0.9 rejected ("Correct values: 0.3,0.5,0.7"). `Validate_MinScore_Rejected` also asserts the error is on `MinScore` and lists all 4 accepted values. `RecaptchaV3RequestSerializationTest_OnlyRequiredArguments` (no `isEnterprise` key) stays green.
 - [ ] Task 1.5: Validate the Turnstile proxy with the proxy validator, without newly requiring a UA (TDD, B3 / FR-3).
   - Red: `UnitTests/ProxyValidationTests.cs`:
     - `Validate_TurnstileRequestWithoutProxy_ReturnsProxyConfigError`
