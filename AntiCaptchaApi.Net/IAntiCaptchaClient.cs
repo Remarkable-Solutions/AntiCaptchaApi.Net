@@ -12,6 +12,41 @@ namespace AntiCaptchaApi.Net;
 public interface IAntiCaptchaClient
 {
     /// <summary>
+    /// Solves <paramref name="task"/>: validates it, creates it, polls until it is ready, and retries retryable errors
+    /// (for example <see cref="AntiCaptchaErrorCode.NoSlotAvailable"/>) with backoff, up to <see cref="SolveOptions.MaxAttempts"/>.
+    /// </summary>
+    /// <typeparam name="TSolution">The solution type, inferred from the task.</typeparam>
+    /// <param name="task">The captcha task, for example <see cref="TurnstileTask"/>.</param>
+    /// <param name="o">Solve settings, or <see langword="null"/> for <see cref="AntiCaptchaClientOptions.DefaultSolveOptions"/>.</param>
+    /// <param name="ct">Cancels the solve; cancellation always surfaces as <see cref="OperationCanceledException"/>.</param>
+    /// <returns>The solution (never null).</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="task"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="o"/> has an invalid value. Nothing was sent.</exception>
+    /// <exception cref="AntiCaptchaValidationException">The task is invalid. Nothing was sent.</exception>
+    /// <exception cref="AntiCaptchaException">
+    /// The solve failed; <see cref="AntiCaptchaException.TaskId"/> is the last created task and
+    /// <see cref="AntiCaptchaException.Attempts"/> the number of <c>createTask</c> calls.
+    /// </exception>
+    Task<TSolution> SolveAsync<TSolution>(CaptchaTask<TSolution> task, SolveOptions? o = null, CancellationToken ct = default)
+        where TSolution : Solution;
+
+    /// <summary>
+    /// Solves <paramref name="task"/> like <see cref="SolveAsync"/>, but returns API and transport failures in
+    /// <see cref="SolveResult{TSolution}.Error"/> instead of throwing. Programmer errors (an invalid task or options) and
+    /// cancellation still throw.
+    /// </summary>
+    /// <typeparam name="TSolution">The solution type, inferred from the task.</typeparam>
+    /// <param name="task">The captcha task, for example <see cref="TurnstileTask"/>.</param>
+    /// <param name="o">Solve settings, or <see langword="null"/> for <see cref="AntiCaptchaClientOptions.DefaultSolveOptions"/>.</param>
+    /// <param name="ct">Cancels the solve; cancellation always surfaces as <see cref="OperationCanceledException"/>.</param>
+    /// <returns>The result: the solution, cost, solve time and worker IP on success, otherwise the error.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="task"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="o"/> has an invalid value. Nothing was sent.</exception>
+    /// <exception cref="AntiCaptchaValidationException">The task is invalid. Nothing was sent.</exception>
+    Task<SolveResult<TSolution>> TrySolveAsync<TSolution>(CaptchaTask<TSolution> task, SolveOptions? o = null, CancellationToken ct = default)
+        where TSolution : Solution;
+
+    /// <summary>
     /// Validates <paramref name="task"/> and creates it (<c>createTask</c>) without waiting for the result.
     /// Use this with a callback URL, or to poll yourself.
     /// </summary>

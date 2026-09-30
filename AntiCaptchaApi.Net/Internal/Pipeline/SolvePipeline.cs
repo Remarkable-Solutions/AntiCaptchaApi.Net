@@ -21,6 +21,41 @@ internal sealed class SolvePipeline
     }
 
     /// <summary>
+    /// Steps 2–3 for a validated task: create it, then poll it. API and transport failures are returned as the
+    /// <see cref="SolveOutcome{TSolution}.Failure"/> (with the last task id and the attempt count); cancellation escapes.
+    /// </summary>
+    public async Task<SolveOutcome<TSolution>> SolveAsync<TSolution>(
+        CaptchaTask<TSolution> task,
+        SolveOptions options,
+        SecretRedactor redactor,
+        CancellationToken ct)
+        where TSolution : Solution
+    {
+        int? taskId = null;
+        var attempts = 0;
+        try
+        {
+            attempts++;
+            var createdAt = _client.Clock.UtcNow;
+            taskId = await _client.CreateTaskAsync(task, options, ct).ConfigureAwait(false);
+            var status = await PollAsync<TSolution>(
+                taskId.Value,
+                options,
+                options.FirstPollDelay ?? task.ResolvedFirstPollDelay,
+                createdAt + options.Timeout,
+                redactor,
+                attempts,
+                ct).ConfigureAwait(false);
+            return SolveOutcome<TSolution>.Success(taskId.Value, status, attempts);
+        }
+        catch (AntiCaptchaException ex)
+        {
+            var failure = ex.TaskId == taskId && ex.Attempts == attempts ? ex : new AntiCaptchaException(ex.Error, taskId, attempts, ex);
+            return SolveOutcome<TSolution>.Failed(failure);
+        }
+    }
+
+    /// <summary>
     /// Step 2.2: waits <paramref name="firstPollDelay"/>, then polls every <see cref="SolveOptions.PollInterval"/> until the
     /// task is ready. Transient errors are tolerated up to <see cref="SolveOptions.MaxConsecutivePollErrors"/> in a row;
     /// any other error is rethrown at once (the caller decides about retries). Past <paramref name="deadline"/> it fails

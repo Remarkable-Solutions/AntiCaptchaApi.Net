@@ -86,6 +86,23 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
     internal HttpMessageHandler? SharedHandlerInUse { get; }
 
     /// <inheritdoc />
+    public async Task<TSolution> SolveAsync<TSolution>(CaptchaTask<TSolution> task, SolveOptions? o = null, CancellationToken ct = default)
+        where TSolution : Solution
+    {
+        var outcome = await RunSolveAsync(task, o, ct).ConfigureAwait(false);
+        if (outcome.Failure is not null)
+        {
+            throw outcome.Failure;
+        }
+        return outcome.Result.Solution!; // A result without a failure is a success, which always has a solution.
+    }
+
+    /// <inheritdoc />
+    public async Task<SolveResult<TSolution>> TrySolveAsync<TSolution>(CaptchaTask<TSolution> task, SolveOptions? o = null, CancellationToken ct = default)
+        where TSolution : Solution =>
+        (await RunSolveAsync(task, o, ct).ConfigureAwait(false)).Result;
+
+    /// <inheritdoc />
     public async Task<int> CreateTaskAsync(CaptchaTask task, CreateOptions? o = null, CancellationToken ct = default)
     {
         if (task is null)
@@ -163,6 +180,19 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
 
     // API descriptions can echo the task's proxy string, so its password is redacted too.
     internal SecretRedactor RedactorFor(CaptchaTask task) => Redactor.With(task.Proxy?.Password);
+
+    // Programmer errors (null task, invalid options or task) throw here, before any HTTP call and outside the pipeline.
+    private Task<SolveOutcome<TSolution>> RunSolveAsync<TSolution>(CaptchaTask<TSolution> task, SolveOptions? o, CancellationToken ct)
+        where TSolution : Solution
+    {
+        if (task is null)
+        {
+            throw new ArgumentNullException(nameof(task));
+        }
+        var options = ResolveSolveOptions(o);
+        task.RunValidation(); // CreateTaskAsync checks CallbackUrl, also before its HTTP call.
+        return Pipeline.SolveAsync(task, options, RedactorFor(task), ct);
+    }
 
     private SolveOptions ResolveSolveOptions(SolveOptions? o) =>
         o is null ? Options.DefaultSolveOptions : o.Validate(nameof(o));

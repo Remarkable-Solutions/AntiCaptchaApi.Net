@@ -16,9 +16,12 @@ internal static class PipelineResponses
 
     public static string Created(int taskId) => $"{{\"errorId\":0,\"taskId\":{taskId}}}";
 
-    /// <summary>A ready Turnstile result, solved 12 seconds after creation by worker <c>198.51.100.7</c>.</summary>
+    /// <summary>
+    /// A ready result, solved 12 seconds after creation by worker <c>198.51.100.7</c>. The solution carries both
+    /// <c>token</c> and <c>text</c>, so it reads as a Turnstile and as an ImageToText solution.
+    /// </summary>
     public static string Ready(string token = "TOKEN", decimal cost = 0.002m) =>
-        $"{{\"errorId\":0,\"status\":\"ready\",\"solution\":{{\"token\":\"{token}\"}},\"cost\":\"{cost.ToString(CultureInfo.InvariantCulture)}\","
+        $"{{\"errorId\":0,\"status\":\"ready\",\"solution\":{{\"token\":\"{token}\",\"text\":\"{token}\"}},\"cost\":\"{cost.ToString(CultureInfo.InvariantCulture)}\","
         + $"\"ip\":\"198.51.100.7\",\"createTime\":{CreateTime},\"endTime\":{CreateTime + 12},\"solveCount\":\"1\"}}";
 
     public static string Error(int errorId, string code) => ClientTestContext.ApiError(errorId, code, "scripted " + code);

@@ -170,4 +170,39 @@ public class RedactionTests
         AssertNoSecrets(string.Join(";", exception.Errors.Select(e => e.ToString())), "ValidationError.ToString()");
         Assert.Empty(context.Handler.Requests);
     }
+
+    public static TheoryData<string> SolvePollFailures => new() { "api-error-echo", "network-failure-echo", "invalid-json-echo" };
+
+    private static void ScriptPollFailure(FakeHttpMessageHandler handler, string name, int times)
+    {
+        for (var i = 0; i < times; i++)
+        {
+            _ = name switch
+            {
+                "api-error-echo" => handler.RespondJson("getTaskResult", ClientTestContext.ApiError(16, "ERROR_NO_SUCH_CAPCHA_ID", Echo)),
+                "network-failure-echo" => handler.Throw("getTaskResult", new HttpRequestException(Echo, new InvalidOperationException(Echo))),
+                "invalid-json-echo" => handler.RespondJson("getTaskResult", "<html>" + Echo + "</html>"),
+                _ => throw new ArgumentOutOfRangeException(nameof(name)),
+            };
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(SolvePollFailures))]
+    public async Task Solve_PollErrorEchoingSecrets_ExceptionAndResultContainNoSecrets(string scenario)
+    {
+        var context = new ClientTestContext(Key);
+        var task = new TurnstileTask(TaskSamples.WebsiteUrl, TaskSamples.WebsiteKey) { Proxy = SecretProxy, UserAgent = TaskSamples.UserAgent };
+        var options = new SolveOptions { MaxConsecutivePollErrors = 0 };
+        context.Handler.RespondJson("createTask", "{\"errorId\":0,\"taskId\":1}").RespondJson("createTask", "{\"errorId\":0,\"taskId\":2}");
+        ScriptPollFailure(context.Handler, scenario, 2);
+
+        var exception = await Assert.ThrowsAsync<AntiCaptchaException>(() => context.Client.SolveAsync(task, options));
+        var result = await context.Client.TrySolveAsync(task, options);
+
+        AssertExceptionHasNoSecrets(exception);
+        Assert.NotNull(result.Error);
+        AssertNoSecrets(result.ToString(), "SolveResult.ToString()");
+        AssertNoSecrets(result.Error!.Description, "SolveResult.Error.Description");
+    }
 }
