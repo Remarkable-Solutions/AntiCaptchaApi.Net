@@ -19,6 +19,11 @@ var commands = new Dictionary<string, (string Description, Func<string[], int> R
     ["offline-create"] = ("Run CreateTaskAsync against an in-process scripted handler: masked request JSON, then error scenarios.", _ => OfflineCreate().GetAwaiter().GetResult()),
     ["offline-solve"] = ("Run TrySolveAsync offline on a simulated clock: processing -> transient error -> ready; print the timeline and the SolveResult.", _ => OfflineSolve().GetAwaiter().GetResult()),
     ["offline-retry"] = ("Run TrySolveAsync offline on a simulated clock: ERROR_NO_SLOT_AVAILABLE x2 -> success; print the timeline, backoff delays and the SolveResult.", _ => OfflineRetry().GetAwaiter().GetResult()),
+    ["offline-account"] = ("Run every Phase 5 method (balance, queue, report, push, spending, app stats) against a scripted handler; print masked requests and results.", _ => OfflineAccount().GetAwaiter().GetResult()),
+    ["live-balance"] = ("USER ONLY (read-only, free, needs ClientKey): print the account balance.", _ => LiveBalance().GetAwaiter().GetResult()),
+    ["live-queue"] = ("USER ONLY (read-only, free): <QueueType|queueId>; print the queue stats (no key sent; ClientKey still required).", a => LiveQueue(a).GetAwaiter().GetResult()),
+    ["live-appstats"] = ("USER ONLY (read-only, free, needs ClientKey): <softId> [AppStatsMode]; print the app stats period and chart data.", a => LiveAppStats(a).GetAwaiter().GetResult()),
+    ["live-spending"] = ("USER ONLY (read-only, free, needs ClientKey): [date (ISO 8601 or unix s)] [queue]; print the spending records.", a => LiveSpending(a).GetAwaiter().GetResult()),
     ["live-solve-image"] = ("USER ONLY (paid, needs ClientKey): solve ImageToText from captchaexample.png [path] and print the text, cost and attempts.", a => LiveSolveImage(a).GetAwaiter().GetResult()),
     ["live-create-image"] = ("USER ONLY (paid, needs ClientKey): create one ImageToText task from captchaexample.png [path] and print the taskId.", a => LiveCreateImage(a).GetAwaiter().GetResult()),
     ["live-amazon-shape"] = ("USER ONLY (paid, needs ClientKey): <websiteUrl> <websiteKey> <iv> <context>; solve AmazonWaf and print the raw solution JSON (spec Q-2).", a => LiveAmazonShape(a).GetAwaiter().GetResult()),
@@ -200,6 +205,188 @@ static async Task<int> OfflineRetry()
     return timeline.Report("TrySolveAsync(ImageToTextTask), default SolveOptions (backoff 2 s, 4 s; jitter off)", result.ToString(), result.IsSuccess && result.Attempts == 3);
 }
 
+static async Task<int> OfflineAccount()
+{
+    // Recognisable fake secrets: neither may appear in anything printed below (request bodies are masked by the probe).
+    const string Key = "SECRET_PROBE_KEY";
+    var output = new StringBuilder();
+    void Print(string line)
+    {
+        Console.WriteLine(line);
+        output.AppendLine(line);
+    }
+
+    var handler = new AccountHandler(Key, Print);
+    handler.Script("getBalance", "{\"errorId\":0,\"balance\":12.3456,\"captchaCredits\":85000}");
+    handler.Script("getQueueStats", "{\"waiting\":242,\"load\":60.33,\"bid\":\"0.0008600982\",\"speed\":10.77,\"total\":610}");
+    handler.Script("reportIncorrectImageCaptcha", "{\"errorId\":0,\"status\":\"success\"}");
+    handler.Script("reportIncorrectRecaptcha", "{\"errorId\":0,\"status\":\"success\"}");
+    handler.Script("reportCorrectRecaptcha", "{\"errorId\":0,\"status\":\"success\"}");
+    handler.Script("pushAntiGateVariable", "{\"errorId\":0,\"status\":\"success\"}");
+    handler.Script("pushAntiGateVariable", "{\"errorId\":0,\"status\":\"success\"}");
+    handler.Script("getSpendingStats", "{\"errorId\":0,\"data\":[{\"dateFrom\":1672185600,\"dateTill\":1672189199,\"volume\":1899,\"money\":7.495948},"
+        + "{\"dateFrom\":1672189200,\"dateTill\":1672192799,\"volume\":2217,\"money\":\"7.861741\"}]}");
+    handler.Script("getAppStats", "{\"errorId\":0,\"chartData\":[{\"name\":\"Accepted (paid)\",\"data\":[{\"date\":\"25 January\",\"y\":134587,"
+        + "\"beginstamp\":1548374400,\"endstamp\":1548460799}],\"itemname\":\"Captchas\"}],\"fromDate\":\"25 Jan 00:00\",\"toDate\":\"24 Feb 08:09\"}");
+    handler.Script("getAppStats", "{\"errorId\":0,\"chartData\":[],\"fromDate\":\"1 Sep 00:00\",\"toDate\":\"30 Sep 12:00\"}");
+    handler.Script("getBalance", $"{{\"errorId\":1,\"errorCode\":\"ERROR_KEY_DOES_NOT_EXIST\",\"errorDescription\":\"key {Key} not found\"}}");
+    handler.Script("reportIncorrectRecaptcha", "{\"errorId\":16,\"errorCode\":\"ERROR_NO_SUCH_CAPCHA_ID\",\"errorDescription\":\"Task you are requesting does not exist\"}");
+    IAntiCaptchaClient client = new AntiCaptchaClient(Key, new HttpClient(handler));
+
+    async Task Step(string title, Func<Task<string>> run)
+    {
+        Print($"== {title}");
+        try
+        {
+            Print("  result:   " + await run());
+        }
+        catch (AntiCaptchaException ex)
+        {
+            Print($"  AntiCaptchaException: {ex.Message} (TaskId = {ex.TaskId?.ToString() ?? "null"}, RawCode = {ex.Error.RawCode})");
+        }
+        catch (ArgumentException ex)
+        {
+            Print($"  {ex.GetType().Name} (param '{ex.ParamName}'), nothing sent: {ex.Message}");
+        }
+    }
+
+    await Step("GetBalanceAsync()", async () => (await client.GetBalanceAsync()).ToString(System.Globalization.CultureInfo.InvariantCulture));
+    await Step("GetQueueStatsAsync(QueueType.RecaptchaV2WithoutProxy)", async () => (await client.GetQueueStatsAsync(QueueType.RecaptchaV2WithoutProxy)).ToString());
+    foreach (var report in Enum.GetValues<Report>())
+    {
+        await Step($"ReportAsync(4242, Report.{report})", async () => { await client.ReportAsync(4242, report); return "accepted"; });
+    }
+    await Step("PushAntiGateVariableAsync(4242, \"my_late_variable\", \"late value\")", async () => { await client.PushAntiGateVariableAsync(4242, "my_late_variable", "late value"); return "accepted"; });
+    await Step("PushAntiGateVariableAsync(4242, \"form\", JsonObject)", async () =>
+    {
+        await client.PushAntiGateVariableAsync(4242, "form", new JsonObject { ["login"] = "user", ["remember"] = true, ["tries"] = 3 });
+        return "accepted";
+    });
+    await Step("GetSpendingStatsAsync(Date = 2022-12-28T02:00+02:00, Queue, SoftId, Ip)", async () =>
+    {
+        var stats = await client.GetSpendingStatsAsync(new SpendingQuery
+        {
+            Date = new DateTimeOffset(2022, 12, 28, 2, 0, 0, TimeSpan.FromHours(2)),
+            Queue = "Recaptcha Proxyless",
+            SoftId = 777,
+            Ip = "198.51.100.7",
+        });
+        return $"{stats.Days.Count} record(s)" + string.Concat(stats.Days.Select(d => "\n            " + d));
+    });
+    await Step("GetAppStatsAsync(123, AppStatsMode.Money)", async () =>
+    {
+        var stats = await client.GetAppStatsAsync(123, AppStatsMode.Money);
+        return $"FromDate = {stats.FromDate}, ToDate = {stats.ToDate}, ChartData ({stats.ChartData.ValueKind}) = {stats.ChartData.GetRawText()}";
+    });
+    await Step("GetAppStatsAsync(123) (null mode is omitted)", async () => (await client.GetAppStatsAsync(123)).FromDate);
+    await Step("GetBalanceAsync() -> API error echoing the key", async () => (await client.GetBalanceAsync()).ToString(System.Globalization.CultureInfo.InvariantCulture));
+    await Step("ReportAsync(4242, Report.IncorrectRecaptcha) -> late report", async () => { await client.ReportAsync(4242, Report.IncorrectRecaptcha); return "accepted"; });
+    await Step("ReportAsync(4242, (Report)7)", async () => { await client.ReportAsync(4242, (Report)7); return "accepted"; });
+    await Step("PushAntiGateVariableAsync(4242, \"when\", DateTime)", async () => { await client.PushAntiGateVariableAsync(4242, "when", new DateTime(2026, 9, 30)); return "accepted"; });
+
+    var leaked = output.ToString().Contains("SECRET", StringComparison.Ordinal);
+    var drained = handler.Unused.Count == 0;
+    Console.WriteLine();
+    Console.WriteLine(leaked ? "FAIL: a SECRET string appears in the output above." : "OK: no SECRET string appears in the output above.");
+    Console.WriteLine(drained ? "OK: every scripted response was used." : "FAIL: unused scripted responses: " + string.Join(", ", handler.Unused));
+    return leaked || !drained ? 1 : 0;
+}
+
+static async Task<int> LiveBalance()
+{
+    if (RequireClientKey() is not { } key)
+    {
+        return 2;
+    }
+    return await LiveCall("getBalance", async () => $"Balance = {await new AntiCaptchaClient(key).GetBalanceAsync()} USD");
+}
+
+static async Task<int> LiveQueue(string[] args)
+{
+    if (RequireClientKey() is not { } key)
+    {
+        return 2;
+    }
+    if (args.Length < 1 || !Enum.TryParse<QueueType>(args[0], ignoreCase: true, out var queue))
+    {
+        Console.Error.WriteLine("Usage: live-queue <QueueType|queueId>; QueueType is one of: " + string.Join(", ", Enum.GetValues<QueueType>().Select(q => $"{q} ({(int)q})")));
+        return 2;
+    }
+    return await LiveCall("getQueueStats", async () => $"{queue} ({(int)queue}): {await new AntiCaptchaClient(key).GetQueueStatsAsync(queue)}");
+}
+
+static async Task<int> LiveAppStats(string[] args)
+{
+    if (RequireClientKey() is not { } key)
+    {
+        return 2;
+    }
+    AppStatsMode? mode = null;
+    var softId = 0;
+    var validSoftId = args.Length > 0 && int.TryParse(args[0], out softId);
+    if (validSoftId && args.Length > 1)
+    {
+        mode = Enum.TryParse<AppStatsMode>(args[1], ignoreCase: true, out var parsed) ? parsed : null;
+    }
+    if (!validSoftId || (args.Length > 1 && mode is null))
+    {
+        Console.Error.WriteLine("Usage: live-appstats <softId> [" + string.Join("|", Enum.GetNames<AppStatsMode>()) + "]");
+        return 2;
+    }
+    return await LiveCall("getAppStats", async () =>
+    {
+        var stats = await new AntiCaptchaClient(key).GetAppStatsAsync(softId, mode);
+        return $"FromDate = {stats.FromDate}, ToDate = {stats.ToDate}\nChartData ({stats.ChartData.ValueKind}):\n{stats.ChartData.GetRawText()}";
+    });
+}
+
+static async Task<int> LiveSpending(string[] args)
+{
+    if (RequireClientKey() is not { } key)
+    {
+        return 2;
+    }
+    DateTimeOffset? date = null;
+    if (args.Length > 0)
+    {
+        if (long.TryParse(args[0], out var seconds))
+        {
+            date = DateTimeOffset.FromUnixTimeSeconds(seconds);
+        }
+        else if (DateTimeOffset.TryParse(args[0], System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var parsed))
+        {
+            date = parsed;
+        }
+        else
+        {
+            Console.Error.WriteLine("Usage: live-spending [date (ISO 8601 or unix seconds)] [queue name, e.g. \"Recaptcha Proxyless\"]");
+            return 2;
+        }
+    }
+    var query = new SpendingQuery { Date = date, Queue = args.Length > 1 ? args[1] : null };
+    return await LiveCall("getSpendingStats", async () =>
+    {
+        var stats = await new AntiCaptchaClient(key).GetSpendingStatsAsync(query);
+        return $"{query}\n{stats.Days.Count} record(s); total volume = {stats.Days.Sum(d => d.Volume)}, total money = {stats.Days.Sum(d => d.Money)} USD"
+            + string.Concat(stats.Days.Select(d => "\n  " + d));
+    });
+}
+
+// Runs one read-only live call and prints its result, or the (already redacted) error.
+static async Task<int> LiveCall(string method, Func<Task<string>> call)
+{
+    try
+    {
+        Console.WriteLine(await call());
+        return 0;
+    }
+    catch (AntiCaptchaException ex)
+    {
+        Console.Error.WriteLine($"{method} failed: {ex.Message} (RawCode = {ex.Error.RawCode}, retryable = {ex.Error.IsRetryable})");
+        return 1;
+    }
+}
+
 static async Task<int> LiveSolveImage(string[] args)
 {
     if (RequireClientKey() is not { } key)
@@ -324,6 +511,38 @@ sealed class ScriptedHandler(Func<HttpRequestMessage, CancellationToken, Task<Ht
     {
         LastBody = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
         return await respond(request, cancellationToken);
+    }
+}
+
+/// <summary>
+/// Answers each API method from its own queue of scripted JSON bodies and prints every request body with the client key
+/// masked (the masking is the probe's; the library itself only redacts errors).
+/// </summary>
+sealed class AccountHandler(string key, Action<string> print) : HttpMessageHandler
+{
+    private readonly Dictionary<string, Queue<string>> _scripts = new(StringComparer.Ordinal);
+
+    public IReadOnlyList<string> Unused => _scripts.Where(s => s.Value.Count > 0).Select(s => $"{s.Key} x{s.Value.Count}").ToList();
+
+    public void Script(string method, string json)
+    {
+        if (!_scripts.TryGetValue(method, out var queue))
+        {
+            _scripts[method] = queue = new Queue<string>();
+        }
+        queue.Enqueue(json);
+    }
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        var method = request.RequestUri!.Segments[^1];
+        var body = request.Content is null ? "(none)" : await request.Content.ReadAsStringAsync(cancellationToken);
+        print($"  request:  POST {method} {body.Replace(key, "***")}");
+        if (!_scripts.TryGetValue(method, out var queue) || queue.Count == 0)
+        {
+            throw new InvalidOperationException($"unscripted call to {method}");
+        }
+        return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(queue.Dequeue(), Encoding.UTF8, "application/json") };
     }
 }
 
