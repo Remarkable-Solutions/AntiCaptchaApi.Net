@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
+using AntiCaptchaApi.Net.Internal.Diagnostics;
 using AntiCaptchaApi.Net.Internal.Errors;
 using AntiCaptchaApi.Net.Internal.Json;
 using AntiCaptchaApi.Net.Internal.Json.Envelopes;
@@ -43,8 +44,17 @@ internal sealed class ApiTransport
         where TResponse : class
     {
         ct.ThrowIfCancellationRequested();
-        var json = await SendAsync(method, JsonSerializer.Serialize(body, requestInfo), redactor, ct).ConfigureAwait(false);
-        return Parse(method, json, responseInfo, redactor);
+        using var activity = Telemetry.StartCall(method);
+        try
+        {
+            var json = await SendAsync(method, JsonSerializer.Serialize(body, requestInfo), redactor, ct).ConfigureAwait(false);
+            return Parse(method, json, responseInfo, redactor);
+        }
+        catch (AntiCaptchaException ex)
+        {
+            Telemetry.SetFailure(activity, ex.Error.Code);
+            throw;
+        }
     }
 
     private async Task<string> SendAsync(string method, string requestJson, SecretRedactor redactor, CancellationToken ct)

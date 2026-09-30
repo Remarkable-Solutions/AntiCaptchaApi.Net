@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
+using AntiCaptchaApi.Net.Internal.Diagnostics;
 using AntiCaptchaApi.Net.Internal.Errors;
 using AntiCaptchaApi.Net.Tasks;
 
@@ -26,6 +27,31 @@ internal sealed class SolvePipeline
     /// <see cref="SolveOutcome{TSolution}.Failure"/> (with the last created task id and the attempt count); cancellation escapes.
     /// </summary>
     public async Task<SolveOutcome<TSolution>> SolveAsync<TSolution>(
+        CaptchaTask<TSolution> task,
+        SolveOptions options,
+        SecretRedactor redactor,
+        CancellationToken ct)
+        where TSolution : Solution
+    {
+        using var activity = Telemetry.StartSolve(task.ResolveTypeName());
+        var outcome = await RunAttemptsAsync(task, options, redactor, ct).ConfigureAwait(false);
+        if (activity is not null)
+        {
+            var result = outcome.Result;
+            if (result.TaskId is { } taskId)
+            {
+                activity.SetTag(Telemetry.TaskIdTag, taskId);
+            }
+            activity.SetTag(Telemetry.AttemptsTag, result.Attempts);
+            if (result.Error is { } error)
+            {
+                Telemetry.SetFailure(activity, error.Code);
+            }
+        }
+        return outcome;
+    }
+
+    private async Task<SolveOutcome<TSolution>> RunAttemptsAsync<TSolution>(
         CaptchaTask<TSolution> task,
         SolveOptions options,
         SecretRedactor redactor,
