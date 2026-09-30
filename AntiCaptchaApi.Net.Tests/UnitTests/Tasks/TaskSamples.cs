@@ -101,6 +101,24 @@ internal static class TaskSamples
         };
         Add(samples, new FunCaptchaTask(WebsiteUrl, WebsiteKey), funCaptchaFull, funCaptchaFull with { Proxy = Proxy });
 
+        var geeTestV3Full = new GeeTestV3Task(WebsiteUrl, "GT_VALUE", "CHALLENGE_VALUE")
+        {
+            GeetestApiServerSubdomain = "api-na.geetest.com",
+            GeetestGetLib = "GETLIB_VALUE",
+            UserAgent = UserAgent,
+        };
+        Add(samples, new GeeTestV3Task(WebsiteUrl, "GT_VALUE", "CHALLENGE_VALUE"), geeTestV3Full, geeTestV3Full with { Proxy = Proxy });
+
+        var geeTestV4Full = new GeeTestV4Task(WebsiteUrl, "GT_VALUE")
+        {
+            Challenge = "CHALLENGE_VALUE",
+            GeetestApiServerSubdomain = "api-na.geetest.com",
+            GeetestGetLib = "GETLIB_VALUE",
+            InitParameters = new Dictionary<string, string> { ["riskType"] = "slide" },
+            UserAgent = UserAgent,
+        };
+        Add(samples, new GeeTestV4Task(WebsiteUrl, "GT_VALUE"), geeTestV4Full, geeTestV4Full with { Proxy = Proxy });
+
         return samples;
     }
 
