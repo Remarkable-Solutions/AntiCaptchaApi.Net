@@ -22,7 +22,7 @@ Manual verification probe (used at every checkpoint): a throwaway console app in
 
 ---
 
-## Phase 1: Correctness (registries and validation)
+## Phase 1: Correctness (registries and validation) [checkpoint: 0f208aa]
 Goal: every existing request type can be validated, named and parsed. Validation matches anti-captcha's rules. A guard test stops registry drift.
 
 Tasks:
@@ -74,7 +74,7 @@ Tasks:
   - Green: already green after 1.2 and 1.3. Optional refactor: make the registry dictionaries `static readonly` (no behavior change).
   - Commit: `test(registry): guard that every request type has validator, task name and converter`
   - Red verified locally (not committed): removing the `AmazonWafRequest` name, the `ProsopoSolution` converter and (extra) the `AmazonWafProxylessRequest` validator entry made 4 tests fail, naming `AmazonWafRequest`, `ProsopoSolution` + the 4 Prosopo/FriendlyCaptcha requests, and `AmazonWafProxylessRequest`. Restored. Also added `RequestTypeDiscovery_FindsKnownRequestTypes` (≥ 22 types discovered) so the guard cannot pass vacuously. Optional `static readonly` refactor skipped to keep this commit test-only (NFR-4, optional).
-- [ ] Verification: Phase 1 manual checks [checkpoint marker]
+- [x] Verification: Phase 1 manual checks [0f208aa] — user confirmed 2026-09-30
   - Run the offline suite (expect 27 + new tests, all green) and `dotnet build` (warnings ≤ 15).
   - Probe: create `AmazonWafProxylessRequest`, `RecaptchaV3Request` (URL+key only), `RecaptchaV3EnterpriseRequest`, and `TurnstileCaptchaRequest` without a proxy. Print each `createTask` body, or the returned validation error for Turnstile. Parse canned Prosopo/WAF `getTaskResult` JSON and print `CreateTimeUtc`.
   - Optional live check (user, own key): solve one `RecaptchaV3Request` without `IsEnterprise`, and one Amazon WAF on a known test page.
