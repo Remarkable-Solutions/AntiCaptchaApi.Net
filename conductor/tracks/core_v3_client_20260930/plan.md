@@ -37,7 +37,7 @@ Tasks:
   - If a 2.x type throws during serialization (for example `ImageToCoordinatesRequest` duplicate `websiteURL`, unless the hotfix fixed it), write that file by hand from the 2.x properties and note it under "Deviations" at the end of this file.
   - Commit: `test(legacy): capture 2.x createTask wire contract and public API`
 
-- [~] Task 1.3: Retarget core and drop 2.x dependencies (TDD)
+- [x] Task 1.3: Retarget core and drop 2.x dependencies (TDD) b2f8069
   - Red: `UnitTests/Packaging/CoreAssemblyTests.cs`:
     - `CoreAssembly_DoesNotReferenceNewtonsoftOrMicrosoftExtensions` (checks `GetReferencedAssemblies()` of `typeof(SoftId).Assembly`)
     - `SoftId_Value_Is1023`
