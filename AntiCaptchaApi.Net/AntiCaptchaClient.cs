@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
@@ -280,6 +281,24 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
             days[i] = new DailySpending(DateTimeOffset.FromUnixTimeSeconds(from), DateTimeOffset.FromUnixTimeSeconds(till), volume, money);
         }
         return new SpendingStats(days);
+    }
+
+    /// <inheritdoc />
+    public async Task<AppStats> GetAppStatsAsync(int softId, AppStatsMode? mode = null, CancellationToken ct = default)
+    {
+        var response = await Transport.PostAsync(
+            "getAppStats",
+            new GetAppStatsRequest(_apiKey, softId, mode),
+            AntiCaptchaJsonContext.Default.GetAppStatsRequest,
+            AntiCaptchaJsonContext.Default.GetAppStatsResponse,
+            Redactor,
+            ct).ConfigureAwait(false);
+        // A JSON null chartData is rejected whether it reads as a missing value or as an element of kind Null.
+        if (response is not { ChartData: { ValueKind: not JsonValueKind.Null } chartData, FromDate: { } fromDate, ToDate: { } toDate })
+        {
+            throw InvalidResponse("getAppStats", "the response lacks chartData, fromDate or toDate.");
+        }
+        return new AppStats(fromDate, toDate, chartData);
     }
 
     /// <summary>Describes the client without revealing the API key.</summary>

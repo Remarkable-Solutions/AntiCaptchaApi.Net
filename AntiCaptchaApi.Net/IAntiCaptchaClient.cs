@@ -153,4 +153,16 @@ public interface IAntiCaptchaClient
     /// <returns>The spending records.</returns>
     /// <exception cref="AntiCaptchaException">The API or the transport failed.</exception>
     Task<SpendingStats> GetSpendingStatsAsync(SpendingQuery? q = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Reads the daily statistics of an app you registered in the Developer Center (<c>getAppStats</c>).
+    /// Only the app owner may read them; others get <c>ERROR_ACCESS_DENIED</c>.
+    /// </summary>
+    /// <param name="softId">The id of your app in the Developer Center. It only selects the stats; it does not change the
+    /// softId this library sends with <c>createTask</c>.</param>
+    /// <param name="mode">The kind of statistics, or <see langword="null"/> for the API default (<see cref="AppStatsMode.Errors"/>).</param>
+    /// <param name="ct">Cancels the call; cancellation always surfaces as <see cref="OperationCanceledException"/>.</param>
+    /// <returns>The report period and the raw chart data.</returns>
+    /// <exception cref="AntiCaptchaException">The API or the transport failed.</exception>
+    Task<AppStats> GetAppStatsAsync(int softId, AppStatsMode? mode = null, CancellationToken ct = default);
 }
