@@ -155,7 +155,8 @@ Tasks:
     - `FirstPollDelay_Default_Is10Seconds`
   - Commit: `feat(tasks): add CaptchaTask base with ProxyMode type naming and proxy validation`
 
-- [~] Task 2.4: `TaskSerializer` and the first catalog entry `TurnstileTask` (TDD)
+- [x] Task 2.4: `TaskSerializer` and the first catalog entry `TurnstileTask` (TDD) dd700c5
+  - Done 2026-09-30: `type` is written as the first key (the other keys keep their declaration order, then the proxy fields). Solutions use the namespace `AntiCaptchaApi.Net.Tasks` (spec 7.1) although they live in `Tasks/Solutions/`. The UserAgent-with-proxy error is `UserAgent: required when Proxy is set`. 3 extra tests: `TaskSerializerTests.ToJsonObject_TypeIsFirstKey`, `TurnstileTaskTests.Validate_ProxyWithUserAgent_Passes`, `TypeName_WithoutProxy_IsTurnstileTaskProxyless`.
   - Files: `Internal/Json/TaskSerializer.cs`, `Tasks/TurnstileTask.cs`, `Tasks/Solutions/TurnstileSolution.cs`, and registration of both in the context.
   - Tests `UnitTests/Tasks/TaskSerializerTests.cs`:
     - `ToJsonObject_WithoutProxy_WritesTypeProxyless_AndNoProxyFields`
@@ -169,7 +170,7 @@ Tasks:
     - `Serialize_OptionalFields_UseActionCDataChlPageDataNames`
   - Commit: `feat(tasks): add TaskSerializer and TurnstileTask`
 
-- [ ] Task 2.5: Reflection-discovered snapshot and parity tests (TDD)
+- [~] Task 2.5: Reflection-discovered snapshot and parity tests (TDD)
   - Files:
     - `UnitTests/Tasks/TaskSamples.cs`: `IReadOnlyDictionary<Type, IReadOnlyList<(string Case, CaptchaTask Task)>>` using the Task 1.2 canonical values.
     - `UnitTests/Tasks/TaskSnapshotTests.cs`
