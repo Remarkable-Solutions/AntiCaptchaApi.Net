@@ -547,6 +547,11 @@ Tasks:
     - `NoPublicMember_ExposesInternalOrThirdPartyJsonTypes`, except the documented `JsonObject`/`JsonNode`/`JsonElement` on AntiGate and AppStats
   - Commit: `test(api): pin IAntiCaptchaClient surface and public namespaces`
 
+- [ ] Task 5.8: Hardening follow-ups from Phase 5 (owner approved 2026-09-30) (TDD)
+  - (a) `Internal/Json/TaskResultMapper.cs`: an out-of-range unix `createTime`/`endTime` must throw `AntiCaptchaException(InvalidResponse)` with `TaskId`, not a raw `ArgumentOutOfRangeException`. Reuse the spending-stats range guard as one shared internal helper. Red: `GetTaskResult_OutOfRangeUnixTime_ThrowsInvalidResponse` (Theory: createTime, endTime; huge and negative).
+  - (b) Add `AntiCaptchaErrorCode.AccessDenied` for `ERROR_ACCESS_DENIED`. Pick a value that doesn't collide with the documented errorIds or the client codes 1000–1003, and record the choice. It is fatal (not retryable, not transient). Red: parser Theory row, classifier rows, and `GetAppStats_AccessDenied_MapsToAccessDenied`. Update the Task 5.6 test that pinned `Unknown`.
+  - (c) `UnitTests/Security/RedactionTests.cs`: `AccountMethods_ErrorPaths_ContainNoSecrets` (Theory over GetBalance, GetQueueStats, Report, PushAntiGateVariable, GetSpendingStats, GetAppStats × API error echoing the key, network failure echoing the key, invalid JSON), asserting that the exception message, `ToString()` and `Error.ToString()` contain no key.
+  - Commit: `fix(client): harden unix-time parsing, add AccessDenied, cover account methods in redaction tests`
 - [ ] Verification 5: Phase 5 checkpoint [checkpoint marker]
   - Run the offline suite and coverage.
   - Add probe commands (user runs the live ones with `ClientKey`): `live-balance`, `live-queue <QueueType>`, `live-appstats`, `live-spending`.
