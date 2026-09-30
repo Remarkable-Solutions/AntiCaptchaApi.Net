@@ -199,7 +199,8 @@ Tasks:
     3. Switch the legacy parity entries from `Pending` to mapped.
   - **Solution deserialization** is tested in Phase 3 (Task 3.6).
 
-- [ ] Task 2.6: `ImageToTextTask`, `ImageToCoordinatesTask` (+ `NumericOption`, `ImageToCoordinatesMode`, solutions)
+- [x] Task 2.6: `ImageToTextTask`, `ImageToCoordinatesTask` (+ `NumericOption`, `ImageToCoordinatesMode`, solutions) 6e569f7
+  - Done 2026-09-30: `NumericOption` keeps the 2.x member names (`NoRequirements`, `NumbersOnly`, `AnyLettersExceptNumbers` = 0/1/2). `ImageToCoordinatesTask.Mode` is non-nullable with default `Points` and is always sent (2.x parity). Body loading and validation are shared by the internal `Tasks/ImageBody.cs`. `ImageToTextSolution.Url` is nullable. The optional `WebsiteUrl` of both types is validated only when set. 4 extra tests: `ImageToTextTaskTests.Validate_NegativeLength_Fails`, `ImageToCoordinatesTaskTests.Mode_Default_IsPointsAndAlwaysSerialized`, `FromBytes_SetsBase64Body`; `Numeric_SerializesAsNumber` is a Theory over the 3 values. Both snapshots equal their 2.x files.
   - Tests `ImageToTextTaskTests`:
     - `FromFile_MissingFile_ThrowsFileNotFound`
     - `FromFile_ExistingFile_SetsBase64Body` (temp file)
