@@ -32,6 +32,8 @@
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <!-- ActivitySource/Meter (spec FR-10); inbox on net8.0. A floor: the lowest 8.0.x without a known vulnerability. -->
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.0" />
   </ItemGroup>
 
   <!-- 2.x sources stay on disk as reference but are not compiled (track core_v3_client_20260930 spec 7.3); deleted in Task 7.2. -->

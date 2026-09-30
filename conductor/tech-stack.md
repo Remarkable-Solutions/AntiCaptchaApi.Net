@@ -32,6 +32,8 @@
 - Time is abstracted by an internal `ISystemClock`, **not** `TimeProvider`: on netstandard2.0, `TimeProvider` would need `Microsoft.Bcl.TimeProvider` (spec R-5).
 - `GeneratePackageOnBuild` was removed from the core csproj. It made `dotnet pack` skip the build and pack stale DLLs. Packing is now an explicit `dotnet build -c Release` + `dotnet pack --no-build` (or plain `dotnet pack`).
 
+*Note 2026-09-30 (track `core_v3_client_20260930`, Task 6.1):* the core adds System.Diagnostics.DiagnosticSource **8.0.0** as a `PackageReference` on `netstandard2.0` only (inbox on net8.0), for `ActivitySource`/`Meter` (spec FR-10, NFR-2). Like System.Text.Json it is a floor, the lowest 8.0.x without a known vulnerability (checked with `dotnet list package --vulnerable --include-transitive`). The public names are `AntiCaptchaDiagnostics.ActivitySourceName` and `MeterName` (both `"AntiCaptcha"`); the source, meter and instruments live in `Internal/Diagnostics/Telemetry.cs`.
+
 ## Constraints
 - Do not push to `main` directly: pushes to `main` publish CI packages to GitHub Packages.
 - Live integration tests (`IntegrationTests/`) require a paid API key — never run them in automated task loops; filter with `--filter "FullyQualifiedName~UnitTests"`.
