@@ -625,7 +625,7 @@ Tasks:
   - Verify: build with 0 warnings. Searching for `Newtonsoft` in `*.cs` and `*.csproj` returns nothing.
   - Commit: `refactor(core)!: remove 2.x API surface`
 
-- [~] Task 7.3: MIGRATION.md (TDD)
+- [x] Task 7.3: MIGRATION.md (TDD) [2a268ff]
   - Red: `UnitTests/Docs/MigrationGuideTests.cs`:
     - `MigrationGuide_MentionsEveryLegacyPublicType`: every type in `Snapshots/Legacy2x/public-api.txt` appears in `MIGRATION.md`, located via `[CallerFilePath]` to the repo root.
     - `MigrationGuide_MentionsEveryLegacyClientMethod`
