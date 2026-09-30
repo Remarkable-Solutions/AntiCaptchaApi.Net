@@ -221,7 +221,8 @@ Tasks:
   - Snapshots: `ImageToTextTask.{minimal,full}.json`, `ImageToCoordinatesTask.{minimal,full}.json`.
   - Commit: `feat(tasks): add ImageToText and ImageToCoordinates tasks`
 
-- [ ] Task 2.7: `RecaptchaV2Task`, `RecaptchaV2EnterpriseTask`, `RecaptchaSolution`
+- [x] Task 2.7: `RecaptchaV2Task`, `RecaptchaV2EnterpriseTask`, `RecaptchaSolution` 564a11e
+  - Done 2026-09-30: `EnterprisePayload` is `IReadOnlyDictionary<string, string>?` (2.x `Dictionary<string, string>`), not a `JsonObject`, so the public surface keeps JSON types to AntiGate/AppStats (Task 5.7). `UserAgent` and `Cookies` are on both records and are sent without a proxy too; the `full` samples set them (like Turnstile), and they are 3.0 additions to the 2.x proxyless files. Refactor: internal `Validator.UserAgentWhenProxy(proxy, userAgent)` now holds the "UserAgent: required when Proxy is set" rule (Turnstile uses it), and internal `Tasks/RecaptchaApiDomain.cs` holds the `apiDomain` allow-list. 3 extra tests: `RecaptchaV2TaskTests.Validate_InvalidUrlAndEmptyKey_ReportsBoth`, `RecaptchaV2EnterpriseTaskTests.Validate_ProxyWithoutUserAgent_Fails`, `TypeName_ProxylessAndProxy`.
   - Tests:
     - `RecaptchaV2TaskTests.TypeName_ProxylessAndProxy`
     - `RecaptchaV2TaskTests.Validate_ProxyWithoutUserAgent_Fails`
