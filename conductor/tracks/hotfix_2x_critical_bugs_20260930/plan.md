@@ -35,10 +35,11 @@ Tasks:
   - Green: add `{ typeof(AmazonWafProxylessRequest), "AmazonTaskProxyless" }` and `{ typeof(AmazonWafRequest), "AmazonTask" }` to `Internal/Helpers/RequestTaskNameHelper.cs`.
   - Commit: `fix(amazon-waf): register AmazonTask/AmazonTaskProxyless task names`
   - Note: also added `CreateCaptchaTaskAsync_AmazonWafWithProxy_SendsAmazonTask` (FR-1 covers both types). Red: all 4 new tests failed with `KeyNotFoundException` for the WAF request types.
-- [ ] Task 1.3: Add missing result converters for Prosopo and Amazon WAF (TDD, B4 / FR-4).
+- [x] Task 1.3: Add missing result converters for Prosopo and Amazon WAF (TDD, B4 / FR-4). [8a10bd1]
   - Red: `UnitTests/TaskResultConverterTests.cs`. Through the fake handler, call `GetTaskResultAsync<ProsopoSolution>` / `<AmazonWafSolution>` with ready JSON (`createTime`, `endTime`) → assert `CreateTimeUtc`/`EndTimeUtc` are set. With `{"errorId":12,"errorCode":"ERROR_CAPTCHA_UNSOLVABLE"}` → assert `Status == TaskStatusType.Error`. Include one existing type (Turnstile) as a control.
   - Green: add `new TaskResultConverter<ProsopoSolution>()` and `new TaskResultConverter<AmazonWafSolution>()` to `Internal/Helpers/HttpHelper.cs:19-29`. Change the list to `internal static readonly IReadOnlyList<JsonConverter> Converters` (it is also passed as an array to `DeserializeObject`; cache the array).
   - Commit: `fix(converters): register TaskResultConverter for Prosopo and AmazonWaf solutions`
+  - Red: Prosopo/WAF ready → `CreateTimeUtc` null; `errorId 12` → `Status` null (Turnstile control green). Converters exposed as `internal static readonly IReadOnlyList<JsonConverter> Converters` wrapping a cached `ConverterArray` passed to `DeserializeObject`.
 - [ ] Task 1.4: reCAPTCHA v3: `IsEnterprise` null means false, and MinScore accepts 0.9 (TDD, B2 / FR-2).
   - Red: `UnitTests/RecaptchaV3RequestValidatorTests.cs`:
     - `Validate_DefaultRequest_IsValid`
