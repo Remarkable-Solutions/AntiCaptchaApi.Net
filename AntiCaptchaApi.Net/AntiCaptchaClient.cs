@@ -187,6 +187,23 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
         return response.Balance ?? throw InvalidResponse("getBalance", "the response has no balance.");
     }
 
+    /// <inheritdoc />
+    public async Task<QueueStats> GetQueueStatsAsync(QueueType q, CancellationToken ct = default)
+    {
+        var response = await Transport.PostAsync(
+            "getQueueStats",
+            new GetQueueStatsRequest((int)q),
+            AntiCaptchaJsonContext.Default.GetQueueStatsRequest,
+            AntiCaptchaJsonContext.Default.GetQueueStatsResponse,
+            Redactor,
+            ct).ConfigureAwait(false);
+        if (response is not { Waiting: { } waiting, Load: { } load, Bid: { } bid, Speed: { } speed, Total: { } total })
+        {
+            throw InvalidResponse("getQueueStats", "the response lacks waiting, load, bid, speed or total.");
+        }
+        return new QueueStats(waiting, load, bid, speed, total);
+    }
+
     /// <summary>Describes the client without revealing the API key.</summary>
     /// <returns>The type name and the base address.</returns>
     public override string ToString() => $"AntiCaptchaClient {{ BaseAddress = {Options.BaseAddress} }}";

@@ -99,4 +99,14 @@ public interface IAntiCaptchaClient
     /// <returns>The balance in USD.</returns>
     /// <exception cref="AntiCaptchaException">The API or the transport failed.</exception>
     Task<decimal> GetBalanceAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Reads the load of a worker queue (<c>getQueueStats</c>), for example to pick a good time to create tasks.
+    /// The API caches the answer for 10 seconds. The call does not send the API key.
+    /// </summary>
+    /// <param name="q">The queue.</param>
+    /// <param name="ct">Cancels the call; cancellation always surfaces as <see cref="OperationCanceledException"/>.</param>
+    /// <returns>The queue statistics.</returns>
+    /// <exception cref="AntiCaptchaException">The API or the transport failed.</exception>
+    Task<QueueStats> GetQueueStatsAsync(QueueType q, CancellationToken ct = default);
 }
