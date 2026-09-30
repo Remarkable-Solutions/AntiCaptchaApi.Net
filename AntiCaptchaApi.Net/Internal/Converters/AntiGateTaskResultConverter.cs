@@ -36,6 +36,10 @@ namespace AntiCaptchaApi.Net.Internal.Converters
             AntiGateTaskResultResponse.Solution.LocalStorage = ParseSolutionJObject(jObject, "localStorage");
             AntiGateTaskResultResponse.Solution.Fingerprint = ParseSolutionJObject(jObject, "fingerprint");
             AntiGateTaskResultResponse.Solution.HTMLsInBase64 = ParseSolutionJObject(jObject, "htmlsInBase64");
+            AntiGateTaskResultResponse.Solution.SessionStorage = ParseSolutionJObject(jObject, "sessionStorage");
+            AntiGateTaskResultResponse.Solution.Screenshots = ParseSolutionJObject(jObject, "screenshots");
+            AntiGateTaskResultResponse.Solution.RequestHeaders = ParseSolutionJObject(jObject, "requestHeaders");
+            AntiGateTaskResultResponse.Solution.ResponseHeaders = ParseSolutionJObject(jObject, "responseHeaders");
         }
     
     }
