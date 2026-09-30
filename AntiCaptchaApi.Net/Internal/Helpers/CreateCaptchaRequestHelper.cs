@@ -31,7 +31,7 @@ namespace AntiCaptchaApi.Net.Internal
                 { typeof(RecaptchaV3Request), () => new RecaptchaV3RequestValidator().Validate(request as RecaptchaV3Request) },
                 { typeof(RecaptchaV3EnterpriseRequest), () => new RecaptchaV3RequestValidator().Validate(request as RecaptchaV3EnterpriseRequest) },
                 { typeof(TurnstileCaptchaProxylessRequest), () => new TurnstileProxylessRequestValidator().Validate(request as TurnstileCaptchaProxylessRequest) },
-                { typeof(TurnstileCaptchaRequest), () => new TurnstileProxylessRequestValidator().Validate(request as TurnstileCaptchaProxylessRequest) },
+                { typeof(TurnstileCaptchaRequest), () => new TurnstileRequestValidator().Validate(request as TurnstileCaptchaRequest) },
                 { typeof(ImageToCoordinatesRequest), () => new ImageToCoordinatesRequestValidator().Validate(request as ImageToCoordinatesRequest) },
                 { typeof(ProsopoProxylessRequest), () => new ProsopoProxylessRequestValidator().Validate(request as ProsopoProxylessRequest) },
                 { typeof(ProsopoRequest), () => new ProsopoRequestValidator().Validate(request as ProsopoRequest) },

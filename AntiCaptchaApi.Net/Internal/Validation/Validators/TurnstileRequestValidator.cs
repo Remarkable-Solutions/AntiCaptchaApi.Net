@@ -7,11 +7,11 @@ namespace AntiCaptchaApi.Net.Internal.Validation.Validators
 {
     public class TurnstileRequestValidator : TurnstileProxylessRequestValidator
     {
+        // TurnstileTask requires a proxy; a custom UserAgent is not needed for Turnstile, so it stays optional.
         public override ValidationResult Validate(TurnstileCaptchaProxylessRequest request)
         {
             return base.Validate(request)
-                .ValidateProxy(((TurnstileCaptchaRequest)request).ProxyConfig)
-                .ValidateIsNotNullOrEmpty(nameof(TurnstileCaptchaRequest.UserAgent), ((TurnstileCaptchaRequest)request).UserAgent);
+                .ValidateProxy((request as TurnstileCaptchaRequest)?.ProxyConfig);
         }
     }
 }
