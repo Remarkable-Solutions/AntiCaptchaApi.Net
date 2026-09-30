@@ -108,7 +108,7 @@ Tasks:
 Goal: all 13 task records exist with validation. Their JSON is proven by reflection-discovered snapshot tests, and a parity test shows that no 2.x field is lost.
 
 Tasks:
-- [ ] Task 2.1: `Proxy` and `ProxyType` (TDD)
+- [x] Task 2.1: `Proxy` and `ProxyType` (TDD) 5e67188
   - Files: `Proxy.cs`, `ProxyType.cs` (with `[JsonConverter(typeof(LowerCaseEnumConverter<ProxyType>))]`).
   - Tests `UnitTests/Tasks/ProxyTests.cs`:
     - `ToString_WithPassword_RedactsPassword`
@@ -117,7 +117,7 @@ Tasks:
     - `ProxyType_Serializes_Lowercase` (Theory: Http→`http`, Socks4→`socks4`, Socks5→`socks5`)
   - Commit: `feat(tasks): add Proxy record with redacted ToString`
 
-- [ ] Task 2.2: `Validator`, `ValidationError`, `AntiCaptchaValidationException` (TDD)
+- [~] Task 2.2: `Validator`, `ValidationError`, `AntiCaptchaValidationException` (TDD)
   - Files: `Tasks/Validator.cs`, `Errors/ValidationError.cs`, `Errors/AntiCaptchaValidationException.cs`.
   - Tests `UnitTests/Tasks/ValidatorTests.cs`:
     - `Url_Relative_AddsError`
