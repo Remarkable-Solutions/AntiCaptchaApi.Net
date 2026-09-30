@@ -640,7 +640,7 @@ Tasks:
   - Verify: each code snippet compiles. Copy them into a probe command `readme-snippets` that compiles against the library; running it is not required.
   - Commit: `docs(readme): rewrite README for 3.0 core package`
 
-- [~] Task 7.5: Version, package metadata, CHANGELOG (no red phase — release prep; no publishing)
+- [x] Task 7.5: Version, package metadata, CHANGELOG (no red phase — release prep; no publishing) [a2c0334]
   - csproj:
     - `Version` and `PackageVersion` = `3.0.0-preview.1`.
     - `Title` = `AntiCaptchaApi.Net`.
