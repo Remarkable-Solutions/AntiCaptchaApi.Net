@@ -304,7 +304,8 @@ Tasks:
 Goal: typed errors and a hardened HTTP transport, plus the `AntiCaptchaClient` constructors, `CreateTaskAsync` and `GetTaskResultAsync`, all with no secret leakage.
 
 Tasks:
-- [ ] Task 3.1: `AntiCaptchaErrorCode`, `AntiCaptchaError`, parser and classifier (TDD)
+- [x] Task 3.1: `AntiCaptchaErrorCode`, `AntiCaptchaError`, parser and classifier (TDD) 804addd
+  - Done 2026-09-30: the code list is the 35 codes on https://anti-captcha.com/apidoc/errors (fetched 2026-09-30; the 2.x sources have no code list). Each enum value equals its documented `errorId`, `Unknown = 0`, and the client codes are 1000–1004. `ERROR_NO_SUCH_CAPCHA_ID` → `NoSuchCaptchaId` and `ERROR_PROXY_CONNECT_*` → `ProxyConnection*`. `HttpError` keeps the HTTP status number as `RawCode` (null = network failure); this is how the classifier tells 400 from 503, with no extra member. `HttpTimeout` counts as "transient HTTP", so it is also retryable. `ErrorCodeParser.FromApi(errorId, raw, description)` builds the error and keeps the raw code. `ErrorClassifier.HttpError(status, description)` is the factory. 4 extra tests: `Parse_IsCaseSensitive_LowercaseIsUnknown`, `FromApi_KnownCode_KeepsRawAndErrorId`, `HttpError_KeepsStatusAsRawCode`, `HttpError_NetworkFailure_HasNoRawCode`.
   - Files: `Errors/AntiCaptchaErrorCode.cs` (every documented `ERROR_*` code plus the client codes from spec FR-6), `Errors/AntiCaptchaError.cs`, `Internal/Errors/ErrorCodeParser.cs`, `Internal/Errors/ErrorClassifier.cs`.
   - Tests:
     - `ErrorCodeParserTests.Parse_KnownCode_MapsEnum` (Theory, one row per documented code)
