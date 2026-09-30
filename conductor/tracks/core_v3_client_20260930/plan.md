@@ -606,7 +606,7 @@ Tasks:
 Goal: 2.x code is gone and the live tests are ported (opt-in). MIGRATION, README and CHANGELOG are complete and the version is `3.0.0-preview.1`.
 
 Tasks:
-- [~] Task 7.1: Opt-in live test infrastructure and port (TDD for the attribute only)
+- [x] Task 7.1: Opt-in live test infrastructure and port (TDD for the attribute only) [5d41522]
   - Files: `LiveTests/LiveFactAttribute.cs` and `LiveTheoryAttribute.cs` (set `Skip` when `ClientKey` is unset; `[Trait("Category","Live")]`), `LiveTests/LiveEnvironment.cs` (`ClientKey`, `ProxyAddress`, `ProxyPort`, `ProxyLogin`, `ProxyPassword`, same env names as 2.x).
   - Test `UnitTests/Live/LiveFactAttributeTests.cs`:
     - `Skip_WhenClientKeyMissing_IsSet`
@@ -618,7 +618,7 @@ Tasks:
   - Verify: `dotnet test --filter "FullyQualifiedName~UnitTests"` does not run them. `dotnet test --filter "Category=Live"` **without** `ClientKey` reports all of them as skipped. **Never run with a key in a task loop.**
   - Commit: `test(live): port 2.x integration tests to opt-in 3.0 live tests`
 
-- [ ] Task 7.2: Delete 2.x code (no red phase — removal; suite must stay green)
+- [~] Task 7.2: Delete 2.x code (no red phase — removal; suite must stay green)
   - Delete `Requests/`, `Responses/`, `Models/`, `Enums/`, the `Internal/{Common,Converters,Extensions,Helpers,Models,Services,Validation}/` folders, `AnticaptchaClient.v2.cs`, `IAnticaptchaClient.v2.cs` (renamed in Task 3.4) and `AnticaptchaServiceCollectionExtensions.cs`. Also delete the 2.x tests: `UnitTests/RequestSerializationTests.cs`, `IntegrationTests/`, `Helpers/`, `Models/` (after the port) and `TestEnvironment.cs`.
   - Remove every `<Compile Remove>` entry from both csproj files.
   - Keep `Snapshots/Legacy2x/**` and `LegacyParityTests` as a permanent contract regression.
