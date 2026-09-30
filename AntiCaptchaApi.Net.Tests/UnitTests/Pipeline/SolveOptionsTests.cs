@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Xunit;
 
 namespace AntiCaptchaApi.Net.Tests.UnitTests.Pipeline;
@@ -17,7 +18,6 @@ public class SolveOptionsTests
         Assert.Equal(5, options.MaxConsecutivePollErrors);
         Assert.Equal(TimeSpan.FromSeconds(2), options.RetryBaseDelay);
         Assert.Equal(TimeSpan.FromSeconds(30), options.RetryMaxDelay);
-        Assert.Null(options.MaxCostPerSolve);
         Assert.Null(options.LanguagePool);
         Assert.Null(options.CallbackUrl);
         Assert.IsAssignableFrom<CreateOptions>(options);
@@ -73,16 +73,20 @@ public class SolveOptionsTests
     }
 
     [Fact]
-    public void Validate_NegativeMaxCost_Throws()
+    public void SolveOptions_HasNoMaxCostPerSolve()
     {
-        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new SolveOptions { MaxCostPerSolve = -0.001m }.Validate("o"));
+        // Removed in Task 4.6: cost is reported only for a ready task, which ends the solve, so a per-solve limit checked
+        // before a retry could never see a spend.
+        var member = typeof(SolveOptions).GetMember(
+            "MaxCostPerSolve",
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
 
-        Assert.Contains("MaxCostPerSolve", exception.Message);
+        Assert.Empty(member);
     }
 
     [Fact]
-    public void Validate_ZeroMaxCost_IsAllowed()
+    public void AntiCaptchaErrorCode_HasNoCostLimitReached()
     {
-        new SolveOptions { MaxCostPerSolve = 0m }.Validate("o");
+        Assert.DoesNotContain("CostLimitReached", Enum.GetNames(typeof(AntiCaptchaErrorCode)));
     }
 }

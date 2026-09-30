@@ -50,13 +50,6 @@ public sealed record SolveOptions : CreateOptions
     /// <summary>The cap of the retry delay before jitter. It must be positive. Defaults to 30 seconds.</summary>
     public TimeSpan RetryMaxDelay { get; init; } = TimeSpan.FromSeconds(30);
 
-    /// <summary>
-    /// An optional budget in USD. Before each retry attempt, when the costs reported for the tasks of this solve add up to
-    /// at least this value, the solve fails with <see cref="AntiCaptchaErrorCode.CostLimitReached"/>. A received solution is
-    /// always returned. It must not be negative. Defaults to <see langword="null"/> (no limit).
-    /// </summary>
-    public decimal? MaxCostPerSolve { get; init; }
-
     /// <summary>Throws <see cref="ArgumentOutOfRangeException"/> (with <paramref name="paramName"/>) for an invalid value.</summary>
     internal SolveOptions Validate(string paramName)
     {
@@ -75,10 +68,6 @@ public sealed record SolveOptions : CreateOptions
         if (MaxConsecutivePollErrors < 0)
         {
             throw Invalid(paramName, $"{nameof(MaxConsecutivePollErrors)} must not be negative.");
-        }
-        if (MaxCostPerSolve < 0m)
-        {
-            throw Invalid(paramName, $"{nameof(MaxCostPerSolve)} must not be negative.");
         }
         return this;
     }

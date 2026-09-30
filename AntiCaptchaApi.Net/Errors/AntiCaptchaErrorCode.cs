@@ -127,7 +127,4 @@ public enum AntiCaptchaErrorCode
 
     /// <summary>The per-attempt <c>SolveOptions.Timeout</c> elapsed before the task was ready. Not retried, because the task may still be charged.</summary>
     SolveTimeout = 1003,
-
-    /// <summary><c>SolveOptions.MaxCostPerSolve</c> was reached before a retry attempt.</summary>
-    CostLimitReached = 1004,
 }
