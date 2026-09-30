@@ -32,6 +32,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <None Update="Snapshots/**;Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
       <Folder Include="Properties\" />
     </ItemGroup>
 
