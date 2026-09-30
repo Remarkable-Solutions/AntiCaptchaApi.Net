@@ -381,7 +381,8 @@ Tasks:
     - `ImageToCoordinatesSolution_ReadsNestedArrays`
   - Commit: `feat(client): add GetTaskResultAsync with typed solutions`
 
-- [ ] Task 3.7: Redaction sweep (TDD)
+- [x] Task 3.7: Redaction sweep (TDD) e3a330a
+  - Done 2026-09-30: 9 transport scenarios through `CreateTaskAsync`: API error echo, unknown-code echo, network failure (with inner), 503 with reason phrase, 400 with body, `RequestTimeout`, `HttpClient.Timeout` with message, invalid JSON, and wrong-shape JSON. Most echo both secrets. The checks cover `Message`, `ToString()`, the inner chain and every `AntiCaptchaError` member. The sweep found one leak, now fixed in `ApiTransport`: an **unknown API `errorCode` was kept unredacted as `RawCode`**. Codes are mapped from the original string, then `RawCode` and `Description` are both redacted. Mutation check: with `SecretRedactor.Redact` a no-op, 6 sweep tests fail. Limitation: `GetTaskResultAsync` knows only the key (no task, so no proxy password); its test asserts the key only. 3 extra tests: `GetTaskResult_ApiErrorEchoingKey_ContainsNoKey`, `Client_ToString_ContainsNoKey`, and `Task_ToString_WithProxy_ContainsNoPassword` as a Theory over all 37 samples. `ValidationException_...` is a Theory over 5 invalid proxy tasks.
   - Tests `UnitTests/Security/RedactionTests.cs`, with key `SECRET_KEY_123` and proxy password `PX_PASS_456`:
     - `AllTransportErrorPaths_ExceptionMessageAndToString_ContainNoSecrets` (Theory over the Task 3.3 scenarios through `CreateTaskAsync`)
     - `AntiCaptchaError_ToString_ContainsNoSecrets`
