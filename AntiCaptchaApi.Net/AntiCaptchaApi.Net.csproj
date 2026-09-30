@@ -47,8 +47,8 @@
     <Compile Remove="Internal/Models/**" />
     <Compile Remove="Internal/Services/**" />
     <Compile Remove="Internal/Validation/**" />
-    <Compile Remove="AnticaptchaClient.cs" />
-    <Compile Remove="IAnticaptchaClient.cs" />
+    <Compile Remove="AnticaptchaClient.v2.cs" />
+    <Compile Remove="IAnticaptchaClient.v2.cs" />
     <Compile Remove="AnticaptchaServiceCollectionExtensions.cs" />
   </ItemGroup>
 
