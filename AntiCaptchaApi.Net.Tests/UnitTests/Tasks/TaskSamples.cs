@@ -119,6 +119,20 @@ internal static class TaskSamples
         };
         Add(samples, new GeeTestV4Task(WebsiteUrl, "GT_VALUE"), geeTestV4Full, geeTestV4Full with { Proxy = Proxy });
 
+        var amazonWafFull = new AmazonWafTask(WebsiteUrl, WebsiteKey, "IV_VALUE", "CONTEXT_VALUE")
+        {
+            CaptchaScript = "https://example.com/captcha.js",
+            ChallengeScript = "https://example.com/challenge.js",
+        };
+        Add(samples, new AmazonWafTask(WebsiteUrl, WebsiteKey, "IV_VALUE", "CONTEXT_VALUE"), amazonWafFull,
+            amazonWafFull with { Proxy = Proxy });
+
+        var prosopoFull = new ProsopoTask(WebsiteUrl, WebsiteKey) { UserAgent = UserAgent };
+        Add(samples, new ProsopoTask(WebsiteUrl, WebsiteKey), prosopoFull, prosopoFull with { Proxy = Proxy });
+
+        var friendlyCaptchaFull = new FriendlyCaptchaTask(WebsiteUrl, WebsiteKey) { UserAgent = UserAgent };
+        Add(samples, new FriendlyCaptchaTask(WebsiteUrl, WebsiteKey), friendlyCaptchaFull, friendlyCaptchaFull with { Proxy = Proxy });
+
         return samples;
     }
 
