@@ -26,7 +26,7 @@ Manual verification probe (used at every checkpoint): a throwaway console app in
 Goal: every existing request type can be validated, named and parsed. Validation matches anti-captcha's rules. A guard test stops registry drift.
 
 Tasks:
-- [ ] Task 1.1: Add the `FakeHttpMessageHandler` test helper (no red phase: test infrastructure).
+- [x] Task 1.1: Add the `FakeHttpMessageHandler` test helper (no red phase: test infrastructure). [5c15351]
   - `AntiCaptchaApi.Net.Tests/Helpers/FakeHttpMessageHandler.cs`: FIFO queue of `Func<HttpRequestMessage, HttpResponseMessage>` or an exception to throw. Captures `RequestUri` and body strings. Exposes `RequestCount`.
   - Add a self-test `UnitTests/FakeHttpMessageHandlerTests.cs` (returns queued JSON, throws a queued `HttpRequestException`, records the body).
   - Commit: `test(infra): add FakeHttpMessageHandler for offline client tests`
