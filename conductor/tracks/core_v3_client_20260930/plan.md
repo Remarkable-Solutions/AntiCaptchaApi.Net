@@ -492,7 +492,7 @@ Tasks:
 
 ---
 
-## Phase 5: Account, report and stats endpoints
+## Phase 5: Account, report and stats endpoints [checkpoint: 9e65c4c]
 Goal: every remaining 2.x API method has a 3.0 equivalent (spec FR-8), and the public surface is pinned.
 
 Tasks:
@@ -552,7 +552,7 @@ Tasks:
   - (b) Add `AntiCaptchaErrorCode.AccessDenied` for `ERROR_ACCESS_DENIED`. Pick a value that doesn't collide with the documented errorIds or the client codes 1000–1003, and record the choice. It is fatal (not retryable, not transient). Red: parser Theory row, classifier rows, and `GetAppStats_AccessDenied_MapsToAccessDenied`. Update the Task 5.6 test that pinned `Unknown`.
   - (c) `UnitTests/Security/RedactionTests.cs`: `AccountMethods_ErrorPaths_ContainNoSecrets` (Theory over GetBalance, GetQueueStats, Report, PushAntiGateVariable, GetSpendingStats, GetAppStats × API error echoing the key, network failure echoing the key, invalid JSON), asserting that the exception message, `ToString()` and `Error.ToString()` contain no key.
   - Commit: `fix(client): harden unix-time parsing, add AccessDenied, cover account methods in redaction tests`
-- [ ] Verification 5: Phase 5 checkpoint [checkpoint marker]
+- [x] Verification 5: Phase 5 checkpoint [9e65c4c] — user confirmed 2026-09-30
   - Run the offline suite and coverage.
   - Add probe commands (user runs the live ones with `ClientKey`): `live-balance`, `live-queue <QueueType>`, `live-appstats`, `live-spending`.
   - Manual: offline tests green. Optionally, the user runs the live read-only commands; they have no cost.
