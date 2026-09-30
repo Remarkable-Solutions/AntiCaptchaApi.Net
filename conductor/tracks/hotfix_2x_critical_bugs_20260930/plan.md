@@ -123,7 +123,7 @@ Tasks:
   - Green: in `AnticaptchaClient.SolveCaptchaAsync` (lines 162-174), `break` when `createTaskResponse.ErrorCode == HttpStatusCode.BadRequest.ToString()`, before the next iteration. The existing error-copy tail stays.
   - Commit: `fix(solve): stop retrying requests that fail local validation`
   - Deviation: with `SolveAsyncRetries = 3`, the retry of a local failure is not observable through the public API (0 HTTP requests and `BadRequest` before and after the fix), so `Solve_InvalidRequest_DoesNotRetryAndSendsNoHttp` was already green. Added `Solve_InvalidRequestWithHugeRetryCount_ReturnsWithoutRetrying` (`SolveAsyncRetries = int.MaxValue`, must return within 2 s) as the deterministic red: it timed out before the fix and takes a few ms after. `Solve_TaskErrorStatus_RetriesUpToConfiguredCount` (3 createTask + 3 getTaskResult) was green before and after.
-- [ ] Task 2.5: DI uses a named client with `MaxHttpRequestTimeMs` (TDD, B10 / FR-10).
+- [x] Task 2.5: DI uses a named client with `MaxHttpRequestTimeMs` (TDD, B10 / FR-10). [33f3c6c]
   - Red: `UnitTests/ServiceCollectionExtensionsTests.cs`:
     - `AddAnticaptcha_ConfiguresNamedClientTimeout` (12345 ms)
     - `AddAnticaptcha_ClientUsesNamedHttpClient`: register `ConfigurePrimaryHttpMessageHandler(() => fake)` on the named client in the test, resolve `IAnticaptchaClient`, call `GetBalanceAsync`, and assert that the fake received the request.
@@ -131,6 +131,7 @@ Tasks:
     Add a `Microsoft.Extensions.DependencyInjection` test package reference only if `ServiceCollection` is not transitively available.
   - Green: internal const `HttpClientName = "AntiCaptchaApi.Net"`. `services.AddHttpClient(HttpClientName, c => c.Timeout = TimeSpan.FromMilliseconds(clientConfig.MaxHttpRequestTimeMs))`. `HttpHelper(IHttpClientFactory)` → `CreateClient(HttpClientName)` at `HttpHelper.cs:49`. The `AddAnticaptcha` signature is unchanged.
   - Commit: `fix(di): use named HttpClient honoring ClientConfig.MaxHttpRequestTimeMs`
+  - Red: the named client's timeout was the 100 s default; the resolved client used the unnamed client (named fake got 0 requests). The test also stubs the unnamed default client with a fake handler so the red run never touches the network, and asserts it gets 0 requests. `HttpClientName` lives on `AnticaptchaServiceCollectionExtensions` (internal). No test package reference was needed (`ServiceCollection` is transitive).
 - [ ] Verification: Phase 2 manual checks [checkpoint marker]
   - Run the offline suite (all green) and `dotnet build` (warnings ≤ 15). Coverage run: new and changed code ≥ 80%.
   - Probe:
