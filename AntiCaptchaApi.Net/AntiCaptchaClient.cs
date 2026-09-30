@@ -174,6 +174,19 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
         return status.Solution!; // PollAsync returns only ready statuses, and IsReady guarantees a solution.
     }
 
+    /// <inheritdoc />
+    public async Task<decimal> GetBalanceAsync(CancellationToken ct = default)
+    {
+        var response = await Transport.PostAsync(
+            "getBalance",
+            new ClientKeyRequest(_apiKey),
+            AntiCaptchaJsonContext.Default.ClientKeyRequest,
+            AntiCaptchaJsonContext.Default.GetBalanceResponse,
+            Redactor,
+            ct).ConfigureAwait(false);
+        return response.Balance ?? throw InvalidResponse("getBalance", "the response has no balance.");
+    }
+
     /// <summary>Describes the client without revealing the API key.</summary>
     /// <returns>The type name and the base address.</returns>
     public override string ToString() => $"AntiCaptchaClient {{ BaseAddress = {Options.BaseAddress} }}";
@@ -193,6 +206,10 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
         task.RunValidation(); // CreateTaskAsync checks CallbackUrl, also before its HTTP call.
         return Pipeline.SolveAsync(task, options, RedactorFor(task), ct);
     }
+
+    // A successful envelope that lacks a required field. The body is not included (it could echo request data).
+    private static AntiCaptchaException InvalidResponse(string method, string reason) =>
+        new(new AntiCaptchaError(AntiCaptchaErrorCode.InvalidResponse, null, method + ": " + reason, null), taskId: null, attempts: 0);
 
     private SolveOptions ResolveSolveOptions(SolveOptions? o) =>
         o is null ? Options.DefaultSolveOptions : o.Validate(nameof(o));

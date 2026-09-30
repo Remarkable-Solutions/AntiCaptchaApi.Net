@@ -90,4 +90,13 @@ public interface IAntiCaptchaClient
     /// </exception>
     Task<TSolution> WaitForResultAsync<TSolution>(int taskId, SolveOptions? o = null, CancellationToken ct = default)
         where TSolution : Solution;
+
+    /// <summary>
+    /// Reads the account balance (<c>getBalance</c>). The API asks not to call this more than once every 30 seconds;
+    /// cache the value instead.
+    /// </summary>
+    /// <param name="ct">Cancels the call; cancellation always surfaces as <see cref="OperationCanceledException"/>.</param>
+    /// <returns>The balance in USD.</returns>
+    /// <exception cref="AntiCaptchaException">The API or the transport failed.</exception>
+    Task<decimal> GetBalanceAsync(CancellationToken ct = default);
 }
