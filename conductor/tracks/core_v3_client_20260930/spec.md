@@ -357,6 +357,7 @@ Resolved in this spec; the owner can override:
 
 Open, to confirm during implementation (each has a default):
 - **Q-1** AntiGate proxy fields: anti-captcha docs list `proxyAddress/Port/Login/Password` **without** `proxyType` for `AntiGateTask`. Default: match the hotfix `AntiGateRequest` legacy snapshot exactly. If that snapshot has no `proxyType`, add an internal `IncludesProxyType => false` override on `AntiGateTask`.
+  - *Resolved 2026-09-30 (Task 2.12):* the snapshot has no `proxyType`, and neither do the docs (checked 2026-09-30). `AntiGateTask` overrides the internal `CaptchaTask.IncludesProxyType` to `false`.
 - **Q-2** The Amazon WAF solution shape (`token` in 2.x vs a possible `cookies["aws-waf-token"]`). Default: keep `token`. The owner can confirm with one live solve in the Phase 3 verification.
 - **Q-3** `reportIncorrectHcaptcha`: anti-captcha discontinued hCaptcha. Default: drop it and document the removal in MIGRATION. If the owner wants parity, add `Report.IncorrectHCaptcha`.
 - **Q-4** Whether `QueueType` should gain newer queue ids (Turnstile and others). Default: no new ids without a doc source; keep the 2.x set with the fixed names.
