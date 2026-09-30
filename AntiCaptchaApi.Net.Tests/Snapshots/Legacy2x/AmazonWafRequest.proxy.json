@@ -1,0 +1,1 @@
+{"captchaScript":"https://example.com/captcha.js","challengeScript":"https://example.com/challenge.js","context":"CONTEXT_VALUE","iv":"IV_VALUE","proxyAddress":"203.0.113.10","proxyLogin":"proxyUser","proxyPassword":"proxyPass","proxyPort":1080,"proxyType":"socks5","type":"AmazonTask","websiteKey":"SITE_KEY","websiteURL":"https://example.com/login"}

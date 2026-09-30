@@ -1,40 +1,46 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0;netstandard2.1;</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net8.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <WarningsAsErrors>nullable;CS1591</WarningsAsErrors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Version>2.2.0</Version>
+    <Version>3.0.0-preview.1</Version>
     <Authors>RemarkableSolutions</Authors>
-    <PackageProjectUrl>https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net</PackageProjectUrl>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <RepositoryUrl>https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net</RepositoryUrl>
-    <PackageTags>AntiCaptcha Captcha Recaptcha GeeCaptcha RecaptchaV2 Anti-captcha RemarkableSolutions CaptchaSolver Solver</PackageTags>
-    <Title>Anticaptcha.NetStandard</Title>
-    <Description>Library for captcha solving using anti-captcha.com api</Description>
-    <Copyright>Copyright (c) Remarkable Solutions 2022</Copyright>
+    <PackageProjectUrl>https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>AntiCaptcha Anti-captcha Captcha CaptchaSolver Solver Recaptcha RecaptchaV2 RecaptchaV3 Turnstile FunCaptcha GeeTest AmazonWaf Prosopo FriendlyCaptcha AntiGate RemarkableSolutions</PackageTags>
+    <Title>AntiCaptchaApi.Net</Title>
+    <Description>A .NET client for the anti-captcha.com captcha-solving API. One record per task type (image, reCAPTCHA v2/v3, Turnstile, FunCaptcha, GeeTest, Amazon WAF, Prosopo, Friendly Captcha, AntiGate) and a single SolveAsync call that validates before spending, polls, retries and never abandons a paid task. Typed errors, ActivitySource/Meter telemetry, System.Text.Json only; netstandard2.0 and net8.0.</Description>
+    <Copyright>Copyright (c) Remarkable Solutions 2022-2026</Copyright>
     <AssemblyName>$(MSBuildProjectName)</AssemblyName>
     <PublishRepositoryUrl>True</PublishRepositoryUrl>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PackageVersion>2.2.0</PackageVersion>
-    <PackageReleaseNotes>
-      2.2.0:
-      - Fixed: Amazon WAF task creation, reCAPTCHA v3 validation (IsEnterprise, MinScore 0.9), Turnstile proxy validation, Prosopo/Friendly Captcha/Amazon WAF result parsing, concurrent-solve race, proxy port 65535, polling through transient network errors, no retry of invalid requests, DI HTTP timeout, AntiGate HTMLsInBase64.
-      - Added: AntiGateRequest (AntiGateTask) and more AntiGateSolution fields.
-      - Security: clientKey and proxyPassword are redacted from RawPayload.
-      - Changed: dependency floors lowered to Microsoft.Extensions.Http 8.0.0 and Newtonsoft.Json 13.0.1.
-      - Deprecated: ReportOutcome.IncorrectHCaptcha, RecaptchaV3Request.MinScore 0.5 (removal in 3.0).
-      Full history: CHANGELOG.md - https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/blob/main/CHANGELOG.md
-    </PackageReleaseNotes>
+    <PackageVersion>3.0.0-preview.1</PackageVersion>
+    <PackageReleaseNotes>See CHANGELOG.md: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/blob/main/CHANGELOG.md</PackageReleaseNotes>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <None Include="..\README.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <!-- ActivitySource/Meter (spec FR-10); inbox on net8.0. A floor: the lowest 8.0.x without a known vulnerability. -->
+    <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="8.0.0" />
+  </ItemGroup>
+
 
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>AntiCaptchaApi.Net.Tests</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>AntiCaptchaApi.Net.Probe</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 

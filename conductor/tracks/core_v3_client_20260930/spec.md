@@ -127,7 +127,7 @@ public interface IAntiCaptchaClient
   - `HttpTimeout` (per-request timeout or `HttpClient.Timeout`, when the user's `ct` was **not** cancelled)
   - `InvalidResponse` (unparseable JSON, or ready without a solution)
   - `SolveTimeout` (per-attempt `Timeout` elapsed)
-  - `CostLimitReached`
+  - ~~`CostLimitReached`~~ *(removed 2026-09-30, Task 4.6, together with `MaxCostPerSolve`)*
   - `Unknown` (the raw string is preserved)
 - `public sealed record AntiCaptchaError(AntiCaptchaErrorCode Code, string? RawCode, string? Description, int? ErrorId)` with `bool IsRetryable` and `bool IsTransient` (internal classifier).
 - Classification:
@@ -148,9 +148,9 @@ public interface IAntiCaptchaClient
 | `MaxAttempts` | 3 | `SolveAsyncRetries` 1 |
 | `MaxConsecutivePollErrors` | 5 | none (2.x abandoned the task) |
 | `RetryBaseDelay` / `RetryMaxDelay` | 2 s / 30 s | none |
-| `MaxCostPerSolve` (`decimal?`) | null | none |
+| ~~`MaxCostPerSolve` (`decimal?`)~~ *(removed 2026-09-30, Task 4.6)* | — | none |
 
-Invalid option values (non-positive times, `MaxAttempts < 1`, negative cost) throw `ArgumentOutOfRangeException` before any HTTP call.
+Invalid option values (non-positive times, `MaxAttempts < 1`) throw `ArgumentOutOfRangeException` before any HTTP call.
 
 Algorithm:
 1. Validate the task.
@@ -166,7 +166,9 @@ Algorithm:
 3. Before retrying, compute the delay as `min(RetryMaxDelay, RetryBaseDelay × 2^(attempt−1)) × (1 ± 20 % jitter)`. If there are no attempts left, fail with the last error.
 
 Rules:
-- `MaxCostPerSolve`: before starting a retry attempt, if the sum of costs reported for tasks created in this call is ≥ the limit, fail with `CostLimitReached`. A solution that has already been received is always returned.
+- ~~`MaxCostPerSolve`: before starting a retry attempt, if the sum of costs reported for tasks created in this call is ≥ the limit, fail with `CostLimitReached`. A solution that has already been received is always returned.~~
+  - *Removed 2026-09-30 (Task 4.6, owner decision):* anti-captcha reports and charges `cost` only for a ready task, and a ready task ends the solve, so a limit checked before a retry always saw 0 (`0` blocked every retry, a positive value never triggered). `SolveOptions.MaxCostPerSolve` and `AntiCaptchaErrorCode.CostLimitReached` are gone; the other client code values are unchanged.
+  - *Future work:* a client-wide spend guard (a running total of the `cost` reported by solved tasks across solves, for example `AntiCaptchaClientOptions.MaxTotalCost`), which does work because solved tasks report their cost.
 - `WaitForResultAsync(taskId)` runs only step 2.2 for an existing task, with no retries. Its first-poll delay is `options.FirstPollDelay ?? TimeSpan.Zero`.
 - `SolveResult` fields:
   - `TaskId`: the last created task.
@@ -329,6 +331,12 @@ The parity test allow-list contains exactly these items.
 
 If the Phase 1 capture shows that the hotfix already changed any 2.x behaviour above, update this list before Phase 2.
 
+*Update 2026-09-30 (Task 1.2 capture, `Snapshots/Legacy2x/`):*
+- Item 1 is **not a wire deviation**: 2.x already sends `mode` as `"points"`/`"rectangles"` (a `StringEnumConverter` with camelCase naming on `IImageToCoordinatesRequest.Mode`; see `ImageToCoordinatesRequest.*.json`). 2.x also always sends `mode` (default `points`), even in the minimal case. The parity allow-list does not need this item.
+- Item 3 was already fixed by the hotfix (2.2.0 accepts 65535). It is validation-only and never appears on the wire.
+- Item 2: the hotfix still accepts 0.5 (deprecated) and still omits `isEnterprise` when unset (`RecaptchaV3Request.minimal.json`), so the item stays.
+- Items 4 and 5 are unchanged in 2.x (`mode?.ToString()`; `AllDailySpendingStats`), so both stay.
+
 ## 10. Out of Scope
 - The `AntiCaptchaApi.Net.DependencyInjection` package, `ILogger`, `IAntiCaptchaClientFactory` and named clients.
 - Release pipeline, CI and Dependabot changes, SourceLink/deterministic settings, package validation baselines, and a net8.0 test TFM in CI.
@@ -343,7 +351,8 @@ Resolved in this spec; the owner can override:
 - **R-3** `TrySolveAsync` still throws validation and cancellation exceptions (programmer errors, no spend). Only API and transport errors go into `SolveResult.Error`.
 - **R-4** Per-attempt `SolveTimeout` is fatal, not retryable: the timed-out task may still be charged, and a new attempt would pay twice. Transient HTTP errors on `createTask` are retried as the design requires, which accepts a small risk of a duplicate task.
 - **R-5** Time abstraction: an internal `ISystemClock` instead of `TimeProvider`, because `TimeProvider` needs `Microsoft.Bcl.TimeProvider` on netstandard2.0 and that would break "System.Text.Json only".
-- **R-6** `MaxCostPerSolve` is a budget checked before each retry attempt. It never discards a received solution. It is P2 value, but it is kept small because the design lists it.
+- **R-6** ~~`MaxCostPerSolve` is a budget checked before each retry attempt. It never discards a received solution. It is P2 value, but it is kept small because the design lists it.~~
+  - *Removed 2026-09-30 (Task 4.6):* the option could not trigger (cost is reported only on success; see FR-7). Future work: a client-wide spend guard (a running total of the `cost` reported by solved tasks across solves, for example `AntiCaptchaClientOptions.MaxTotalCost`), which does work because solved tasks report their cost.
 - **R-7** Defaults changed from 2.x: `Timeout` 180 s (so a paid slow reCAPTCHA is not abandoned at 120 s), `PollInterval` 3 s, `MaxAttempts` 3.
 - **R-8** `ImageToCoordinatesTask` also uses a 3 s first-poll delay (it is an image task). The design mentions this only for ImageToText.
 - **R-9** `CaptchaTask` is a closed hierarchy (`private protected` ctor and internal abstract members). Users cannot add custom task types, because unregistered types cannot be serialized.
@@ -351,6 +360,8 @@ Resolved in this spec; the owner can override:
 
 Open, to confirm during implementation (each has a default):
 - **Q-1** AntiGate proxy fields: anti-captcha docs list `proxyAddress/Port/Login/Password` **without** `proxyType` for `AntiGateTask`. Default: match the hotfix `AntiGateRequest` legacy snapshot exactly. If that snapshot has no `proxyType`, add an internal `IncludesProxyType => false` override on `AntiGateTask`.
+  - *Resolved 2026-09-30 (Task 2.12):* the snapshot has no `proxyType`, and neither do the docs (checked 2026-09-30). `AntiGateTask` overrides the internal `CaptchaTask.IncludesProxyType` to `false`.
 - **Q-2** The Amazon WAF solution shape (`token` in 2.x vs a possible `cookies["aws-waf-token"]`). Default: keep `token`. The owner can confirm with one live solve in the Phase 3 verification.
+  - *Note 2026-09-30 (Task 3.6):* the `AmazonTaskProxyless` docs response example (fetched 2026-09-30) shows `solution.token` (plus `userAgent`), which supports the default. The optional live check `live-amazon-shape` remains.
 - **Q-3** `reportIncorrectHcaptcha`: anti-captcha discontinued hCaptcha. Default: drop it and document the removal in MIGRATION. If the owner wants parity, add `Report.IncorrectHCaptcha`.
 - **Q-4** Whether `QueueType` should gain newer queue ids (Turnstile and others). Default: no new ids without a doc source; keep the 2.x set with the fixed names.

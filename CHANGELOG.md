@@ -3,6 +3,59 @@
 All notable changes to AntiCaptchaApi.Net are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project follows [Semantic Versioning](https://semver.org/).
 
+## [3.0.0-preview.1] - 2026-09-30 (unreleased)
+
+3.0 is a rewrite. Each captcha type is one record, one call solves it, and the package no longer depends on Newtonsoft.Json or Microsoft.Extensions.*. This is a breaking release: the whole 2.x API is replaced. [MIGRATION.md](MIGRATION.md) maps every 2.x type and method to its replacement.
+
+### Added
+
+- **One record per task type** in `AntiCaptchaApi.Net.Tasks`: `ImageToTextTask`, `ImageToCoordinatesTask`, `RecaptchaV2Task`, `RecaptchaV2EnterpriseTask`, `RecaptchaV3Task`, `TurnstileTask`, `FunCaptchaTask`, `GeeTestV3Task`, `GeeTestV4Task`, `AmazonWafTask`, `ProsopoTask`, `FriendlyCaptchaTask` and `AntiGateTask`. Required values are constructor parameters. Setting `Proxy` switches to the proxy variant.
+- **`AntiCaptchaClient` / `IAntiCaptchaClient`** with `SolveAsync` (returns the solution or throws) and `TrySolveAsync` (returns a `SolveResult` with `TaskId`, `Cost`, `SolveTime`, `WorkerIp` and `Attempts`). Also `CreateTaskAsync`, `GetTaskResultAsync`, `WaitForResultAsync`, `ReportAsync`, `PushAntiGateVariableAsync`, `GetBalanceAsync`, `GetQueueStatsAsync`, `GetSpendingStatsAsync` and `GetAppStatsAsync`. Every method takes a `CancellationToken`.
+- **A solving pipeline that protects paid tasks:**
+  - Network errors, HTTP 408/429/5xx, timeouts and unparseable responses while polling are retried on the same task, up to `MaxConsecutivePollErrors`.
+  - `NoSlotAvailable`, `CaptchaUnsolvable` and `ProxyConnectionRefused` start a new attempt with exponential backoff and jitter.
+  - Everything else fails at once.
+- **Typed errors:** `AntiCaptchaException` with an `AntiCaptchaError` (`Code`, `RawCode`, `Description`, `ErrorId`, `IsRetryable`, `IsTransient`), and `AntiCaptchaValidationException` with field-level `ValidationError`s. `AntiCaptchaErrorCode` covers every documented API error, plus `AccessDenied` and the client-side `HttpError`, `HttpTimeout`, `InvalidResponse` and `SolveTimeout`.
+- **Validation before any request**, so a mistake costs nothing. It checks absolute http(s) URLs, non-empty keys, image bodies, length ranges, the reCAPTCHA `ApiDomain`, the proxy address and port, and `UserAgent` when a proxy is set.
+- **Options:** `AntiCaptchaClientOptions` (`BaseAddress`, `RequestTimeout`, `DefaultSolveOptions`) and per-call `SolveOptions` (`Timeout`, `PollInterval`, `FirstPollDelay`, `MaxAttempts`, `MaxConsecutivePollErrors`, `RetryBaseDelay`, `RetryMaxDelay`, `LanguagePool`, `CallbackUrl`).
+- **Observability:** an `ActivitySource` and a `Meter` named `AntiCaptcha` (`AntiCaptchaDiagnostics`). There is an `AntiCaptcha.Solve` activity per solve and an `AntiCaptcha.<apiMethod>` activity per call. The instruments are `anticaptcha.tasks.created`, `anticaptcha.solves`, `anticaptcha.failures`, `anticaptcha.solve.duration` and `anticaptcha.cost`. Telemetry never carries the key, proxy details or solution content.
+- **Turnstile** `Action`, `CData` and `ChlPageData`. **`QueueType`** `TurnstileWithProxy` (26), `TurnstileWithoutProxy` (27) and `ImageToCoordinates` (28).
+- **`FriendlyCaptchaSolution`**, a separate type (2.x returned a `ProsopoSolution`).
+- `ImageToTextTask.FromBytes` and `ImageToCoordinatesTask.FromBytes`.
+
+### Changed
+
+- **Targets** `netstandard2.0` (now .NET Framework 4.6.2+ too) and `net8.0`, instead of netstandard2.1, net8.0 and net9.0.
+- **Dependencies:** System.Text.Json ≥ 8.0.5 and System.Diagnostics.DiagnosticSource ≥ 8.0.0, on netstandard2.0 only. There are none on net8.0.
+- **Defaults:**
+  - The wait per attempt is 180 s (was 120 s) and the poll interval 3 s (was 1 s).
+  - The first poll comes after 3 s for image tasks and 10 s for the others.
+  - Up to 3 attempts (was 1).
+  - The HTTP request timeout is 30 s (was 60 s).
+- `new AntiCaptchaClient(apiKey)` shares one pooled handler across instances. `new AntiCaptchaClient(apiKey, httpClient, options)` never disposes your `HttpClient` and never changes its `Timeout` or `BaseAddress`.
+- reCAPTCHA v3 `MinScore` is the enum `MinScore.Score03` / `Score07` / `Score09`, and `isEnterprise` is always sent (default `false`).
+- `QueueType.RecaptchaB2WithProxy` / `RecaptchaB2WithoutProxy` are renamed to `RecaptchaV2WithProxy` / `RecaptchaV2WithoutProxy`.
+- `ReportTaskOutcomeAsync(taskId, ReportOutcome)` is now `ReportAsync(taskId, Report)`.
+- Results are plain values: `GetBalanceAsync` returns `decimal`, and `GetQueueStatsAsync` returns `QueueStats` (with a `decimal` bid). `GetSpendingStatsAsync` takes a `SpendingQuery` and returns `SpendingStats` with `DateTimeOffset` times.
+- `AntiGateSolution` data members are `JsonNode?` (the API sends an empty map as `[]`). `AppStats.ChartData` is a `JsonElement`.
+- `userAgent` and `cookies` can be sent without a proxy on the types that support them.
+- Cancelling your `CancellationToken` always ends a call with `OperationCanceledException`. It is never wrapped or returned as an error. An HTTP timeout is a separate `HttpTimeout` error.
+
+### Removed
+
+- The 2.x API: `AnticaptchaClient`, `IAnticaptchaClient`, `ClientConfig`, `Configure`, the public `ClientKey`, all `*Request` / `*ProxylessRequest` classes and their interfaces, the `*Response` classes, `BaseSolution.IsValid()`, `ProxyConfig`, `ProxyTypeOption`, `TaskStatusType`, `ApiMethod`, and the public validators and Newtonsoft converters.
+- `RawPayload` and `RawResponse`: they could expose the API key and proxy password.
+- `AddAnticaptcha`: dependency injection moves to a separate `AntiCaptchaApi.Net.DependencyInjection` package. Until it ships, pass an `HttpClient` from `IHttpClientFactory` to the constructor (see the README).
+- `ReportOutcome.IncorrectHCaptcha` and reCAPTCHA v3 `MinScore = 0.5`, deprecated in 2.2.0.
+- The Newtonsoft.Json and Microsoft.Extensions.Http dependencies.
+
+### Fixed
+
+- A missing image file now throws `FileNotFoundException` from `FromFile`. 2.x silently sent an empty body.
+- `getSpendingStats` results are read from the documented `data` array. In 2.x they were always empty.
+- `getAppStats` sends `mode` lowercase, as documented.
+- Amazon WAF validates `Iv` and `Context` with a proxy too.
+
 ## [2.2.0] - 2026-09-30 (unreleased)
 
 A bug-fix release for 2.x. Every advertised task type now works, polling survives network blips, and secrets no longer show up in `RawPayload`. There are no breaking API changes.
@@ -66,10 +119,11 @@ These still work in 2.x and will be removed in 3.0:
 - Added a public constructor to `AnticaptchaClient`, so it can be created without dependency injection.
 - `HttpHelper` accepts an `HttpClient` in its constructor to support manual instantiation.
 
-[2.2.0]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.18...HEAD
-[2.1.6]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.5...v2.1.18
-[2.1.18]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.5...v2.1.18
-[2.1.5]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.4...v2.1.5
-[2.1.4]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.3...v2.1.4
-[2.1.3]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.2...v2.1.3
-[2.1.2]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.1...v2.1.2
+[3.0.0-preview.1]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.18...HEAD
+[2.1.6]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.5...v2.1.18
+[2.1.18]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.5...v2.1.18
+[2.1.5]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.4...v2.1.5
+[2.1.4]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.3...v2.1.4
+[2.1.3]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.1...v2.1.2

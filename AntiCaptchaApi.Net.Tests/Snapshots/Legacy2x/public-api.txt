@@ -1,0 +1,505 @@
+AntiCaptchaApi.Net.AnticaptchaClient
+AntiCaptchaApi.Net.AnticaptchaClient..ctor(System.String, AntiCaptchaApi.Net.Models.ClientConfig, System.Net.Http.HttpClient)
+AntiCaptchaApi.Net.AnticaptchaClient.ClientConfig
+AntiCaptchaApi.Net.AnticaptchaClient.ClientKey
+AntiCaptchaApi.Net.AnticaptchaClient.Configure(AntiCaptchaApi.Net.Models.ClientConfig)
+AntiCaptchaApi.Net.AnticaptchaClient.CreateCaptchaTaskAsync<T>(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ICaptchaRequest<T>, System.String, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.GetAppStatsAsync(System.Int32, AntiCaptchaApi.Net.Enums.AppStatsMode?, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.GetBalanceAsync(System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.GetQueueStatsAsync(AntiCaptchaApi.Net.Enums.QueueType, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.GetSpendingStatsAsync(System.Int32?, System.String, System.Int32?, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.GetTaskResultAsync<TSolution>(System.Int32, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.PushAntiGateVariableAsync(System.Int32, System.String, System.Object, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.ReportTaskOutcomeAsync(System.Int32, AntiCaptchaApi.Net.Enums.ReportOutcome, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.SolveCaptchaAsync<TSolution>(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ICaptchaRequest<TSolution>, System.String, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.SolveFriendlyCaptchaAsync(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFriendlyCaptchaRequest, System.String, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.SolveFriendlyCaptchaProxylessAsync(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFriendlyCaptchaProxylessRequest, System.String, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.SolveProsopoAsync(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IProsopoRequest, System.String, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.SolveProsopoProxylessAsync(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IProsopoProxylessRequest, System.String, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.WaitForTaskResultAsync<TSolution>(AntiCaptchaApi.Net.Responses.CreateTaskResponse, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaClient.WaitForTaskResultAsync<TSolution>(System.Int32, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.AnticaptchaServiceCollectionExtensions
+AntiCaptchaApi.Net.AnticaptchaServiceCollectionExtensions.AddAnticaptcha(Microsoft.Extensions.DependencyInjection.IServiceCollection, System.String, System.Action<AntiCaptchaApi.Net.Models.ClientConfig>)
+AntiCaptchaApi.Net.Enums.ApiMethod
+AntiCaptchaApi.Net.Enums.ApiMethod.CreateTask = 0
+AntiCaptchaApi.Net.Enums.ApiMethod.GetAppStats = 10
+AntiCaptchaApi.Net.Enums.ApiMethod.GetBalance = 2
+AntiCaptchaApi.Net.Enums.ApiMethod.GetQueueStats = 3
+AntiCaptchaApi.Net.Enums.ApiMethod.GetSpendingStats = 9
+AntiCaptchaApi.Net.Enums.ApiMethod.GetTaskResult = 1
+AntiCaptchaApi.Net.Enums.ApiMethod.PushAntiGateVariable = 8
+AntiCaptchaApi.Net.Enums.ApiMethod.ReportCorrectRecaptcha = 6
+AntiCaptchaApi.Net.Enums.ApiMethod.ReportIncorrectHCaptcha = 7
+AntiCaptchaApi.Net.Enums.ApiMethod.ReportIncorrectImageCaptcha = 4
+AntiCaptchaApi.Net.Enums.ApiMethod.ReportIncorrectRecaptcha = 5
+AntiCaptchaApi.Net.Enums.AppStatsMode
+AntiCaptchaApi.Net.Enums.AppStatsMode.Downloads = 2
+AntiCaptchaApi.Net.Enums.AppStatsMode.Errors = 0
+AntiCaptchaApi.Net.Enums.AppStatsMode.Money = 4
+AntiCaptchaApi.Net.Enums.AppStatsMode.Users = 3
+AntiCaptchaApi.Net.Enums.AppStatsMode.Views = 1
+AntiCaptchaApi.Net.Enums.NumericOption
+AntiCaptchaApi.Net.Enums.NumericOption.AnyLettersExceptNumbers = 2
+AntiCaptchaApi.Net.Enums.NumericOption.NoRequirements = 0
+AntiCaptchaApi.Net.Enums.NumericOption.NumbersOnly = 1
+AntiCaptchaApi.Net.Enums.ProxyTypeOption
+AntiCaptchaApi.Net.Enums.ProxyTypeOption.Http = 0
+AntiCaptchaApi.Net.Enums.ProxyTypeOption.Socks4 = 1
+AntiCaptchaApi.Net.Enums.ProxyTypeOption.Socks5 = 2
+AntiCaptchaApi.Net.Enums.QueueType
+AntiCaptchaApi.Net.Enums.QueueType.AntiGateTask = 25
+AntiCaptchaApi.Net.Enums.QueueType.FuncaptchaWithProxy = 7
+AntiCaptchaApi.Net.Enums.QueueType.FuncaptchaWithoutProxy = 10
+AntiCaptchaApi.Net.Enums.QueueType.GeeTestWithProxy = 12
+AntiCaptchaApi.Net.Enums.QueueType.GeeTestWithoutProxy = 13
+AntiCaptchaApi.Net.Enums.QueueType.ImageToTextEng = 1
+AntiCaptchaApi.Net.Enums.QueueType.ImageToTextRus = 2
+AntiCaptchaApi.Net.Enums.QueueType.RecaptchaB2WithProxy = 5
+AntiCaptchaApi.Net.Enums.QueueType.RecaptchaB2WithoutProxy = 6
+AntiCaptchaApi.Net.Enums.QueueType.RecaptchaEnterpriseV2WithProxy = 23
+AntiCaptchaApi.Net.Enums.QueueType.RecaptchaEnterpriseV2WithoutProxy = 24
+AntiCaptchaApi.Net.Enums.QueueType.RecaptchaV3s03 = 18
+AntiCaptchaApi.Net.Enums.QueueType.RecaptchaV3s07 = 19
+AntiCaptchaApi.Net.Enums.QueueType.RecaptchaV3s09 = 20
+AntiCaptchaApi.Net.Enums.ReportOutcome
+AntiCaptchaApi.Net.Enums.ReportOutcome.CorrectRecaptcha = 2
+AntiCaptchaApi.Net.Enums.ReportOutcome.IncorrectHCaptcha = 3
+AntiCaptchaApi.Net.Enums.ReportOutcome.IncorrectImageCaptcha = 0
+AntiCaptchaApi.Net.Enums.ReportOutcome.IncorrectRecaptcha = 1
+AntiCaptchaApi.Net.Enums.TaskStatusType
+AntiCaptchaApi.Net.Enums.TaskStatusType.Error = 2
+AntiCaptchaApi.Net.Enums.TaskStatusType.Processing = 0
+AntiCaptchaApi.Net.Enums.TaskStatusType.Ready = 1
+AntiCaptchaApi.Net.IAnticaptchaClient
+AntiCaptchaApi.Net.IAnticaptchaClient.ClientConfig
+AntiCaptchaApi.Net.IAnticaptchaClient.Configure(AntiCaptchaApi.Net.Models.ClientConfig)
+AntiCaptchaApi.Net.IAnticaptchaClient.CreateCaptchaTaskAsync<T>(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ICaptchaRequest<T>, System.String, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.GetAppStatsAsync(System.Int32, AntiCaptchaApi.Net.Enums.AppStatsMode?, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.GetBalanceAsync(System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.GetQueueStatsAsync(AntiCaptchaApi.Net.Enums.QueueType, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.GetSpendingStatsAsync(System.Int32?, System.String, System.Int32?, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.GetTaskResultAsync<TSolution>(System.Int32, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.PushAntiGateVariableAsync(System.Int32, System.String, System.Object, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.ReportTaskOutcomeAsync(System.Int32, AntiCaptchaApi.Net.Enums.ReportOutcome, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.SolveCaptchaAsync<TSolution>(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ICaptchaRequest<TSolution>, System.String, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.SolveFriendlyCaptchaAsync(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFriendlyCaptchaRequest, System.String, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.SolveFriendlyCaptchaProxylessAsync(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFriendlyCaptchaProxylessRequest, System.String, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.SolveProsopoAsync(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IProsopoRequest, System.String, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.SolveProsopoProxylessAsync(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IProsopoProxylessRequest, System.String, System.String, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.IAnticaptchaClient.WaitForTaskResultAsync<TSolution>(System.Int32, System.Threading.CancellationToken)
+AntiCaptchaApi.Net.Internal.Converters.AntiGateTaskResultConverter
+AntiCaptchaApi.Net.Internal.Converters.AntiGateTaskResultConverter..ctor()
+AntiCaptchaApi.Net.Internal.Converters.AntiGateTaskResultConverter.ReadJson(Newtonsoft.Json.JsonReader, System.Type, AntiCaptchaApi.Net.Responses.TaskResultResponse<AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution>, System.Boolean, Newtonsoft.Json.JsonSerializer)
+AntiCaptchaApi.Net.Internal.Converters.AntiGateTaskResultConverter.WriteJson(Newtonsoft.Json.JsonWriter, AntiCaptchaApi.Net.Responses.TaskResultResponse<AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution>, Newtonsoft.Json.JsonSerializer)
+AntiCaptchaApi.Net.Internal.Converters.GetAppStatsResponseConverter
+AntiCaptchaApi.Net.Internal.Converters.GetAppStatsResponseConverter..ctor()
+AntiCaptchaApi.Net.Internal.Converters.GetAppStatsResponseConverter.ReadJson(Newtonsoft.Json.JsonReader, System.Type, AntiCaptchaApi.Net.Responses.GetAppStatsResponse, System.Boolean, Newtonsoft.Json.JsonSerializer)
+AntiCaptchaApi.Net.Internal.Converters.GetAppStatsResponseConverter.WriteJson(Newtonsoft.Json.JsonWriter, AntiCaptchaApi.Net.Responses.GetAppStatsResponse, Newtonsoft.Json.JsonSerializer)
+AntiCaptchaApi.Net.Internal.Converters.TaskResultConverter<T>
+AntiCaptchaApi.Net.Internal.Converters.TaskResultConverter<T>..ctor()
+AntiCaptchaApi.Net.Internal.Converters.TaskResultConverter<T>.ReadJson(Newtonsoft.Json.JsonReader, System.Type, AntiCaptchaApi.Net.Responses.TaskResultResponse<T>, System.Boolean, Newtonsoft.Json.JsonSerializer)
+AntiCaptchaApi.Net.Internal.Converters.TaskResultConverter<T>.WriteJson(Newtonsoft.Json.JsonWriter, AntiCaptchaApi.Net.Responses.TaskResultResponse<T>, Newtonsoft.Json.JsonSerializer)
+AntiCaptchaApi.Net.Internal.Extensions.ValidationResultExtensions
+AntiCaptchaApi.Net.Internal.Helpers.BaseTaskResultResponseBuilder
+AntiCaptchaApi.Net.Internal.Helpers.BaseTaskResultResponseBuilder.Build<TSolution>(System.String, System.String)
+AntiCaptchaApi.Net.Internal.Validation.ValidationErrors.ValidationError
+AntiCaptchaApi.Net.Internal.Validation.ValidationErrors.ValidationError..ctor(System.String, System.String)
+AntiCaptchaApi.Net.Internal.Validation.ValidationErrors.ValidationError.ErrorMessage
+AntiCaptchaApi.Net.Internal.Validation.ValidationErrors.ValidationError.PropertyName
+AntiCaptchaApi.Net.Internal.Validation.ValidationErrors.ValidationError.ToString()
+AntiCaptchaApi.Net.Internal.Validation.ValidationResult
+AntiCaptchaApi.Net.Internal.Validation.ValidationResult..ctor()
+AntiCaptchaApi.Net.Internal.Validation.ValidationResult.Errors
+AntiCaptchaApi.Net.Internal.Validation.ValidationResult.IsValid
+AntiCaptchaApi.Net.Internal.Validation.Validators.AmazonWafProxylessRequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.AmazonWafProxylessRequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.AmazonWafProxylessRequestValidator.Validate(AntiCaptchaApi.Net.Requests.AmazonWafProxylessRequest)
+AntiCaptchaApi.Net.Internal.Validation.Validators.AmazonWafRequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.AmazonWafRequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.AmazonWafRequestValidator.Validate(AntiCaptchaApi.Net.Requests.AmazonWafRequest)
+AntiCaptchaApi.Net.Internal.Validation.Validators.Base.CaptchaRequestValidator<TRequest, TSolution>
+AntiCaptchaApi.Net.Internal.Validation.Validators.Base.CaptchaRequestValidator<TRequest, TSolution>.Validate(TRequest)
+AntiCaptchaApi.Net.Internal.Validation.Validators.Base.WebsiteCaptchaRequestValidator<TRequest, TSolution>
+AntiCaptchaApi.Net.Internal.Validation.Validators.Base.WebsiteCaptchaRequestValidator<TRequest, TSolution>.Validate(TRequest)
+AntiCaptchaApi.Net.Internal.Validation.Validators.FunCaptchaProxylessRequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.FunCaptchaProxylessRequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.FunCaptchaProxylessRequestValidator.Validate(AntiCaptchaApi.Net.Requests.FunCaptchaProxylessRequest)
+AntiCaptchaApi.Net.Internal.Validation.Validators.FunCaptchaRequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.FunCaptchaRequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.FunCaptchaRequestValidator.Validate(AntiCaptchaApi.Net.Requests.FunCaptchaProxylessRequest)
+AntiCaptchaApi.Net.Internal.Validation.Validators.GeeTestV4ProxylessRequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.GeeTestV4ProxylessRequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.GeeTestV4ProxylessRequestValidator.Validate(AntiCaptchaApi.Net.Requests.GeeTestV4ProxylessRequest)
+AntiCaptchaApi.Net.Internal.Validation.Validators.GeeTestV4RequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.GeeTestV4RequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.GeeTestV4RequestValidator.Validate(AntiCaptchaApi.Net.Requests.GeeTestV4ProxylessRequest)
+AntiCaptchaApi.Net.Internal.Validation.Validators.ImageToCoordinatesRequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.ImageToCoordinatesRequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.ImageToCoordinatesRequestValidator.Validate(AntiCaptchaApi.Net.Requests.ImageToCoordinatesRequest)
+AntiCaptchaApi.Net.Internal.Validation.Validators.ImageToTextRequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.ImageToTextRequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.ImageToTextRequestValidator.Validate(AntiCaptchaApi.Net.Requests.ImageToTextRequest)
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV2EnterpriseProxylessRequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV2EnterpriseProxylessRequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV2EnterpriseRequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV2EnterpriseRequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV2EnterpriseRequestValidator.Validate(AntiCaptchaApi.Net.Requests.RecaptchaV2EnterpriseProxylessRequest)
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV2ProxylessRequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV2ProxylessRequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV2RequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV2RequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV2RequestValidator.Validate(AntiCaptchaApi.Net.Requests.RecaptchaV2ProxylessRequest)
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV3RequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV3RequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.RecaptchaV3RequestValidator.Validate(AntiCaptchaApi.Net.Requests.RecaptchaV3Request)
+AntiCaptchaApi.Net.Internal.Validation.Validators.TurnstileProxylessRequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.TurnstileProxylessRequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.TurnstileRequestValidator
+AntiCaptchaApi.Net.Internal.Validation.Validators.TurnstileRequestValidator..ctor()
+AntiCaptchaApi.Net.Internal.Validation.Validators.TurnstileRequestValidator.Validate(AntiCaptchaApi.Net.Requests.TurnstileCaptchaProxylessRequest)
+AntiCaptchaApi.Net.Models.ClientConfig
+AntiCaptchaApi.Net.Models.ClientConfig..ctor()
+AntiCaptchaApi.Net.Models.ClientConfig.DelayTimeBetweenCheckingTaskResultMs
+AntiCaptchaApi.Net.Models.ClientConfig.MaxHttpRequestTimeMs
+AntiCaptchaApi.Net.Models.ClientConfig.MaxWaitForTaskResultTimeMs
+AntiCaptchaApi.Net.Models.ClientConfig.SolveAsyncRetries
+AntiCaptchaApi.Net.Models.DailySpendingStats
+AntiCaptchaApi.Net.Models.DailySpendingStats..ctor()
+AntiCaptchaApi.Net.Models.DailySpendingStats.DateFrom
+AntiCaptchaApi.Net.Models.DailySpendingStats.DateTill
+AntiCaptchaApi.Net.Models.DailySpendingStats.Money
+AntiCaptchaApi.Net.Models.DailySpendingStats.Volume
+AntiCaptchaApi.Net.Models.ProxyConfig
+AntiCaptchaApi.Net.Models.ProxyConfig..ctor()
+AntiCaptchaApi.Net.Models.ProxyConfig.ProxyAddress
+AntiCaptchaApi.Net.Models.ProxyConfig.ProxyLogin
+AntiCaptchaApi.Net.Models.ProxyConfig.ProxyPassword
+AntiCaptchaApi.Net.Models.ProxyConfig.ProxyPort
+AntiCaptchaApi.Net.Models.ProxyConfig.ProxyType
+AntiCaptchaApi.Net.Models.Solutions.AmazonWafSolution
+AntiCaptchaApi.Net.Models.Solutions.AmazonWafSolution..ctor()
+AntiCaptchaApi.Net.Models.Solutions.AmazonWafSolution.IsValid()
+AntiCaptchaApi.Net.Models.Solutions.AmazonWafSolution.Token
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution..ctor()
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution.Cookies
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution.Domain
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution.Fingerprint
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution.HTMLsInBase64
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution.IsValid()
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution.LocalStorage
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution.RequestHeaders
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution.ResponseHeaders
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution.Screenshots
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution.SessionStorage
+AntiCaptchaApi.Net.Models.Solutions.AntiGateSolution.Url
+AntiCaptchaApi.Net.Models.Solutions.BaseSolution
+AntiCaptchaApi.Net.Models.Solutions.BaseSolution.IsValid()
+AntiCaptchaApi.Net.Models.Solutions.FunCaptchaSolution
+AntiCaptchaApi.Net.Models.Solutions.FunCaptchaSolution..ctor()
+AntiCaptchaApi.Net.Models.Solutions.FunCaptchaSolution.IsValid()
+AntiCaptchaApi.Net.Models.Solutions.FunCaptchaSolution.Token
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV3Solution
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV3Solution..ctor()
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV3Solution.Challenge
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV3Solution.IsValid()
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV3Solution.Seccode
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV3Solution.Validate
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV4Solution
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV4Solution..ctor()
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV4Solution.CaptchaId
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV4Solution.CaptchaOutput
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV4Solution.GenTime
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV4Solution.IsValid()
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV4Solution.LotNumber
+AntiCaptchaApi.Net.Models.Solutions.GeeTestV4Solution.PassToken
+AntiCaptchaApi.Net.Models.Solutions.ImageToCoordinatesSolution
+AntiCaptchaApi.Net.Models.Solutions.ImageToCoordinatesSolution..ctor()
+AntiCaptchaApi.Net.Models.Solutions.ImageToCoordinatesSolution.Coordinates
+AntiCaptchaApi.Net.Models.Solutions.ImageToCoordinatesSolution.IsValid()
+AntiCaptchaApi.Net.Models.Solutions.ImageToTextSolution
+AntiCaptchaApi.Net.Models.Solutions.ImageToTextSolution..ctor()
+AntiCaptchaApi.Net.Models.Solutions.ImageToTextSolution.IsValid()
+AntiCaptchaApi.Net.Models.Solutions.ImageToTextSolution.Text
+AntiCaptchaApi.Net.Models.Solutions.ImageToTextSolution.Url
+AntiCaptchaApi.Net.Models.Solutions.ProsopoSolution
+AntiCaptchaApi.Net.Models.Solutions.ProsopoSolution..ctor()
+AntiCaptchaApi.Net.Models.Solutions.ProsopoSolution.IsValid()
+AntiCaptchaApi.Net.Models.Solutions.ProsopoSolution.Token
+AntiCaptchaApi.Net.Models.Solutions.ProsopoSolution.UserAgent
+AntiCaptchaApi.Net.Models.Solutions.RecaptchaSolution
+AntiCaptchaApi.Net.Models.Solutions.RecaptchaSolution..ctor()
+AntiCaptchaApi.Net.Models.Solutions.RecaptchaSolution.GRecaptchaResponse
+AntiCaptchaApi.Net.Models.Solutions.RecaptchaSolution.GRecaptchaResponseMd5
+AntiCaptchaApi.Net.Models.Solutions.RecaptchaSolution.IsValid()
+AntiCaptchaApi.Net.Models.Solutions.TurnstileSolution
+AntiCaptchaApi.Net.Models.Solutions.TurnstileSolution..ctor()
+AntiCaptchaApi.Net.Models.Solutions.TurnstileSolution.IsValid()
+AntiCaptchaApi.Net.Models.Solutions.TurnstileSolution.Token
+AntiCaptchaApi.Net.Models.Solutions.TurnstileSolution.UserAgent
+AntiCaptchaApi.Net.Requests.Abstractions.CaptchaRequest<TSolution>
+AntiCaptchaApi.Net.Requests.Abstractions.CaptchaRequest<TSolution>..ctor()
+AntiCaptchaApi.Net.Requests.Abstractions.CaptchaRequest<TSolution>..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ICaptchaRequest<TSolution>)
+AntiCaptchaApi.Net.Requests.Abstractions.CaptchaRequest<TSolution>.WebsiteUrl
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IApiDomainArg
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IApiDomainArg.ApiDomain
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.ICookiesArg
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.ICookiesArg.Cookies
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IEnterprisePayloadArg
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IEnterprisePayloadArg.EnterprisePayload
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IGeeTestArgs
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IGeeTestArgs.Challenge
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IGeeTestArgs.GeetestApiServerSubdomain
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IGeeTestArgs.GeetestGetLib
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IGeeTestArgs.Gt
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IIsEnterpriseArg
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IIsEnterpriseArg.IsEnterprise
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IIsInvisibleArg
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IIsInvisibleArg.IsInvisible
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IProxyConfigArg
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IProxyConfigArg.ProxyConfig
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IProxyConfigWithUserAgentArgs
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IRequestArg
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IUserAgentArg
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IUserAgentArg.UserAgent
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IWebsiteKeyArg
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IWebsiteKeyArg.WebsiteKey
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IWebsiteUrlArg
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.Args.IWebsiteUrlArg.WebsiteUrl
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAmazonWafProxylessRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAmazonWafProxylessRequest.CaptchaScript
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAmazonWafProxylessRequest.ChallengeScript
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAmazonWafProxylessRequest.Context
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAmazonWafProxylessRequest.Iv
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAmazonWafRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAntiGateRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAntiGateRequest.DomainsOfInterest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAntiGateRequest.TemplateName
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAntiGateRequest.Variables
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ICaptchaRequest<TSolution>
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFriendlyCaptchaProxylessRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFriendlyCaptchaRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFunCaptchaProxylessRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFunCaptchaProxylessRequest.Data
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFunCaptchaProxylessRequest.FunCaptchaApiJsSubdomain
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFunCaptchaProxylessRequest.WebsitePublicKey
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFunCaptchaRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IGeeTestV3ProxylessRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IGeeTestV3Request
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IGeeTestV4ProxylessRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IGeeTestV4ProxylessRequest.InitParameters
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IGeeTestV4Request
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToCoordinatesRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToCoordinatesRequest.Body
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToCoordinatesRequest.Comment
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToCoordinatesRequest.Mode
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToCoordinatesRequest.WebsiteURL
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToTextRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToTextRequest.BodyBase64
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToTextRequest.Case
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToTextRequest.Comment
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToTextRequest.FilePath
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToTextRequest.Math
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToTextRequest.MaxLength
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToTextRequest.MinLength
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToTextRequest.Numeric
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToTextRequest.Phrase
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IProsopoProxylessRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IProsopoRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV2EnterpriseProxylessRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV2EnterpriseRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV2ProxylessRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV2ProxylessRequest.RecaptchaDataSValue
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV2Request
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV3EnterpriseRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV3Request
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV3Request.MinScore
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV3Request.PageAction
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ITurnstileCaptchaProxylessRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ITurnstileCaptchaRequest
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IWebCaptchaRequest<TSolution>
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ImageToCoordinatesMode
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ImageToCoordinatesMode.Points = 0
+AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ImageToCoordinatesMode.Rectangles = 1
+AntiCaptchaApi.Net.Requests.Abstractions.WebsiteCaptchaRequest<TSolution>
+AntiCaptchaApi.Net.Requests.Abstractions.WebsiteCaptchaRequest<TSolution>..ctor()
+AntiCaptchaApi.Net.Requests.Abstractions.WebsiteCaptchaRequest<TSolution>..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IWebCaptchaRequest<TSolution>)
+AntiCaptchaApi.Net.Requests.Abstractions.WebsiteCaptchaRequest<TSolution>.WebsiteKey
+AntiCaptchaApi.Net.Requests.AmazonWafProxylessRequest
+AntiCaptchaApi.Net.Requests.AmazonWafProxylessRequest..ctor()
+AntiCaptchaApi.Net.Requests.AmazonWafProxylessRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAmazonWafProxylessRequest)
+AntiCaptchaApi.Net.Requests.AmazonWafProxylessRequest.CaptchaScript
+AntiCaptchaApi.Net.Requests.AmazonWafProxylessRequest.ChallengeScript
+AntiCaptchaApi.Net.Requests.AmazonWafProxylessRequest.Context
+AntiCaptchaApi.Net.Requests.AmazonWafProxylessRequest.Iv
+AntiCaptchaApi.Net.Requests.AmazonWafRequest
+AntiCaptchaApi.Net.Requests.AmazonWafRequest..ctor()
+AntiCaptchaApi.Net.Requests.AmazonWafRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAmazonWafRequest)
+AntiCaptchaApi.Net.Requests.AmazonWafRequest.CaptchaScript
+AntiCaptchaApi.Net.Requests.AmazonWafRequest.ChallengeScript
+AntiCaptchaApi.Net.Requests.AmazonWafRequest.Context
+AntiCaptchaApi.Net.Requests.AmazonWafRequest.Iv
+AntiCaptchaApi.Net.Requests.AmazonWafRequest.ProxyConfig
+AntiCaptchaApi.Net.Requests.AntiGateRequest
+AntiCaptchaApi.Net.Requests.AntiGateRequest..ctor()
+AntiCaptchaApi.Net.Requests.AntiGateRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IAntiGateRequest)
+AntiCaptchaApi.Net.Requests.AntiGateRequest.DomainsOfInterest
+AntiCaptchaApi.Net.Requests.AntiGateRequest.ProxyConfig
+AntiCaptchaApi.Net.Requests.AntiGateRequest.TemplateName
+AntiCaptchaApi.Net.Requests.AntiGateRequest.Variables
+AntiCaptchaApi.Net.Requests.FriendlyCaptchaProxylessRequest
+AntiCaptchaApi.Net.Requests.FriendlyCaptchaProxylessRequest..ctor()
+AntiCaptchaApi.Net.Requests.FriendlyCaptchaProxylessRequest..ctor(System.String, System.String)
+AntiCaptchaApi.Net.Requests.FriendlyCaptchaRequest
+AntiCaptchaApi.Net.Requests.FriendlyCaptchaRequest..ctor()
+AntiCaptchaApi.Net.Requests.FriendlyCaptchaRequest..ctor(System.String, System.String, System.String, AntiCaptchaApi.Net.Models.ProxyConfig)
+AntiCaptchaApi.Net.Requests.FriendlyCaptchaRequest.ProxyConfig
+AntiCaptchaApi.Net.Requests.FriendlyCaptchaRequest.UserAgent
+AntiCaptchaApi.Net.Requests.FunCaptchaProxylessRequest
+AntiCaptchaApi.Net.Requests.FunCaptchaProxylessRequest..ctor()
+AntiCaptchaApi.Net.Requests.FunCaptchaProxylessRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFunCaptchaProxylessRequest)
+AntiCaptchaApi.Net.Requests.FunCaptchaProxylessRequest.Data
+AntiCaptchaApi.Net.Requests.FunCaptchaProxylessRequest.FunCaptchaApiJsSubdomain
+AntiCaptchaApi.Net.Requests.FunCaptchaProxylessRequest.WebsitePublicKey
+AntiCaptchaApi.Net.Requests.FunCaptchaRequest
+AntiCaptchaApi.Net.Requests.FunCaptchaRequest..ctor()
+AntiCaptchaApi.Net.Requests.FunCaptchaRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IFunCaptchaRequest)
+AntiCaptchaApi.Net.Requests.FunCaptchaRequest.ProxyConfig
+AntiCaptchaApi.Net.Requests.FunCaptchaRequest.UserAgent
+AntiCaptchaApi.Net.Requests.GeeTestV3ProxylessRequest
+AntiCaptchaApi.Net.Requests.GeeTestV3ProxylessRequest..ctor()
+AntiCaptchaApi.Net.Requests.GeeTestV3ProxylessRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IGeeTestV3ProxylessRequest)
+AntiCaptchaApi.Net.Requests.GeeTestV3ProxylessRequest.Challenge
+AntiCaptchaApi.Net.Requests.GeeTestV3ProxylessRequest.GeetestApiServerSubdomain
+AntiCaptchaApi.Net.Requests.GeeTestV3ProxylessRequest.GeetestGetLib
+AntiCaptchaApi.Net.Requests.GeeTestV3ProxylessRequest.Gt
+AntiCaptchaApi.Net.Requests.GeeTestV3Request
+AntiCaptchaApi.Net.Requests.GeeTestV3Request..ctor()
+AntiCaptchaApi.Net.Requests.GeeTestV3Request..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IGeeTestV3Request)
+AntiCaptchaApi.Net.Requests.GeeTestV3Request.ProxyConfig
+AntiCaptchaApi.Net.Requests.GeeTestV3Request.UserAgent
+AntiCaptchaApi.Net.Requests.GeeTestV4ProxylessRequest
+AntiCaptchaApi.Net.Requests.GeeTestV4ProxylessRequest..ctor()
+AntiCaptchaApi.Net.Requests.GeeTestV4ProxylessRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IGeeTestV4ProxylessRequest)
+AntiCaptchaApi.Net.Requests.GeeTestV4ProxylessRequest.Challenge
+AntiCaptchaApi.Net.Requests.GeeTestV4ProxylessRequest.GeetestApiServerSubdomain
+AntiCaptchaApi.Net.Requests.GeeTestV4ProxylessRequest.GeetestGetLib
+AntiCaptchaApi.Net.Requests.GeeTestV4ProxylessRequest.Gt
+AntiCaptchaApi.Net.Requests.GeeTestV4ProxylessRequest.InitParameters
+AntiCaptchaApi.Net.Requests.GeeTestV4Request
+AntiCaptchaApi.Net.Requests.GeeTestV4Request..ctor()
+AntiCaptchaApi.Net.Requests.GeeTestV4Request..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IGeeTestV4Request)
+AntiCaptchaApi.Net.Requests.GeeTestV4Request.ProxyConfig
+AntiCaptchaApi.Net.Requests.GeeTestV4Request.UserAgent
+AntiCaptchaApi.Net.Requests.ImageToCoordinatesRequest
+AntiCaptchaApi.Net.Requests.ImageToCoordinatesRequest..ctor()
+AntiCaptchaApi.Net.Requests.ImageToCoordinatesRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToCoordinatesRequest)
+AntiCaptchaApi.Net.Requests.ImageToCoordinatesRequest.Body
+AntiCaptchaApi.Net.Requests.ImageToCoordinatesRequest.Comment
+AntiCaptchaApi.Net.Requests.ImageToCoordinatesRequest.Mode
+AntiCaptchaApi.Net.Requests.ImageToCoordinatesRequest.WebsiteURL
+AntiCaptchaApi.Net.Requests.ImageToTextRequest
+AntiCaptchaApi.Net.Requests.ImageToTextRequest..ctor()
+AntiCaptchaApi.Net.Requests.ImageToTextRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IImageToTextRequest)
+AntiCaptchaApi.Net.Requests.ImageToTextRequest.BodyBase64
+AntiCaptchaApi.Net.Requests.ImageToTextRequest.Case
+AntiCaptchaApi.Net.Requests.ImageToTextRequest.Comment
+AntiCaptchaApi.Net.Requests.ImageToTextRequest.FilePath
+AntiCaptchaApi.Net.Requests.ImageToTextRequest.Math
+AntiCaptchaApi.Net.Requests.ImageToTextRequest.MaxLength
+AntiCaptchaApi.Net.Requests.ImageToTextRequest.MinLength
+AntiCaptchaApi.Net.Requests.ImageToTextRequest.Numeric
+AntiCaptchaApi.Net.Requests.ImageToTextRequest.Phrase
+AntiCaptchaApi.Net.Requests.ProsopoProxylessRequest
+AntiCaptchaApi.Net.Requests.ProsopoProxylessRequest..ctor()
+AntiCaptchaApi.Net.Requests.ProsopoProxylessRequest..ctor(System.String, System.String)
+AntiCaptchaApi.Net.Requests.ProsopoRequest
+AntiCaptchaApi.Net.Requests.ProsopoRequest..ctor()
+AntiCaptchaApi.Net.Requests.ProsopoRequest..ctor(System.String, System.String, System.String, AntiCaptchaApi.Net.Models.ProxyConfig)
+AntiCaptchaApi.Net.Requests.ProsopoRequest.ProxyConfig
+AntiCaptchaApi.Net.Requests.ProsopoRequest.UserAgent
+AntiCaptchaApi.Net.Requests.RecaptchaV2EnterpriseProxylessRequest
+AntiCaptchaApi.Net.Requests.RecaptchaV2EnterpriseProxylessRequest..ctor()
+AntiCaptchaApi.Net.Requests.RecaptchaV2EnterpriseProxylessRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV2EnterpriseProxylessRequest)
+AntiCaptchaApi.Net.Requests.RecaptchaV2EnterpriseProxylessRequest.ApiDomain
+AntiCaptchaApi.Net.Requests.RecaptchaV2EnterpriseProxylessRequest.EnterprisePayload
+AntiCaptchaApi.Net.Requests.RecaptchaV2EnterpriseRequest
+AntiCaptchaApi.Net.Requests.RecaptchaV2EnterpriseRequest..ctor()
+AntiCaptchaApi.Net.Requests.RecaptchaV2EnterpriseRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV2EnterpriseRequest)
+AntiCaptchaApi.Net.Requests.RecaptchaV2EnterpriseRequest.Cookies
+AntiCaptchaApi.Net.Requests.RecaptchaV2EnterpriseRequest.ProxyConfig
+AntiCaptchaApi.Net.Requests.RecaptchaV2EnterpriseRequest.UserAgent
+AntiCaptchaApi.Net.Requests.RecaptchaV2ProxylessRequest
+AntiCaptchaApi.Net.Requests.RecaptchaV2ProxylessRequest..ctor()
+AntiCaptchaApi.Net.Requests.RecaptchaV2ProxylessRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV2ProxylessRequest)
+AntiCaptchaApi.Net.Requests.RecaptchaV2ProxylessRequest.IsInvisible
+AntiCaptchaApi.Net.Requests.RecaptchaV2ProxylessRequest.RecaptchaDataSValue
+AntiCaptchaApi.Net.Requests.RecaptchaV2Request
+AntiCaptchaApi.Net.Requests.RecaptchaV2Request..ctor()
+AntiCaptchaApi.Net.Requests.RecaptchaV2Request..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV2Request)
+AntiCaptchaApi.Net.Requests.RecaptchaV2Request.Cookies
+AntiCaptchaApi.Net.Requests.RecaptchaV2Request.ProxyConfig
+AntiCaptchaApi.Net.Requests.RecaptchaV2Request.UserAgent
+AntiCaptchaApi.Net.Requests.RecaptchaV3EnterpriseRequest
+AntiCaptchaApi.Net.Requests.RecaptchaV3EnterpriseRequest..ctor()
+AntiCaptchaApi.Net.Requests.RecaptchaV3EnterpriseRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV3EnterpriseRequest)
+AntiCaptchaApi.Net.Requests.RecaptchaV3Request
+AntiCaptchaApi.Net.Requests.RecaptchaV3Request..ctor()
+AntiCaptchaApi.Net.Requests.RecaptchaV3Request..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.IRecaptchaV3Request)
+AntiCaptchaApi.Net.Requests.RecaptchaV3Request.ApiDomain
+AntiCaptchaApi.Net.Requests.RecaptchaV3Request.IsEnterprise
+AntiCaptchaApi.Net.Requests.RecaptchaV3Request.MinScore
+AntiCaptchaApi.Net.Requests.RecaptchaV3Request.PageAction
+AntiCaptchaApi.Net.Requests.TurnstileCaptchaProxylessRequest
+AntiCaptchaApi.Net.Requests.TurnstileCaptchaProxylessRequest..ctor()
+AntiCaptchaApi.Net.Requests.TurnstileCaptchaProxylessRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ITurnstileCaptchaProxylessRequest)
+AntiCaptchaApi.Net.Requests.TurnstileCaptchaRequest
+AntiCaptchaApi.Net.Requests.TurnstileCaptchaRequest..ctor()
+AntiCaptchaApi.Net.Requests.TurnstileCaptchaRequest..ctor(AntiCaptchaApi.Net.Requests.Abstractions.Interfaces.ITurnstileCaptchaRequest)
+AntiCaptchaApi.Net.Requests.TurnstileCaptchaRequest.ProxyConfig
+AntiCaptchaApi.Net.Requests.TurnstileCaptchaRequest.UserAgent
+AntiCaptchaApi.Net.Responses.Abstractions.BaseResponse
+AntiCaptchaApi.Net.Responses.Abstractions.BaseResponse.ErrorCode
+AntiCaptchaApi.Net.Responses.Abstractions.BaseResponse.ErrorDescription
+AntiCaptchaApi.Net.Responses.Abstractions.BaseResponse.ErrorId
+AntiCaptchaApi.Net.Responses.Abstractions.BaseResponse.IsErrorResponse
+AntiCaptchaApi.Net.Responses.Abstractions.BaseResponse.RawPayload
+AntiCaptchaApi.Net.Responses.Abstractions.BaseResponse.RawResponse
+AntiCaptchaApi.Net.Responses.ActionResponse
+AntiCaptchaApi.Net.Responses.ActionResponse..ctor()
+AntiCaptchaApi.Net.Responses.ActionResponse.Status
+AntiCaptchaApi.Net.Responses.BalanceResponse
+AntiCaptchaApi.Net.Responses.BalanceResponse..ctor()
+AntiCaptchaApi.Net.Responses.BalanceResponse..ctor(System.String, System.String)
+AntiCaptchaApi.Net.Responses.BalanceResponse.Balance
+AntiCaptchaApi.Net.Responses.CreateTaskResponse
+AntiCaptchaApi.Net.Responses.CreateTaskResponse..ctor()
+AntiCaptchaApi.Net.Responses.CreateTaskResponse..ctor(System.String, System.String)
+AntiCaptchaApi.Net.Responses.CreateTaskResponse.TaskId
+AntiCaptchaApi.Net.Responses.GetAppStatsResponse
+AntiCaptchaApi.Net.Responses.GetAppStatsResponse..ctor()
+AntiCaptchaApi.Net.Responses.GetAppStatsResponse.ChartData
+AntiCaptchaApi.Net.Responses.GetAppStatsResponse.FromDate
+AntiCaptchaApi.Net.Responses.GetAppStatsResponse.ToDate
+AntiCaptchaApi.Net.Responses.GetQueueStatsResponse
+AntiCaptchaApi.Net.Responses.GetQueueStatsResponse..ctor()
+AntiCaptchaApi.Net.Responses.GetQueueStatsResponse.Bid
+AntiCaptchaApi.Net.Responses.GetQueueStatsResponse.Load
+AntiCaptchaApi.Net.Responses.GetQueueStatsResponse.Speed
+AntiCaptchaApi.Net.Responses.GetQueueStatsResponse.Total
+AntiCaptchaApi.Net.Responses.GetQueueStatsResponse.Waiting
+AntiCaptchaApi.Net.Responses.GetSpendingStatsResponse
+AntiCaptchaApi.Net.Responses.GetSpendingStatsResponse..ctor()
+AntiCaptchaApi.Net.Responses.GetSpendingStatsResponse.AllDailySpendingStats
+AntiCaptchaApi.Net.Responses.TaskResultResponse<T>
+AntiCaptchaApi.Net.Responses.TaskResultResponse<T>..ctor()
+AntiCaptchaApi.Net.Responses.TaskResultResponse<T>..ctor(System.String, System.String)
+AntiCaptchaApi.Net.Responses.TaskResultResponse<T>.CaptchaRequest
+AntiCaptchaApi.Net.Responses.TaskResultResponse<T>.Cost
+AntiCaptchaApi.Net.Responses.TaskResultResponse<T>.CreateTaskResponse
+AntiCaptchaApi.Net.Responses.TaskResultResponse<T>.CreateTimeUtc
+AntiCaptchaApi.Net.Responses.TaskResultResponse<T>.EndTimeUtc
+AntiCaptchaApi.Net.Responses.TaskResultResponse<T>.Ip
+AntiCaptchaApi.Net.Responses.TaskResultResponse<T>.Solution
+AntiCaptchaApi.Net.Responses.TaskResultResponse<T>.SolveCount
+AntiCaptchaApi.Net.Responses.TaskResultResponse<T>.Status

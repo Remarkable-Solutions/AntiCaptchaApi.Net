@@ -3,6 +3,6 @@
   "description": "Core 3.0 client: one record per task type (CaptchaTask<TSolution>), IAntiCaptchaClient with SolveAsync/TrySolveAsync, typed errors and redaction, resilient solving pipeline, account/report/stats endpoints, System.Text.Json source-gen on netstandard2.0+net8.0, ActivitySource/Meter observability, 2.x removal with MIGRATION.md; version 3.0.0-preview.1 (no publishing)",
   "type": "feature",
   "created_at": "2026-09-30T00:00:00Z",
-  "status": "pending",
+  "status": "complete",
   "depends_on": ["hotfix_2x_critical_bugs_20260930"]
 }

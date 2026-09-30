@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
 
         <IsPackable>false</IsPackable>
@@ -32,8 +32,13 @@
     </ItemGroup>
 
     <ItemGroup>
+      <None Update="Snapshots/**;Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
+    </ItemGroup>
+
+    <ItemGroup>
       <Folder Include="Properties\" />
     </ItemGroup>
+
 
     <ItemGroup>
       <ProjectReference Include="..\AntiCaptchaApi.Net\AntiCaptchaApi.Net.csproj" />

@@ -26,6 +26,16 @@
 | Coverage | `dotnet test --collect:"XPlat Code Coverage"` + report | target ≥ 80% on new code |
 | CI | build + offline tests on every PR; publish only on `v*` tag; Dependabot PRs instead of auto-release cron | |
 
+*Note 2026-09-30 (track `core_v3_client_20260930`, Task 1.3):*
+- The core targets `netstandard2.0;net8.0` with System.Text.Json 8.0.5 (netstandard2.0 only). Newtonsoft.Json and Microsoft.Extensions.Http were removed, and 2.x sources are excluded from compilation until Task 7.2.
+- For this track the test project targets **net10.0 only** (the only local runtime). The net8.0 test TFM in the table above is deferred to the CI track.
+- Time is abstracted by an internal `ISystemClock`, **not** `TimeProvider`: on netstandard2.0, `TimeProvider` would need `Microsoft.Bcl.TimeProvider` (spec R-5).
+- `GeneratePackageOnBuild` was removed from the core csproj. It made `dotnet pack` skip the build and pack stale DLLs. Packing is now an explicit `dotnet build -c Release` + `dotnet pack --no-build` (or plain `dotnet pack`).
+
+*Note 2026-09-30 (track `core_v3_client_20260930`, Task 6.1):* the core adds System.Diagnostics.DiagnosticSource **8.0.0** as a `PackageReference` on `netstandard2.0` only (inbox on net8.0), for `ActivitySource`/`Meter` (spec FR-10, NFR-2). Like System.Text.Json it is a floor, the lowest 8.0.x without a known vulnerability (checked with `dotnet list package --vulnerable --include-transitive`). The public names are `AntiCaptchaDiagnostics.ActivitySourceName` and `MeterName` (both `"AntiCaptcha"`); the source, meter and instruments live in `Internal/Diagnostics/Telemetry.cs`.
+
+*Note 2026-09-30 (track `core_v3_client_20260930`, Task 7.4):* the probe (`tools/AntiCaptchaApi.Net.Probe`, net10.0, not packable) references **Microsoft.Extensions.Http 8.0.0** and **OpenTelemetry.Exporter.Console 1.19.1** (the latest stable version; it brings `OpenTelemetry`). They are there only so that the README's `IHttpClientFactory` and OpenTelemetry snippets compile (`readme-snippets` command). The core package and the test project do not reference them, and the core stays free of Microsoft.Extensions.* (`CoreAssemblyTests`).
+
 ## Constraints
 - Do not push to `main` directly: pushes to `main` publish CI packages to GitHub Packages.
 - Live integration tests (`IntegrationTests/`) require a paid API key — never run them in automated task loops; filter with `--filter "FullyQualifiedName~UnitTests"`.

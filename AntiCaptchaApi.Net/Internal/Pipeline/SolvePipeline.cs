@@ -1,0 +1,175 @@
+using System;
+using System.Globalization;
+using System.Threading;
+using System.Threading.Tasks;
+using AntiCaptchaApi.Net.Internal.Diagnostics;
+using AntiCaptchaApi.Net.Internal.Errors;
+using AntiCaptchaApi.Net.Tasks;
+
+namespace AntiCaptchaApi.Net.Internal.Pipeline;
+
+/// <summary>
+/// The solving pipeline of spec FR-7 (design §4.4). All waiting goes through the client's <c>ISystemClock</c>, so tests
+/// run it instantly with a fake clock.
+/// </summary>
+internal sealed class SolvePipeline
+{
+    private readonly AntiCaptchaClient _client;
+
+    public SolvePipeline(AntiCaptchaClient client)
+    {
+        _client = client;
+    }
+
+    /// <summary>
+    /// Steps 2–3 for a validated task: up to <see cref="SolveOptions.MaxAttempts"/> attempts of createTask + polling, with
+    /// an exponential backoff between them. API and transport failures are returned as the
+    /// <see cref="SolveOutcome{TSolution}.Failure"/> (with the last created task id and the attempt count); cancellation escapes.
+    /// The solve runs inside an <c>AntiCaptcha.Solve</c> activity and ends with the solve metrics (spec FR-10).
+    /// </summary>
+    public async Task<SolveOutcome<TSolution>> SolveAsync<TSolution>(
+        CaptchaTask<TSolution> task,
+        SolveOptions options,
+        SecretRedactor redactor,
+        CancellationToken ct)
+        where TSolution : Solution
+    {
+        var taskType = task.ResolveTypeName();
+        using var activity = Telemetry.StartSolve(taskType);
+        var startedAt = _client.Clock.UtcNow;
+        var outcome = await RunAttemptsAsync(task, options, redactor, ct).ConfigureAwait(false);
+        Telemetry.RecordSolve(activity, taskType, outcome.Result, _client.Clock.UtcNow - startedAt);
+        return outcome;
+    }
+
+    private async Task<SolveOutcome<TSolution>> RunAttemptsAsync<TSolution>(
+        CaptchaTask<TSolution> task,
+        SolveOptions options,
+        SecretRedactor redactor,
+        CancellationToken ct)
+        where TSolution : Solution
+    {
+        int? taskId = null;
+        for (var attempt = 1; ; attempt++)
+        {
+            AntiCaptchaException failure;
+            bool retryable;
+            var createdAt = _client.Clock.UtcNow;
+            var created = await TryCreateAsync(task, options, ct).ConfigureAwait(false);
+            if (created.Error is { } createError)
+            {
+                // Transient HTTP trouble on createTask is retried too (spec R-4 accepts a small duplicate-task risk).
+                failure = new AntiCaptchaException(createError.Error, taskId, attempt, createError);
+                retryable = createError.Error.IsRetryable;
+            }
+            else
+            {
+                taskId = created.TaskId;
+                try
+                {
+                    var status = await PollAsync<TSolution>(
+                        created.TaskId,
+                        options,
+                        options.FirstPollDelay ?? task.ResolvedFirstPollDelay,
+                        createdAt + options.Timeout,
+                        redactor,
+                        attempt,
+                        ct).ConfigureAwait(false);
+                    return SolveOutcome<TSolution>.Success(created.TaskId, status, attempt);
+                }
+                catch (AntiCaptchaException ex)
+                {
+                    // A poll failure is retried only for task errors (for example CaptchaUnsolvable). Transient errors got
+                    // here by exceeding MaxConsecutivePollErrors, and SolveTimeout is fatal: in both cases the task may be charged.
+                    failure = ex;
+                    retryable = ex.Error.IsRetryable && !ex.Error.IsTransient;
+                }
+            }
+
+            if (!retryable || attempt >= options.MaxAttempts)
+            {
+                return SolveOutcome<TSolution>.Failed(failure);
+            }
+            await _client.Clock.Delay(
+                Backoff.Delay(attempt, options.RetryBaseDelay, options.RetryMaxDelay, _client.Random),
+                ct).ConfigureAwait(false);
+        }
+    }
+
+    private async Task<(int TaskId, AntiCaptchaException? Error)> TryCreateAsync(CaptchaTask task, SolveOptions options, CancellationToken ct)
+    {
+        try
+        {
+            return (await _client.CreateTaskAsync(task, options, ct).ConfigureAwait(false), null);
+        }
+        catch (AntiCaptchaException ex)
+        {
+            return (0, ex);
+        }
+    }
+
+    /// <summary>
+    /// Step 2.2: waits <paramref name="firstPollDelay"/>, then polls every <see cref="SolveOptions.PollInterval"/> until the
+    /// task is ready. Transient errors are tolerated up to <see cref="SolveOptions.MaxConsecutivePollErrors"/> in a row;
+    /// any other error is rethrown at once (the caller decides about retries). Past <paramref name="deadline"/> it fails
+    /// with <see cref="AntiCaptchaErrorCode.SolveTimeout"/>. Every exception carries <paramref name="taskId"/> and
+    /// <paramref name="attempts"/>.
+    /// </summary>
+    public async Task<TaskStatus<TSolution>> PollAsync<TSolution>(
+        int taskId,
+        SolveOptions options,
+        TimeSpan firstPollDelay,
+        DateTimeOffset deadline,
+        SecretRedactor redactor,
+        int attempts,
+        CancellationToken ct)
+        where TSolution : Solution
+    {
+        var clock = _client.Clock;
+        var delay = firstPollDelay;
+        var consecutiveErrors = 0;
+        while (true)
+        {
+            // The last wait is shortened so that the final poll happens exactly at the deadline.
+            var remaining = deadline - clock.UtcNow;
+            await clock.Delay(remaining < delay ? Max(remaining, TimeSpan.Zero) : delay, ct).ConfigureAwait(false);
+            try
+            {
+                var status = await _client.GetTaskResultCoreAsync<TSolution>(taskId, redactor, ct).ConfigureAwait(false);
+                if (status.IsReady)
+                {
+                    return status;
+                }
+                consecutiveErrors = 0;
+            }
+            catch (AntiCaptchaException ex) when (ex.Error.IsTransient)
+            {
+                // Polling is free and the task is already paid for, so transient trouble (including an unreadable or
+                // solution-less "ready" answer) is simply asked again, up to the limit.
+                if (++consecutiveErrors > options.MaxConsecutivePollErrors)
+                {
+                    throw new AntiCaptchaException(ex.Error, taskId, attempts, ex);
+                }
+            }
+            catch (AntiCaptchaException ex)
+            {
+                throw new AntiCaptchaException(ex.Error, taskId, attempts, ex);
+            }
+
+            if (clock.UtcNow >= deadline)
+            {
+                throw new AntiCaptchaException(SolveTimeout(options.Timeout), taskId, attempts);
+            }
+            delay = options.PollInterval;
+        }
+    }
+
+    private static AntiCaptchaError SolveTimeout(TimeSpan timeout) =>
+        new(
+            AntiCaptchaErrorCode.SolveTimeout,
+            null,
+            $"The task was not ready within the solve timeout of {timeout.TotalSeconds.ToString(CultureInfo.InvariantCulture)} s.",
+            null);
+
+    private static TimeSpan Max(TimeSpan a, TimeSpan b) => a > b ? a : b;
+}
