@@ -120,10 +120,10 @@ These still work in 2.x and will be removed in 3.0:
 - `HttpHelper` accepts an `HttpClient` in its constructor to support manual instantiation.
 
 [3.0.0-preview.1]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.2.0...HEAD
-[2.2.0]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.18...HEAD
-[2.1.6]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.5...v2.1.18
-[2.1.18]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.5...v2.1.18
-[2.1.5]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.4...v2.1.5
-[2.1.4]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.3...v2.1.4
-[2.1.3]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.2...v2.1.3
-[2.1.2]: https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net/compare/v2.1.1...v2.1.2
+[2.2.0]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.18...HEAD
+[2.1.6]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.5...v2.1.18
+[2.1.18]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.5...v2.1.18
+[2.1.5]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.4...v2.1.5
+[2.1.4]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.3...v2.1.4
+[2.1.3]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/compare/v2.1.1...v2.1.2

@@ -34,8 +34,10 @@ public class ReadmeSnippetsTests
     {
         var readme = File.ReadAllText(Path.Combine(RepositoryRoot(), "README.md"));
 
-        Assert.Contains("(MIGRATION.md)", readme, StringComparison.Ordinal);
-        Assert.Contains("(CHANGELOG.md)", readme, StringComparison.Ordinal);
+        // Absolute links: the README is packed into the nupkg, and nuget.org cannot resolve relative paths.
+        const string Blob = "(https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/blob/main/";
+        Assert.Contains(Blob + "MIGRATION.md)", readme, StringComparison.Ordinal);
+        Assert.Contains(Blob + "CHANGELOG.md)", readme, StringComparison.Ordinal);
     }
 
     private static string Normalize(string code) =>

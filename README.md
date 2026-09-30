@@ -2,7 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/vpre/AntiCaptchaApi.Net.svg)](https://www.nuget.org/packages/AntiCaptchaApi.Net/)
 [![NuGet downloads](https://img.shields.io/nuget/dt/AntiCaptchaApi.Net.svg)](https://www.nuget.org/packages/AntiCaptchaApi.Net/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/blob/main/LICENSE)
 
 A .NET client for the [anti-captcha.com API](https://anti-captcha.com/apidoc). Describe the captcha with one record and call `SolveAsync`. The library validates the task before it spends money, polls for the result, retries what is worth retrying, and never abandons a task you have already paid for.
 
@@ -11,7 +11,7 @@ A .NET client for the [anti-captcha.com API](https://anti-captcha.com/apidoc). D
 - 13 task types: image to text, image to coordinates, reCAPTCHA v2 / v2 Enterprise / v3, Cloudflare Turnstile, FunCaptcha, GeeTest v3 / v4, Amazon WAF, Prosopo, Friendly Captcha and AntiGate.
 - Traces and metrics through `ActivitySource` and `Meter`, ready for OpenTelemetry.
 
-> Upgrading from 2.x? Read [MIGRATION.md](MIGRATION.md). Every 2.x type and method has a row there.
+> Upgrading from 2.x? Read [MIGRATION.md](https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/blob/main/MIGRATION.md). Every 2.x type and method has a row there.
 
 ## Install
 
@@ -392,8 +392,8 @@ In an ASP.NET Core or generic host, call the same `AddSource` and `AddMeter` ins
 
 ## Links
 
-- [MIGRATION.md](MIGRATION.md): upgrading from 2.x.
-- [CHANGELOG.md](CHANGELOG.md): release notes.
+- [MIGRATION.md](https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/blob/main/MIGRATION.md): upgrading from 2.x.
+- [CHANGELOG.md](https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/blob/main/CHANGELOG.md): release notes.
 - [anti-captcha.com API docs](https://anti-captcha.com/apidoc).
 
 ## Contributing
@@ -406,6 +406,6 @@ In an ASP.NET Core or generic host, call the same `AddSource` and `AddMeter` ins
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net/blob/main/LICENSE).
 
 Copyright (c) 2022-2026 Remarkable Solutions
