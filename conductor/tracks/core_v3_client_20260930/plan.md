@@ -233,7 +233,8 @@ Tasks:
   - Snapshots: `{minimal,full,proxy}` for both.
   - Commit: `feat(tasks): add RecaptchaV2 and RecaptchaV2Enterprise tasks`
 
-- [ ] Task 2.8: `RecaptchaV3Task` (+ `MinScore`, `MinScoreJsonConverter`)
+- [x] Task 2.8: `RecaptchaV3Task` (+ `MinScore`, `MinScoreJsonConverter`) ed3f7c6
+  - Done 2026-09-30: an extra sample case `enterprise` (`IsEnterprise = true`, default `Score03`) was added, with `Snapshots/Tasks/RecaptchaV3Task.enterprise.json`, and `RecaptchaV3EnterpriseRequest.minimal` maps to it exactly. Both 2.x `full` files are identical and map to `RecaptchaV3Task.full`. `TaskSamples.AddCase` appends extra cases. `DocumentedDeviations` stays **empty**: the only wire change of spec §9 item 2, `isEnterprise: false` in `minimal`, is an added key (2.x omitted it), and the parity test allows added keys (an allow-list entry for it would fail `DocumentedDeviations_EveryEntryIsNeeded`). The dropped 0.5 score is enforced by the enum type and is not used by any 2.x sample. `MinScore` members are 0/1/2, so `default(MinScore)` is `Score03`. The converter also reads 0.3/0.7/0.9 and throws `JsonException` for other values and for undefined enum values. 6 extra tests: `RecaptchaV3TaskTests.Validate_ApiDomainNotAllowed_Fails` and `MinScoreJsonConverterTests` (`Read_DocumentedNumber_MapsEnum` ×3, `Read_OtherValue_ThrowsJsonException` ×2, `Write_UndefinedValue_ThrowsJsonException`).
   - Tests:
     - `MinScore_SerializesAsNumber` (Theory: 0.3, 0.7, 0.9)
     - `MinScore_Default_Is03`
