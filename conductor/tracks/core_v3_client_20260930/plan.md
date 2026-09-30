@@ -255,7 +255,8 @@ Tasks:
   - Snapshots: `{minimal,full,proxy}`.
   - Commit: `feat(tasks): add FunCaptcha task`
 
-- [ ] Task 2.10: `GeeTestV3Task`, `GeeTestV4Task`, solutions
+- [x] Task 2.10: `GeeTestV3Task`, `GeeTestV4Task`, solutions 8e62322
+  - Done 2026-09-30: `Version` is a get-only `[JsonPropertyName("version")]` property (spec 7.2). `InitParameters` is `IReadOnlyDictionary<string, string>?` (2.x `Dictionary<string, string>`), like `EnterprisePayload`. The `full` samples also set `UserAgent`. 1 extra test: `GeeTestV4TaskTests.Validate_EmptyGt_Fails`; `Serialize_Version3_AndTypeGeeTestTask` also asserts the proxyless name.
   - Tests:
     - `GeeTestV3TaskTests.Serialize_Version3_AndTypeGeeTestTask`
     - `GeeTestV3TaskTests.Validate_EmptyChallenge_Fails`
