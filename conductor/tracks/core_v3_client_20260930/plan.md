@@ -21,8 +21,9 @@ Conventions for every task (see `conductor/workflow.md`):
 Goal: branch `v3` exists and the 2.x wire contract and public API are frozen into checked-in files. After that, the core targets `netstandard2.0;net8.0` with STJ and no Newtonsoft/M.E.Http, 2.x code is excluded from compilation, and the test project (net10.0) has fakes, snapshot tooling and the probe.
 
 Tasks:
-- [ ] Task 1.1: Create branch and record baseline (no red phase — setup)
+- [x] Task 1.1: Create branch and record baseline (no red phase — setup)
   - Precondition: `hotfix_2x_critical_bugs_20260930` is complete. Run `git switch fix/2x-critical-bugs && git switch -c v3`.
+  - Done 2026-09-30: branch `v3` was already created by the orchestrator from `fix/2x-critical-bugs` at 85cd2e2 (+ track-start commit 77c8966); only the baseline was recorded.
   - Run build and offline tests. Record the test count and warning count under "Baselines" at the end of this file.
   - Commit: none (only the plan update `conductor(plan): Record v3 baseline`).
 
@@ -626,7 +627,7 @@ Tasks:
 ---
 
 ## Baselines
-- 2.x at branch creation: tests: _?_, warnings: _?_ (Task 1.1)
+- 2.x at branch creation (77c8966): tests: 126 offline unit tests passing (net9.0 test TFM, roll-forward to .NET 10), warnings: 15 (all in the test project; core 0) (Task 1.1)
 - After Phase 1: tests: _?_, core warnings: 0 (Verification 1)
 
 ## Deviations
