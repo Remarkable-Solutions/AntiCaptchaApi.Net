@@ -300,7 +300,7 @@ Tasks:
 
 ---
 
-## Phase 3: Transport, errors, redaction, client skeleton
+## Phase 3: Transport, errors, redaction, client skeleton [checkpoint: 158ccf0]
 Goal: typed errors and a hardened HTTP transport, plus the `AntiCaptchaClient` constructors, `CreateTaskAsync` and `GetTaskResultAsync`, all with no secret leakage.
 
 Tasks:
@@ -390,7 +390,7 @@ Tasks:
     - `ValidationException_Message_ContainsNoProxyPassword`
   - Commit: `test(security): assert secrets never leak through errors or ToString`
 
-- [ ] Verification 3: Phase 3 checkpoint [checkpoint marker]
+- [x] Verification 3: Phase 3 checkpoint [158ccf0] — user confirmed 2026-09-30
   - Run the offline suite and coverage for `Errors/**`, `Internal/Http/**`, `Internal/Errors/**` and `AntiCaptchaClient.cs`.
   - Add probe commands:
     - `offline-create`: in-process scripted handler; shows the request JSON with the key masked, and runs an error scenario whose message is printed.
