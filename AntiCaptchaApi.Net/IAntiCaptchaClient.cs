@@ -36,4 +36,23 @@ public interface IAntiCaptchaClient
     /// </exception>
     Task<TaskStatus<TSolution>> GetTaskResultAsync<TSolution>(int taskId, CancellationToken ct = default)
         where TSolution : Solution;
+
+    /// <summary>
+    /// Polls an existing task (<c>getTaskResult</c>) until it is ready, without creating tasks or retrying. The first poll
+    /// waits <see cref="SolveOptions.FirstPollDelay"/> (zero when unset), then every <see cref="SolveOptions.PollInterval"/>.
+    /// Transient errors (network failures, 408/429/5xx, timeouts, unreadable responses) are tolerated up to
+    /// <see cref="SolveOptions.MaxConsecutivePollErrors"/> in a row.
+    /// </summary>
+    /// <typeparam name="TSolution">The solution type of the task, for example <see cref="TurnstileSolution"/>.</typeparam>
+    /// <param name="taskId">The id returned by <see cref="CreateTaskAsync"/>.</param>
+    /// <param name="o">Solve settings, or <see langword="null"/> for <see cref="AntiCaptchaClientOptions.DefaultSolveOptions"/>.</param>
+    /// <param name="ct">Cancels the wait; cancellation always surfaces as <see cref="OperationCanceledException"/>.</param>
+    /// <returns>The solution (never null).</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="o"/> has an invalid value. Nothing was sent.</exception>
+    /// <exception cref="AntiCaptchaException">
+    /// The API reported an error, the transient-error limit was exceeded, or <see cref="SolveOptions.Timeout"/> elapsed
+    /// (<see cref="AntiCaptchaErrorCode.SolveTimeout"/>). <see cref="AntiCaptchaException.TaskId"/> is <paramref name="taskId"/>.
+    /// </exception>
+    Task<TSolution> WaitForResultAsync<TSolution>(int taskId, SolveOptions? o = null, CancellationToken ct = default)
+        where TSolution : Solution;
 }

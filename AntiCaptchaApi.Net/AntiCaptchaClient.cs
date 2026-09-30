@@ -7,6 +7,7 @@ using AntiCaptchaApi.Net.Internal.Errors;
 using AntiCaptchaApi.Net.Internal.Http;
 using AntiCaptchaApi.Net.Internal.Json;
 using AntiCaptchaApi.Net.Internal.Json.Envelopes;
+using AntiCaptchaApi.Net.Internal.Pipeline;
 using AntiCaptchaApi.Net.Internal.Time;
 using AntiCaptchaApi.Net.Tasks;
 
@@ -66,6 +67,7 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
         Random = random;
         Redactor = new SecretRedactor(apiKey, Enumerable.Empty<string?>());
         Transport = new ApiTransport(httpClient, Options.BaseAddress, Options.RequestTimeout);
+        Pipeline = new SolvePipeline(this);
     }
 
     internal AntiCaptchaClientOptions Options { get; }
@@ -77,6 +79,8 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
     internal SecretRedactor Redactor { get; }
 
     internal ApiTransport Transport { get; }
+
+    internal SolvePipeline Pipeline { get; }
 
     /// <summary>The shared handler when the key-only constructor was used; otherwise <see langword="null"/>.</summary>
     internal HttpMessageHandler? SharedHandlerInUse { get; }
@@ -111,7 +115,12 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
     }
 
     /// <inheritdoc />
-    public async Task<TaskStatus<TSolution>> GetTaskResultAsync<TSolution>(int taskId, CancellationToken ct = default)
+    public Task<TaskStatus<TSolution>> GetTaskResultAsync<TSolution>(int taskId, CancellationToken ct = default)
+        where TSolution : Solution =>
+        GetTaskResultCoreAsync<TSolution>(taskId, Redactor, ct);
+
+    // The pipeline passes the task's redactor, so that a proxy password echoed while polling is redacted too.
+    internal async Task<TaskStatus<TSolution>> GetTaskResultCoreAsync<TSolution>(int taskId, SecretRedactor redactor, CancellationToken ct)
         where TSolution : Solution
     {
         GetTaskResultResponse response;
@@ -122,7 +131,7 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
                 new GetTaskResultRequest(_apiKey, taskId),
                 AntiCaptchaJsonContext.Default.GetTaskResultRequest,
                 AntiCaptchaJsonContext.Default.GetTaskResultResponse,
-                Redactor,
+                redactor,
                 ct).ConfigureAwait(false);
         }
         catch (AntiCaptchaException ex) when (ex.TaskId is null)
@@ -132,12 +141,31 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
         return TaskResultMapper.Map<TSolution>(response, taskId);
     }
 
+    /// <inheritdoc />
+    public async Task<TSolution> WaitForResultAsync<TSolution>(int taskId, SolveOptions? o = null, CancellationToken ct = default)
+        where TSolution : Solution
+    {
+        var options = ResolveSolveOptions(o);
+        var status = await Pipeline.PollAsync<TSolution>(
+            taskId,
+            options,
+            options.FirstPollDelay ?? TimeSpan.Zero,
+            Clock.UtcNow + options.Timeout,
+            Redactor,
+            0,
+            ct).ConfigureAwait(false);
+        return status.Solution!; // PollAsync returns only ready statuses, and IsReady guarantees a solution.
+    }
+
     /// <summary>Describes the client without revealing the API key.</summary>
     /// <returns>The type name and the base address.</returns>
     public override string ToString() => $"AntiCaptchaClient {{ BaseAddress = {Options.BaseAddress} }}";
 
     // API descriptions can echo the task's proxy string, so its password is redacted too.
     internal SecretRedactor RedactorFor(CaptchaTask task) => Redactor.With(task.Proxy?.Password);
+
+    private SolveOptions ResolveSolveOptions(SolveOptions? o) =>
+        o is null ? Options.DefaultSolveOptions : o.Validate(nameof(o));
 
     private static AntiCaptchaClientOptions Validate(AntiCaptchaClientOptions options)
     {
