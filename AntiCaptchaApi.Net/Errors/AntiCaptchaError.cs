@@ -3,7 +3,7 @@ using AntiCaptchaApi.Net.Internal.Errors;
 namespace AntiCaptchaApi.Net;
 
 /// <summary>
-/// Why an anti-captcha call or solve failed. It is carried by <c>AntiCaptchaException</c> and by failed
+/// Why an anti-captcha call or solve failed. It is carried by <see cref="AntiCaptchaException"/> and by failed
 /// solve results. It never contains the client key or proxy passwords: descriptions are redacted before they get here.
 /// </summary>
 /// <param name="Code">The typed reason.</param>
