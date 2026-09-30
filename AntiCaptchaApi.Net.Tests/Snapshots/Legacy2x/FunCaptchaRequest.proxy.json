@@ -1,0 +1,1 @@
+{"data":"{\"blob\":\"BLOB_VALUE\"}","funcaptchaApiJSSubdomain":"client-api.arkoselabs.com","proxyAddress":"203.0.113.10","proxyLogin":"proxyUser","proxyPassword":"proxyPass","proxyPort":1080,"proxyType":"socks5","type":"FunCaptchaTask","userAgent":"Mozilla/5.0 (probe)","websitePublicKey":"SITE_KEY","websiteURL":"https://example.com/login"}

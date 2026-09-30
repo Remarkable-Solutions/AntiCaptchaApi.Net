@@ -1,0 +1,1 @@
+{"domainsOfInterest":["example.com","auth.example.com"],"proxyAddress":"203.0.113.10","proxyLogin":"proxyUser","proxyPassword":"proxyPass","proxyPort":1080,"templateName":"Sign-in and wait for control text","type":"AntiGateTask","variables":{"login_input_css":"#login","login_input_value":"user"},"websiteURL":"https://example.com/login"}

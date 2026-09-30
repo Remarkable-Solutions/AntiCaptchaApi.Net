@@ -329,6 +329,12 @@ The parity test allow-list contains exactly these items.
 
 If the Phase 1 capture shows that the hotfix already changed any 2.x behaviour above, update this list before Phase 2.
 
+*Update 2026-09-30 (Task 1.2 capture, `Snapshots/Legacy2x/`):*
+- Item 1 is **not a wire deviation**: 2.x already sends `mode` as `"points"`/`"rectangles"` (a `StringEnumConverter` with camelCase naming on `IImageToCoordinatesRequest.Mode`; see `ImageToCoordinatesRequest.*.json`). 2.x also always sends `mode` (default `points`), even in the minimal case. The parity allow-list does not need this item.
+- Item 3 was already fixed by the hotfix (2.2.0 accepts 65535). It is validation-only and never appears on the wire.
+- Item 2: the hotfix still accepts 0.5 (deprecated) and still omits `isEnterprise` when unset (`RecaptchaV3Request.minimal.json`), so the item stays.
+- Items 4 and 5 are unchanged in 2.x (`mode?.ToString()`; `AllDailySpendingStats`), so both stay.
+
 ## 10. Out of Scope
 - The `AntiCaptchaApi.Net.DependencyInjection` package, `ILogger`, `IAntiCaptchaClientFactory` and named clients.
 - Release pipeline, CI and Dependabot changes, SourceLink/deterministic settings, package validation baselines, and a net8.0 test TFM in CI.

@@ -21,13 +21,13 @@ Conventions for every task (see `conductor/workflow.md`):
 Goal: branch `v3` exists and the 2.x wire contract and public API are frozen into checked-in files. After that, the core targets `netstandard2.0;net8.0` with STJ and no Newtonsoft/M.E.Http, 2.x code is excluded from compilation, and the test project (net10.0) has fakes, snapshot tooling and the probe.
 
 Tasks:
-- [x] Task 1.1: Create branch and record baseline (no red phase — setup)
+- [x] Task 1.1: Create branch and record baseline (no red phase — setup) 1c2e398
   - Precondition: `hotfix_2x_critical_bugs_20260930` is complete. Run `git switch fix/2x-critical-bugs && git switch -c v3`.
   - Done 2026-09-30: branch `v3` was already created by the orchestrator from `fix/2x-critical-bugs` at 85cd2e2 (+ track-start commit 77c8966); only the baseline was recorded.
   - Run build and offline tests. Record the test count and warning count under "Baselines" at the end of this file.
   - Commit: none (only the plan update `conductor(plan): Record v3 baseline`).
 
-- [ ] Task 1.2: Capture 2.x wire contract and public API (TDD: characterization)
+- [~] Task 1.2: Capture 2.x wire contract and public API (TDD: characterization)
   - Add `AntiCaptchaApi.Net.Tests/UnitTests/Legacy/LegacyContractCapture.cs`. It is temporary and uses 2.x `CreateCaptchaRequestHelper.Build` and Newtonsoft.
   - `Capture_EveryLegacyRequestType_WritesWireSnapshot` (Theory over every concrete 2.x request type, **including the hotfix `AntiGateRequest`**) writes `Snapshots/Legacy2x/<RequestType>.<case>.json` in compact form with sorted keys:
     - Proxyless classes get the cases `minimal` and `full`. Proxy classes get `proxy`.
@@ -632,3 +632,5 @@ Tasks:
 
 ## Deviations
 _Record any departures from spec/tech-stack here with a date (workflow step 7)._
+- 2026-09-30, Task 1.2: every 2.x type serialized without throwing (including `ImageToCoordinatesRequest`), so no snapshot was written by hand. `AntiGateRequest` is a single class for both proxy modes, so it got all three cases (`minimal`, `full`, `proxy`), not only `proxy`. The `proxy` case of each proxy class sets every settable field plus the proxy. This matters because some 2.x fields (for example RecaptchaV2 `cookies`) exist only on the proxy class. An extra guard fact `Capture_CoversEveryConcreteLegacyRequestType` asserts that the capture table lists every concrete 2.x request type. The capture changed spec §9: item 1 (`mode` is already a lowercase string in 2.x) and item 3 (the hotfix already accepts 65535) are no longer 2.x deviations. See the dated note in spec §9.
+- 2026-09-30, Task 1.2: the `public-api.txt` format is `Namespace.Type`, `Namespace.Type..ctor(ParamTypes)`, `Namespace.Type.Method<T>(ParamTypes)`, `Namespace.Type.Property`, `Namespace.Type.Field` and `Namespace.EnumType.Member = N`. Parameter types are full names (generic types as `Name<Args>`, `Nullable<T>` as `T?`). Only declared public members are listed; accessors and other special-name methods are skipped. It has 505 lines.

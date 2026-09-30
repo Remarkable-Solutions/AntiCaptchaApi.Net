@@ -1,0 +1,1 @@
+{"templateName":"Sign-in and wait for control text","type":"AntiGateTask","variables":{"login_input_css":"#login","login_input_value":"user"},"websiteURL":"https://example.com/login"}

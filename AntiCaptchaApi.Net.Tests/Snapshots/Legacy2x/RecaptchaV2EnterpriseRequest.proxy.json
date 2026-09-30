@@ -1,0 +1,1 @@
+{"apiDomain":"www.recaptcha.net","cookies":"cookie1=value1; cookie2=value2","enterprisePayload":{"s":"ENTERPRISE_S_VALUE"},"proxyAddress":"203.0.113.10","proxyLogin":"proxyUser","proxyPassword":"proxyPass","proxyPort":1080,"proxyType":"socks5","type":"RecaptchaV2EnterpriseTask","userAgent":"Mozilla/5.0 (probe)","websiteKey":"SITE_KEY","websiteURL":"https://example.com/login"}
