@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using AntiCaptchaApi.Net.Internal.Json.Envelopes;
+using AntiCaptchaApi.Net.Tasks;
 
 namespace AntiCaptchaApi.Net.Internal.Json;
 
@@ -15,6 +16,9 @@ namespace AntiCaptchaApi.Net.Internal.Json;
 [JsonSerializable(typeof(CreateTaskRequest))]
 [JsonSerializable(typeof(CreateTaskResponse))]
 [JsonSerializable(typeof(ProxyType))]
+// Tasks and their solutions (one pair per catalog type; guarded by TaskSnapshotTests).
+[JsonSerializable(typeof(TurnstileTask))]
+[JsonSerializable(typeof(TurnstileSolution))]
 internal sealed partial class AntiCaptchaJsonContext : JsonSerializerContext
 {
 }
