@@ -246,7 +246,8 @@ Tasks:
   - Parity: `RecaptchaV3Request.*` and `RecaptchaV3EnterpriseRequest.*` both map to `RecaptchaV3Task` samples.
   - Commit: `feat(tasks): add RecaptchaV3 task with MinScore enum`
 
-- [ ] Task 2.9: `FunCaptchaTask`, `FunCaptchaSolution`
+- [x] Task 2.9: `FunCaptchaTask`, `FunCaptchaSolution` 191174e
+  - Done 2026-09-30: `Data` stays a JSON string (2.x parity; the API expects a string). The `full` sample also sets `UserAgent` (a 3.0 addition to the 2.x proxyless file). 1 extra test: `FunCaptchaTaskTests.TypeName_ProxylessAndProxy`.
   - Tests:
     - `Serialize_ApiJsSubdomain_UsesFuncaptchaApiJSSubdomainName`
     - `Validate_EmptyPublicKey_Fails`
