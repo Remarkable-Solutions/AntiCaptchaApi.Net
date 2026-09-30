@@ -1,279 +1,411 @@
-# AntiCaptchaApi.Net [![NuGet Version](https://img.shields.io/nuget/v/AntiCaptchaApi.Net.svg)](https://www.nuget.org/packages/AntiCaptchaApi.Net/)
+# AntiCaptchaApi.Net
 
-A .NET library (netstandard2.1, net8.0, net9.0) that implements the [anti-captcha.com API](https://anti-captcha.com/apidoc).
+[![NuGet](https://img.shields.io/nuget/vpre/AntiCaptchaApi.Net.svg)](https://www.nuget.org/packages/AntiCaptchaApi.Net/)
+[![NuGet downloads](https://img.shields.io/nuget/dt/AntiCaptchaApi.Net.svg)](https://www.nuget.org/packages/AntiCaptchaApi.Net/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-You create a request object for a captcha type, call `SolveCaptchaAsync`, and get back the solution or an error description. The library validates requests before any HTTP call, polls for the result and handles the JSON for you.
+A .NET client for the [anti-captcha.com API](https://anti-captcha.com/apidoc). Describe the captcha with one record and call `SolveAsync`. The library validates the task before it spends money, polls for the result, retries what is worth retrying, and never abandons a task you have already paid for.
 
-## Features
+- Targets netstandard2.0 (.NET Framework 4.6.2+ and .NET Core) and net8.0 (.NET 8, 9, 10).
+- Depends only on System.Text.Json and System.Diagnostics.DiagnosticSource, and only on netstandard2.0. On net8.0 it has no dependencies.
+- 13 task types: image to text, image to coordinates, reCAPTCHA v2 / v2 Enterprise / v3, Cloudflare Turnstile, FunCaptcha, GeeTest v3 / v4, Amazon WAF, Prosopo, Friendly Captcha and AntiGate.
+- Traces and metrics through `ActivitySource` and `Meter`, ready for OpenTelemetry.
 
-*   Supported task types:
-    *   ImageToText, ImageToCoordinates
-    *   reCAPTCHA v2, v2 Enterprise, v3, v3 Enterprise
-    *   FunCaptcha (Arkose Labs)
-    *   GeeTest v3, v4
-    *   Cloudflare Turnstile
-    *   Amazon WAF
-    *   Prosopo
-    *   Friendly Captcha
-    *   AntiGate (custom browser templates)
-*   Proxy and proxyless variants for the types that anti-captcha offers both for.
-*   Async API with `CancellationToken` support.
-*   Works with or without dependency injection.
-*   Balance, queue, spending and app statistics, task reporting, and AntiGate variables.
+> Upgrading from 2.x? Read [MIGRATION.md](MIGRATION.md). Every 2.x type and method has a row there.
 
-## Installation
+## Install
 
 ```bash
-dotnet add package AntiCaptchaApi.Net
+dotnet add package AntiCaptchaApi.Net --prerelease
 ```
-
-The package depends on `Microsoft.Extensions.Http` (≥ 8.0.0) and `Newtonsoft.Json` (≥ 13.0.1). These are minimum versions, so your application can use newer ones.
 
 ## Quick start
 
 ```csharp
 using AntiCaptchaApi.Net;
-using AntiCaptchaApi.Net.Enums;
-using AntiCaptchaApi.Net.Requests;
+using AntiCaptchaApi.Net.Tasks;
 
-var client = new AnticaptchaClient("YOUR_API_KEY");
+var client = new AntiCaptchaClient("YOUR_API_KEY");
 
-var result = await client.SolveCaptchaAsync(new RecaptchaV2ProxylessRequest
-{
-    WebsiteUrl = "https://example.com/login",
-    WebsiteKey = "6Le-wvkSAAAAAPBMRTvw0Q4Muexq9bi0DJwx_mJ-",
-});
+var solution = await client.SolveAsync(
+    new TurnstileTask("https://example.com/login", "0x4AAAAAAAA-your-site-key"));
 
-if (result.Status == TaskStatusType.Ready)
-    Console.WriteLine(result.Solution.GRecaptchaResponse);
-else
-    Console.WriteLine($"{result.ErrorCode}: {result.ErrorDescription}");
+Console.WriteLine(solution.Token);
 ```
 
-Errors are returned as data, not thrown. Check `Status` (`Ready`, `Processing` or `Error`) and read `ErrorCode` / `ErrorDescription` when the solve did not succeed.
+`SolveAsync` returns the solution or throws `AntiCaptchaException`. Create one client per API key and reuse it; it is thread-safe.
 
-## Creating a client
+### Without exceptions
 
-Both ways are supported. Use the one that fits your application.
-
-**With dependency injection** (recommended for ASP.NET Core and hosted apps). `AddAnticaptcha` registers `IAnticaptchaClient` and a named `HttpClient` from `IHttpClientFactory` whose timeout is `ClientConfig.MaxHttpRequestTimeMs`.
+`TrySolveAsync` returns a `SolveResult` instead of throwing on API and network errors:
 
 ```csharp
-using AntiCaptchaApi.Net;
-using Microsoft.Extensions.DependencyInjection;
+var result = await client.TrySolveAsync(new TurnstileTask("https://example.com/login", "0x4AAAAAAAA-your-site-key"));
 
-services.AddAnticaptcha("YOUR_API_KEY", options =>
+if (result.IsSuccess)
 {
-    options.MaxWaitForTaskResultTimeMs = 180000;
-});
-
-public class MyService
+    Console.WriteLine($"{result.Solution!.Token} (task {result.TaskId}, {result.Cost} USD, {result.Attempts} attempt(s))");
+}
+else
 {
-    private readonly IAnticaptchaClient _anticaptchaClient;
-
-    public MyService(IAnticaptchaClient anticaptchaClient)
-    {
-        _anticaptchaClient = anticaptchaClient;
-    }
+    Console.WriteLine($"Failed: {result.Error!.Code} - {result.Error.Description}");
 }
 ```
 
-**With the constructor.** Without an `HttpClient`, the client creates one with `MaxHttpRequestTimeMs` as its timeout. If you pass your own `HttpClient`, you configure it yourself. Reuse one client instance instead of creating one per solve.
+It still throws `AntiCaptchaValidationException` for an invalid task and `OperationCanceledException` when you cancel. Both are thrown before any money is spent, or because you asked for it.
+
+## Task types
+
+The examples assume `using AntiCaptchaApi.Net;` and `using AntiCaptchaApi.Net.Tasks;` (plus `System.Text.Json.Nodes` for AntiGate), and a `client` created as in the quick start.
+
+Tasks live in `AntiCaptchaApi.Net.Tasks`. Required values are constructor parameters. Optional values are `init` properties that use anti-captcha's defaults when you leave them out. Each record links its anti-captcha docs page in its XML docs.
+
+### Image to text
 
 ```csharp
-using AntiCaptchaApi.Net;
-using AntiCaptchaApi.Net.Models;
-
-var client = new AnticaptchaClient("YOUR_API_KEY");
-
-var config = new ClientConfig { MaxWaitForTaskResultTimeMs = 120000 };
-var clientWithConfig = new AnticaptchaClient("YOUR_API_KEY", config);
-
-var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-var clientWithHttpClient = new AnticaptchaClient("YOUR_API_KEY", config, httpClient);
+var task = ImageToTextTask.FromFile("captcha.png") with
+{
+    Numeric = NumericOption.NumbersOnly,
+    MinLength = 4,
+    MaxLength = 6,
+};
+var text = (await client.SolveAsync(task)).Text;
 ```
 
-## Configuration
+`FromFile` throws `FileNotFoundException` when the file is missing. Use `ImageToTextTask.FromBytes(bytes)` or `new ImageToTextTask(base64)` when the image is already in memory.
 
-`ClientConfig` controls timeouts, polling and retries:
-
-| Property | Default | Meaning |
-|---|---|---|
-| `MaxWaitForTaskResultTimeMs` | 120000 | How long `SolveCaptchaAsync` / `WaitForTaskResultAsync` polls before it gives up with a `RequestTimeout` error. |
-| `DelayTimeBetweenCheckingTaskResultMs` | 1000 | Delay between two `getTaskResult` polls. |
-| `MaxHttpRequestTimeMs` | 60000 | Timeout of a single HTTP request (the DI client, or the client the constructor creates). |
-| `SolveAsyncRetries` | 1 | Total number of attempts `SolveCaptchaAsync` makes when the task ends with an error. `2` means one retry. |
-
-## Examples
-
-### ImageToText
+### Image to coordinates
 
 ```csharp
-var result = await client.SolveCaptchaAsync(new ImageToTextRequest
+var task = ImageToCoordinatesTask.FromFile("cats.jpeg") with
 {
-    FilePath = "captcha.png", // or set BodyBase64
-    // Optional: Phrase, Case, Numeric, Math, MinLength, MaxLength, Comment
-});
+    Comment = "Select all cats",
+    Mode = ImageToCoordinatesMode.Rectangles,
+};
+foreach (var shape in (await client.SolveAsync(task)).Coordinates)
+{
+    Console.WriteLine(string.Join(", ", shape)); // x1, y1, x2, y2 for a rectangle
+}
+```
 
-if (result.Status == TaskStatusType.Ready)
-    Console.WriteLine(result.Solution.Text);
+### reCAPTCHA v2
+
+```csharp
+var solution = await client.SolveAsync(new RecaptchaV2Task("https://example.com/signup", "6Lc_your-site-key")
+{
+    IsInvisible = true, // optional
+});
+Console.WriteLine(solution.GRecaptchaResponse);
+```
+
+### reCAPTCHA v2 Enterprise
+
+```csharp
+var solution = await client.SolveAsync(new RecaptchaV2EnterpriseTask("https://example.com/signup", "6Lc_your-site-key")
+{
+    EnterprisePayload = new Dictionary<string, string> { ["s"] = "value-from-grecaptcha.enterprise.render" },
+});
+Console.WriteLine(solution.GRecaptchaResponse);
 ```
 
 ### reCAPTCHA v3
 
 ```csharp
-var result = await client.SolveCaptchaAsync(new RecaptchaV3Request
+var solution = await client.SolveAsync(new RecaptchaV3Task("https://example.com/login", "6Lc_your-site-key")
 {
-    WebsiteUrl = "https://example.com/",
-    WebsiteKey = "6LeYOUR_SITE_KEY",
-    MinScore = 0.7m,        // 0.3 (default), 0.7 or 0.9
-    PageAction = "login",   // optional
+    MinScore = MinScore.Score07, // Score03 (default), Score07 or Score09
+    PageAction = "login",
+    IsEnterprise = false,        // true for reCAPTCHA v3 Enterprise
 });
+Console.WriteLine(solution.GRecaptchaResponse);
 ```
 
-`IsEnterprise` is optional: leaving it unset means a non-Enterprise site. Use `RecaptchaV3EnterpriseRequest` for Enterprise sites. `MinScore = 0.5` is still accepted for backward compatibility, but it is not one of anti-captcha's score queues, so avoid it. It will be removed in 3.0.
+### Cloudflare Turnstile
+
+```csharp
+var solution = await client.SolveAsync(new TurnstileTask("https://example.com/login", "0x4AAAAAAAA-your-site-key")
+{
+    Action = "login", // optional; also CData and ChlPageData for challenge pages
+});
+Console.WriteLine(solution.Token);
+```
+
+### FunCaptcha (Arkose Labs)
+
+```csharp
+var solution = await client.SolveAsync(new FunCaptchaTask("https://example.com/signup", "DF9C4D87-CB7B-4062-9FEB-BADB6ADA61E6")
+{
+    ApiJsSubdomain = "client-api.arkoselabs.com", // optional
+});
+Console.WriteLine(solution.Token);
+```
+
+### GeeTest v3
+
+```csharp
+var solution = await client.SolveAsync(new GeeTestV3Task("https://example.com/login", "gt-from-the-page", "fresh-challenge"));
+Console.WriteLine($"{solution.Challenge} {solution.Validate} {solution.Seccode}");
+```
+
+### GeeTest v4
+
+```csharp
+var solution = await client.SolveAsync(new GeeTestV4Task("https://example.com/login", "captcha-id-from-the-page")
+{
+    InitParameters = new Dictionary<string, string> { ["riskType"] = "slide" }, // optional
+});
+Console.WriteLine($"{solution.CaptchaId} {solution.LotNumber} {solution.PassToken} {solution.GenTime} {solution.CaptchaOutput}");
+```
 
 ### Amazon WAF
 
 ```csharp
-using AntiCaptchaApi.Net.Requests;
-
-var result = await client.SolveCaptchaAsync(new AmazonWafProxylessRequest
-{
-    WebsiteUrl = "https://example.com/protected",
-    WebsiteKey = "AQIDAHjcYu/GjX+QlghicBgQ/7bFaQZ+m5FKCMDnO+vTbNg96AF5H1K", // "key" from the page
-    Iv = "CgAHbCe2GgAAAAAj",                                           // "iv" from the page
-    Context = "9BUgmlm48F92WUoqv97a49ZuEJJ50TCk9MVr3C7WMtQ0X6flVbufM4n8m", // "context" from the page
-    // Optional: CaptchaScript, ChallengeScript
-});
-
-if (result.Status == TaskStatusType.Ready)
-    Console.WriteLine(result.Solution.Token); // value for the aws-waf-token cookie
+var solution = await client.SolveAsync(new AmazonWafTask(
+    "https://example.com/protected",
+    "AQIDAHjcYu/GjX+QlghicBgQ/7bFaQZ+m5FKCMDnO+vTbNg96AF5H1K", // "key" from the page
+    "CgAHbCe2GgAAAAAj",                                        // "iv" from the page
+    "9BUgmlm48F92WUoqv97a49ZuEJJ50TCk9MVr3C7WMtQ0X6flVbufM4n8m")); // "context" from the page
+Console.WriteLine(solution.Token); // the aws-waf-token cookie value
 ```
 
-Use `AmazonWafRequest` with `ProxyConfig` to solve through your own proxy.
-
-### AntiGate
-
-[AntiGate](https://anti-captcha.com/apidoc/task-types/AntiGateTask) runs a template in a real browser and returns cookies, storage and the browser fingerprint. The variables must match what the template expects.
+### Prosopo
 
 ```csharp
-using AntiCaptchaApi.Net.Models;
-using AntiCaptchaApi.Net.Requests;
-using Newtonsoft.Json.Linq;
-
-var result = await client.SolveCaptchaAsync(new AntiGateRequest
-{
-    WebsiteUrl = "https://example.com/",
-    TemplateName = "YOUR_TEMPLATE_NAME", // a template from the AntiGate catalog
-    Variables = JObject.FromObject(new { css_selector = "#content" }),
-    DomainsOfInterest = new List<string> { "auth.example.com" }, // optional
-    ProxyConfig = new ProxyConfig { ProxyAddress = "203.0.113.10", ProxyPort = 3128 }, // optional, HTTPS proxy by IP
-});
-
-if (result.Status == TaskStatusType.Ready)
-{
-    Console.WriteLine(result.Solution.Url);
-    Console.WriteLine(result.Solution.Cookies);
-    Console.WriteLine(result.Solution.Fingerprint);
-}
+var solution = await client.SolveAsync(new ProsopoTask("https://example.com/login", "your-prosopo-site-key"));
+Console.WriteLine(solution.Token);
 ```
 
-The solution also exposes `Domain`, `LocalStorage`, `SessionStorage`, `HTMLsInBase64`, `Screenshots`, `RequestHeaders` and `ResponseHeaders` when the template returns them.
-
-Some templates wait for a value that you only know after the task has started, for example a code sent by email. Create the task, push the variable, then wait:
+### Friendly Captcha
 
 ```csharp
-var created = await client.CreateCaptchaTaskAsync(antiGateRequest);
-if (created.IsErrorResponse || !created.TaskId.HasValue)
-    return;
+var solution = await client.SolveAsync(new FriendlyCaptchaTask("https://example.com/login", "your-friendly-captcha-site-key"));
+Console.WriteLine(solution.Token);
+```
+
+### AntiGate (browser templates)
+
+[AntiGate](https://anti-captcha.com/apidoc/task-types/AntiGateTask) runs a template in a real browser and returns cookies, storage and the browser fingerprint. The variables must match the template.
+
+```csharp
+var solution = await client.SolveAsync(new AntiGateTask(
+    "https://example.com/",
+    "YOUR_TEMPLATE_NAME",
+    new JsonObject { ["css_selector"] = "#content" })
+{
+    DomainsOfInterest = new[] { "auth.example.com" }, // optional
+});
+Console.WriteLine(solution.Cookies?.ToJsonString());
+```
+
+The cookie, storage, fingerprint, screenshot and header members are `JsonNode?`, because the API sends an empty map as `[]`.
+
+When a template waits for a value you learn later (for example a code sent by email), create the task, push the variable and then wait:
+
+```csharp
+var taskId = await client.CreateTaskAsync(antiGateTask);
 
 // Later, when the value is known:
-await client.PushAntiGateVariableAsync(created.TaskId.Value, "verification_code", "123456");
+await client.PushAntiGateVariableAsync(taskId, "verification_code", "123456");
 
-var solved = await client.WaitForTaskResultAsync<AntiGateSolution>(created.TaskId.Value);
+var solution = await client.WaitForResultAsync<AntiGateSolution>(taskId);
 ```
 
-### Two-step solving
+## Proxies
 
-`SolveCaptchaAsync` creates the task and polls for the result. You can also do both steps yourself:
+Set `Proxy` to have anti-captcha solve through your proxy. This selects the proxy variant of the task type (for example `RecaptchaV2Task` instead of `RecaptchaV2TaskProxyless`).
 
 ```csharp
-var created = await client.CreateCaptchaTaskAsync(request);
-if (created.IsErrorResponse || !created.TaskId.HasValue)
+var proxy = new Proxy(ProxyType.Http, "203.0.113.10", 3128)
 {
-    Console.WriteLine($"Failed to create task: {created.ErrorCode} - {created.ErrorDescription}");
-    return;
-}
+    Login = "user",
+    Password = "secret",
+};
 
-var result = await client.WaitForTaskResultAsync<ImageToTextSolution>(created.TaskId.Value);
+var solution = await client.SolveAsync(new RecaptchaV2Task("https://example.com/signup", "6Lc_your-site-key")
+{
+    Proxy = proxy,
+    UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36",
+});
 ```
 
-## Behavior worth knowing
+- `ProxyType` is `Http`, `Socks4` or `Socks5`. The port must be 1–65535.
+- With a proxy, `UserAgent` is required for RecaptchaV2, RecaptchaV2Enterprise, Turnstile, FunCaptcha, GeeTest v3/v4, Prosopo and Friendly Captcha. Use the user agent of the browser that will submit the token.
+- Image tasks and `RecaptchaV3Task` have no proxy variant. Setting `Proxy` on them is a validation error, not silently ignored.
+- `Proxy.ToString()` prints `Password = ***`, and the password never appears in exceptions or telemetry.
 
-*   **Validation first.** Missing or invalid values (URL, site key, proxy, port 1-65535, ...) are reported with `ErrorCode = "BadRequest"` before any HTTP call, so nothing is charged. `SolveCaptchaAsync` does not retry them.
-*   **Resilient polling.** A created task is paid for, so a single network error while polling does not abandon it. Transport errors (`HttpError`, `JsonError`, `UnexpectedError`, and an HTTP timeout) are retried on the next poll. The wait gives up only after 3 consecutive failed polls and then returns the last error. API errors (for example `ERROR_CAPTCHA_UNSOLVABLE`) return immediately. Cancelling your `CancellationToken` stops polling.
-*   **Redacted `RawPayload`.** Every response has `RawPayload` (the request JSON) and `RawResponse` (the API's JSON) for debugging. In `RawPayload` the `clientKey` and every `proxyPassword` are replaced with `"***"`, so it is safe to log. The request sent to anti-captcha is unchanged.
-*   **Thread safety.** One client instance can run many solves in parallel.
+## Other API methods
 
-## API client methods
+```csharp
+decimal balance = await client.GetBalanceAsync();
 
-The methods on `IAnticaptchaClient`:
+QueueStats queue = await client.GetQueueStatsAsync(QueueType.RecaptchaV2WithoutProxy);
+Console.WriteLine($"{queue.Waiting} workers waiting, load {queue.Load} %, bid {queue.Bid} USD");
 
-*   `GetBalanceAsync(...)`: [docs](https://anti-captcha.com/apidoc/methods/getBalance)
-    ```csharp
-    var balance = await client.GetBalanceAsync();
-    Console.WriteLine(balance.Balance);
-    ```
-*   `SolveCaptchaAsync<TSolution>(request, ...)`: `CreateCaptchaTaskAsync` plus `WaitForTaskResultAsync`, with retries per `SolveAsyncRetries`.
-*   `CreateCaptchaTaskAsync<T>(request, ...)`: [docs](https://anti-captcha.com/apidoc/methods/createTask)
-*   `GetTaskResultAsync<TSolution>(taskId, cancellationToken)`: [docs](https://anti-captcha.com/apidoc/methods/getTaskResult). Checks once; the task may still be processing.
-    ```csharp
-    var result = await client.GetTaskResultAsync<ImageToTextSolution>(taskId, CancellationToken.None);
-    ```
-*   `WaitForTaskResultAsync<TSolution>(taskId, ...)`: polls `getTaskResult` until the task is ready, fails or times out.
-*   `GetQueueStatsAsync(queueType, ...)`: [docs](https://anti-captcha.com/apidoc/methods/getQueueStats)
-    ```csharp
-    var stats = await client.GetQueueStatsAsync(QueueType.RecaptchaB2WithoutProxy);
-    ```
-*   `GetSpendingStatsAsync(...)`: [docs](https://anti-captcha.com/apidoc/methods/getSpendingStats)
-    ```csharp
-    var spending = await client.GetSpendingStatsAsync(queue: "ImageToTextTask");
-    ```
-*   `GetAppStatsAsync(softId, ...)`: [docs](https://anti-captcha.com/apidoc/methods/getAppStats)
-    ```csharp
-    var appStats = await client.GetAppStatsAsync(123, AppStatsMode.Errors); // your SoftID
-    ```
-*   `ReportTaskOutcomeAsync(taskId, outcome, ...)`: reports a wrong (or correct) solution; `outcome` selects the API method ([docs](https://anti-captcha.com/apidoc/methods/reportIncorrectImageCaptcha)).
-    ```csharp
-    await client.ReportTaskOutcomeAsync(taskId, ReportOutcome.IncorrectRecaptcha);
-    ```
-*   `PushAntiGateVariableAsync(taskId, name, value, ...)`: [docs](https://anti-captcha.com/apidoc/methods/pushAntiGateVariable). See the AntiGate example.
-*   `SolveProsopoAsync`, `SolveProsopoProxylessAsync`, `SolveFriendlyCaptchaAsync`, `SolveFriendlyCaptchaProxylessAsync`: typed shortcuts for `SolveCaptchaAsync`.
+SpendingStats spending = await client.GetSpendingStatsAsync(new SpendingQuery { Date = DateTimeOffset.UtcNow.AddDays(-1) });
+foreach (var period in spending.Days)
+{
+    Console.WriteLine($"{period.DateFrom:u}: {period.Volume} tasks, {period.Money} USD");
+}
 
-## Deprecations
+// The site rejected a token: tell anti-captcha.
+await client.ReportAsync(taskId, Report.IncorrectRecaptcha);
+```
 
-These still work in 2.x and will be removed in 3.0:
+- `CreateTaskAsync` → task id; `GetTaskResultAsync<TSolution>` → one poll (`TaskStatus<TSolution>`); `WaitForResultAsync<TSolution>` → polls an existing task until it is ready.
+- `ReportAsync` accepts `Report.IncorrectImageCaptcha`, `Report.IncorrectRecaptcha` and `Report.CorrectRecaptcha`.
+- `GetAppStatsAsync` returns the statistics of an application you own.
 
-*   The hCaptcha value of `ReportOutcome`: the library has no hCaptcha request type, so there is nothing to report.
-*   `RecaptchaV3Request.MinScore = 0.5`: not an anti-captcha score queue. Use 0.3, 0.7 or 0.9.
+## Configuration
 
-## Changelog
+Per call, pass `SolveOptions`. For every call of a client, set `AntiCaptchaClientOptions.DefaultSolveOptions`.
 
-See [CHANGELOG.md](CHANGELOG.md).
+```csharp
+var solution = await client.SolveAsync(task, new SolveOptions
+{
+    Timeout = TimeSpan.FromMinutes(5),
+    MaxAttempts = 2,
+    LanguagePool = "rn",
+});
+```
+
+| `SolveOptions` | Default | Meaning |
+|---|---|---|
+| `Timeout` | 180 s | How long one attempt waits for its task, from `createTask`. |
+| `PollInterval` | 3 s | Delay between `getTaskResult` polls. |
+| `FirstPollDelay` | `null` | Delay before the first poll. `null` means 3 s for image tasks and 10 s for the others. |
+| `MaxAttempts` | 3 | Total attempts, counting the first one. A new attempt creates a new task. |
+| `MaxConsecutivePollErrors` | 5 | Transient poll errors in a row that are tolerated on the same task. |
+| `RetryBaseDelay` / `RetryMaxDelay` | 2 s / 30 s | Backoff between attempts: `min(max, base × 2^(attempt−1))`, ±20 % jitter. |
+| `LanguagePool` | `null` | anti-captcha's `languagePool` (for example `"en"` or `"rn"`). |
+| `CallbackUrl` | `null` | anti-captcha's `callbackUrl`. |
+
+| `AntiCaptchaClientOptions` | Default | Meaning |
+|---|---|---|
+| `BaseAddress` | `https://api.anti-captcha.com/` | API root. |
+| `RequestTimeout` | 30 s | Timeout of each HTTP call. |
+| `DefaultSolveOptions` | `new SolveOptions()` | Used when a call passes no `SolveOptions`. |
+
+Invalid values (a zero or negative time, `MaxAttempts < 1`) throw `ArgumentOutOfRangeException` before any request.
+
+### Using IHttpClientFactory
+
+The core package has no dependency injection code. A separate `AntiCaptchaApi.Net.DependencyInjection` package is planned. Until then, pass an `HttpClient` from the factory. The client never disposes it and never changes its `Timeout` or `BaseAddress`; `AntiCaptchaClientOptions` applies instead.
+
+```csharp
+services.AddHttpClient("anticaptcha");
+services.AddTransient<IAntiCaptchaClient>(sp => new AntiCaptchaClient(
+    Environment.GetEnvironmentVariable("ANTICAPTCHA_API_KEY")!,
+    sp.GetRequiredService<IHttpClientFactory>().CreateClient("anticaptcha"),
+    new AntiCaptchaClientOptions { RequestTimeout = TimeSpan.FromSeconds(20) }));
+```
+
+`new AntiCaptchaClient(apiKey)` without an `HttpClient` shares one pooled handler across all instances, so it does not exhaust sockets either.
+
+## Errors and retries
+
+- **Invalid task:** `AntiCaptchaValidationException`, thrown before any request. `Errors` lists every problem as `ValidationError(Field, Message)`.
+- **API or network error:** `AntiCaptchaException`. Its `Error` has the parsed `Code` (`AntiCaptchaErrorCode`), the API's `RawCode` (such as `ERROR_ZERO_BALANCE`), a `Description` and the `ErrorId`. The exception also carries `TaskId` (when a task was created) and `Attempts`. From `TrySolveAsync` you get the same `AntiCaptchaError` in `SolveResult.Error`.
+
+```csharp
+try
+{
+    var solution = await client.SolveAsync(new TurnstileTask(url, siteKey));
+}
+catch (AntiCaptchaValidationException ex)
+{
+    foreach (var error in ex.Errors)
+    {
+        Console.WriteLine($"{error.Field}: {error.Message}");
+    }
+}
+catch (AntiCaptchaException ex) when (ex.Error.Code == AntiCaptchaErrorCode.ZeroBalance)
+{
+    Console.WriteLine("Top up your anti-captcha balance.");
+}
+```
+
+How the solve pipeline treats an error (`AntiCaptchaError.IsTransient` / `IsRetryable`):
+
+| Kind | Errors | What happens |
+|---|---|---|
+| Transient | network failure, HTTP 408 / 429 / 5xx, `HttpTimeout`, `InvalidResponse` while polling | The same task is polled again. The task is already paid for, so it is not abandoned. After `MaxConsecutivePollErrors` in a row, the solve fails with that error. |
+| Retryable | `NoSlotAvailable`, `CaptchaUnsolvable`, `ProxyConnectionRefused`, transient HTTP errors on `createTask` | A new attempt after the backoff, up to `MaxAttempts`. |
+| Fatal | everything else, for example `KeyDoesNotExist`, `ZeroBalance`, `IpBlocked`, `SolveTimeout`, other 4xx, `Unknown` | The solve fails at once. `SolveTimeout` is not retried because the timed-out task may still be charged. |
+
+Client-side codes: `HttpError` (network failure or non-2xx status), `HttpTimeout`, `InvalidResponse` (unparseable JSON, or a ready task without a usable solution) and `SolveTimeout`. A code the library does not know is `Unknown`, with the original string in `RawCode`.
+
+## Cancellation and timeouts
+
+```csharp
+using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2));
+try
+{
+    var solution = await client.SolveAsync(task, ct: cts.Token);
+}
+catch (OperationCanceledException)
+{
+    Console.WriteLine("Cancelled by us.");
+}
+catch (AntiCaptchaException ex) when (ex.Error.Code == AntiCaptchaErrorCode.SolveTimeout)
+{
+    Console.WriteLine($"Task {ex.TaskId} was not ready in time.");
+}
+```
+
+- **Your `CancellationToken`** always ends the call with `OperationCanceledException`. It is never wrapped and never reported as an error.
+- **`AntiCaptchaClientOptions.RequestTimeout`** limits one HTTP call. When it expires, the error is `HttpTimeout`, which is transient while polling.
+- **`SolveOptions.Timeout`** limits one attempt. When it expires, the error is `SolveTimeout`.
+
+## Observability
+
+The library emits traces and metrics under the names in `AntiCaptchaDiagnostics`. Both are `"AntiCaptcha"`.
+
+- Activities: one `AntiCaptcha.Solve` per solve, with the tags `anticaptcha.task.type`, `anticaptcha.task.id`, `anticaptcha.attempts` and, on failure, `anticaptcha.error.code` and an Error status. There is one child `AntiCaptcha.<apiMethod>` activity per API call, for example `AntiCaptcha.getTaskResult`.
+- Metrics: `anticaptcha.tasks.created`, `anticaptcha.solves` (`outcome` = `success` or `failure`), `anticaptcha.failures` (by `error.code`), `anticaptcha.solve.duration` (seconds) and `anticaptcha.cost` (USD). All are tagged with `task.type`.
+- Telemetry never contains the API key, proxy details, website data or solution content.
+
+With OpenTelemetry (the `OpenTelemetry` and `OpenTelemetry.Exporter.Console` packages):
+
+```csharp
+using var tracing = Sdk.CreateTracerProviderBuilder()
+    .AddSource(AntiCaptchaDiagnostics.ActivitySourceName)
+    .AddConsoleExporter()
+    .Build();
+
+using var metrics = Sdk.CreateMeterProviderBuilder()
+    .AddMeter(AntiCaptchaDiagnostics.MeterName)
+    .AddConsoleExporter()
+    .Build();
+```
+
+In an ASP.NET Core or generic host, call the same `AddSource` and `AddMeter` inside `services.AddOpenTelemetry().WithTracing(...)` and `.WithMetrics(...)`.
+
+## Troubleshooting
+
+- **`AntiCaptchaValidationException`:** the task was rejected locally and nothing was sent. `Errors` names each field. Common causes are a relative or non-http(s) `WebsiteUrl`, an empty key, a proxy without `UserAgent`, and an image passed with a `data:` prefix.
+- **`KeyDoesNotExist` / `ZeroBalance` / `IpNotAllowed`:** check the key, the balance and the IP allow-list in your anti-captcha account. These errors are not retried.
+- **`SolveTimeout`:** the task was not solved in `SolveOptions.Timeout`. Hard reCAPTCHAs can take minutes, so raise `Timeout` rather than `MaxAttempts`.
+- **`HttpTimeout` or `HttpError` from account methods:** your network could not reach `api.anti-captcha.com` within `RequestTimeout`. While polling, these errors are retried automatically.
+- **Proxy errors (`ProxyConnectionRefused`, `ProxyBanned`, `ProxyTransparent`, ...):** anti-captcha's workers could not use your proxy. It must be reachable from the internet, and it must not be a transparent proxy.
+- **The website rejects a token:** send the token soon after you get it, from the same IP (use `Proxy`) and with the same user agent. Report bad tokens with `ReportAsync(taskId, Report.IncorrectRecaptcha)`. The task id is in `SolveResult.TaskId` or `AntiCaptchaException.TaskId`.
+- **Seeing what happens:** subscribe to the `AntiCaptcha` activity source (see [Observability](#observability)). Each API call is an activity with its error code.
+
+## Links
+
+- [MIGRATION.md](MIGRATION.md): upgrading from 2.x.
+- [CHANGELOG.md](CHANGELOG.md): release notes.
+- [anti-captcha.com API docs](https://anti-captcha.com/apidoc).
 
 ## Contributing
 
-1.  Clone the repository: `git clone https://github.com/RemarkableSolutionsAdmin/AntiCaptchaApi.Net.git`
-2.  Create a new branch for your feature or bug fix.
-3.  Make your changes and add tests.
-4.  Run the offline unit tests: `dotnet test AntiCaptchaApi.Net.sln --filter "FullyQualifiedName~UnitTests"`. The tests under `IntegrationTests/` call the live, paid API and need your own key.
-5.  Push your branch to your fork and create a pull request.
+1. Clone `https://github.com/Remarkable-Solutions/AntiCaptchaApi.Net` and create a branch.
+2. Make your change and add tests.
+3. Run the offline tests: `dotnet test AntiCaptchaApi.Net.sln --filter "FullyQualifiedName~UnitTests"`.
+4. The live tests (`--filter "Category=Live"`) call the paid API. They are skipped unless the `ClientKey` environment variable is set; the proxy variants also need `ProxyAddress`, `ProxyPort`, `ProxyLogin` and `ProxyPassword`.
+5. Open a pull request.
 
 ## License
 
-MIT - see the [LICENSE](LICENSE) file for details.
+MIT. See [LICENSE](LICENSE).
 
-## Credits
-
-Copyright (c) 2022-2025 Remarkable Solutions
+Copyright (c) 2022-2026 Remarkable Solutions

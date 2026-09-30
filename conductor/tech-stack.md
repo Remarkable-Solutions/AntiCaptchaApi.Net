@@ -34,6 +34,8 @@
 
 *Note 2026-09-30 (track `core_v3_client_20260930`, Task 6.1):* the core adds System.Diagnostics.DiagnosticSource **8.0.0** as a `PackageReference` on `netstandard2.0` only (inbox on net8.0), for `ActivitySource`/`Meter` (spec FR-10, NFR-2). Like System.Text.Json it is a floor, the lowest 8.0.x without a known vulnerability (checked with `dotnet list package --vulnerable --include-transitive`). The public names are `AntiCaptchaDiagnostics.ActivitySourceName` and `MeterName` (both `"AntiCaptcha"`); the source, meter and instruments live in `Internal/Diagnostics/Telemetry.cs`.
 
+*Note 2026-09-30 (track `core_v3_client_20260930`, Task 7.4):* the probe (`tools/AntiCaptchaApi.Net.Probe`, net10.0, not packable) references **Microsoft.Extensions.Http 8.0.0** and **OpenTelemetry.Exporter.Console 1.19.1** (the latest stable version; it brings `OpenTelemetry`). They are there only so that the README's `IHttpClientFactory` and OpenTelemetry snippets compile (`readme-snippets` command). The core package and the test project do not reference them, and the core stays free of Microsoft.Extensions.* (`CoreAssemblyTests`).
+
 ## Constraints
 - Do not push to `main` directly: pushes to `main` publish CI packages to GitHub Packages.
 - Live integration tests (`IntegrationTests/`) require a paid API key — never run them in automated task loops; filter with `--filter "FullyQualifiedName~UnitTests"`.

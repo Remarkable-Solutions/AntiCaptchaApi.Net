@@ -23,6 +23,7 @@ var commands = new Dictionary<string, (string Description, Func<string[], int> R
     ["offline-retry"] = ("Run TrySolveAsync offline on a simulated clock: ERROR_NO_SLOT_AVAILABLE x2 -> success; print the timeline, backoff delays and the SolveResult.", _ => OfflineRetry().GetAwaiter().GetResult()),
     ["telemetry"] = ("Attach an ActivityListener and a MeterListener, run the offline-solve scenario (task with a proxy), print the activities and measurements; fails if a secret appears.", _ => TelemetryProbe().GetAwaiter().GetResult()),
     ["offline-account"] = ("Run every Phase 5 method (balance, queue, report, push, spending, app stats) against a scripted handler; print masked requests and results.", _ => OfflineAccount().GetAwaiter().GetResult()),
+    ["readme-snippets"] = ("List the README.md code snippets that this probe compiles (ReadmeSnippets.cs). They are not run: they would call the paid API.", _ => ListReadmeSnippets()),
     ["live-balance"] = ("USER ONLY (read-only, free, needs ClientKey): print the account balance.", _ => LiveBalance().GetAwaiter().GetResult()),
     ["live-queue"] = ("USER ONLY (read-only, free): <QueueType|queueId>; print the queue stats (no key sent; ClientKey still required).", a => LiveQueue(a).GetAwaiter().GetResult()),
     ["live-appstats"] = ("USER ONLY (read-only, free, needs ClientKey): <softId> [AppStatsMode]; print the app stats period and chart data.", a => LiveAppStats(a).GetAwaiter().GetResult()),
@@ -44,6 +45,21 @@ if (args.Length == 0 || !commands.TryGetValue(args[0], out var command))
 }
 
 return command.Run(args[1..]);
+
+static int ListReadmeSnippets()
+{
+    var snippets = typeof(ReadmeSnippets)
+        .GetMethods(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)
+        .Where(m => !m.IsSpecialName && !m.Name.Contains('<'))
+        .Select(m => m.Name)
+        .ToList();
+    Console.WriteLine($"{snippets.Count} README.md snippets compile against the core library (not run):");
+    foreach (var name in snippets)
+    {
+        Console.WriteLine($"  {name}");
+    }
+    return 0;
+}
 
 static int Info()
 {
