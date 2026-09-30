@@ -104,7 +104,7 @@ Tasks:
 
 ---
 
-## Phase 2: Task model, validation, catalog, snapshots
+## Phase 2: Task model, validation, catalog, snapshots [checkpoint: c35b617]
 Goal: all 13 task records exist with validation. Their JSON is proven by reflection-discovered snapshot tests, and a parity test shows that no 2.x field is lost.
 
 Tasks:
@@ -290,7 +290,7 @@ Tasks:
   - Remove `Pending` support from `LegacyParityTests`. `LegacyParity_EveryLegacyFile_IsMapped` must be green with no pending entries.
   - Commit: `feat(tasks): add AntiGate task`
 
-- [ ] Verification 2: Phase 2 checkpoint [checkpoint marker]
+- [x] Verification 2: Phase 2 checkpoint [c35b617] — user confirmed 2026-09-30 (probe 'serialize' added in ae8e981)
   - Run the offline suite and coverage for `Tasks/**` and `Internal/Json/**` (≥ 80 %).
   - Add a probe command `serialize`: prints the compact JSON of every sample task, and prints the validation errors of `new TurnstileTask("not-a-url", "")`.
   - Manual:
