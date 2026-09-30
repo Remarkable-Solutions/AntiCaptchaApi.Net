@@ -30,10 +30,11 @@ Tasks:
   - `AntiCaptchaApi.Net.Tests/Helpers/FakeHttpMessageHandler.cs`: FIFO queue of `Func<HttpRequestMessage, HttpResponseMessage>` or an exception to throw. Captures `RequestUri` and body strings. Exposes `RequestCount`.
   - Add a self-test `UnitTests/FakeHttpMessageHandlerTests.cs` (returns queued JSON, throws a queued `HttpRequestException`, records the body).
   - Commit: `test(infra): add FakeHttpMessageHandler for offline client tests`
-- [ ] Task 1.2: Register Amazon WAF task names (TDD, B1 / FR-1).
+- [x] Task 1.2: Register Amazon WAF task names (TDD, B1 / FR-1). [a60b49d]
   - Red: in `UnitTests/RequestSerializationTests.cs`, add `AmazonWafProxylessRequestSerializationTest` (`type = AmazonTaskProxyless`, `websiteURL`, `websiteKey`, `iv`, `context`, optional scripts) and `AmazonWafRequestSerializationTest` (`type = AmazonTask` + flattened proxy). Add `UnitTests/AmazonWafClientTests.cs`: `CreateCaptchaTaskAsync_AmazonWafProxyless_SendsAmazonTaskProxyless` using the fake handler. It currently fails with `KeyNotFoundException` from `RequestTaskNameHelper.cs:39`.
   - Green: add `{ typeof(AmazonWafProxylessRequest), "AmazonTaskProxyless" }` and `{ typeof(AmazonWafRequest), "AmazonTask" }` to `Internal/Helpers/RequestTaskNameHelper.cs`.
   - Commit: `fix(amazon-waf): register AmazonTask/AmazonTaskProxyless task names`
+  - Note: also added `CreateCaptchaTaskAsync_AmazonWafWithProxy_SendsAmazonTask` (FR-1 covers both types). Red: all 4 new tests failed with `KeyNotFoundException` for the WAF request types.
 - [ ] Task 1.3: Add missing result converters for Prosopo and Amazon WAF (TDD, B4 / FR-4).
   - Red: `UnitTests/TaskResultConverterTests.cs`. Through the fake handler, call `GetTaskResultAsync<ProsopoSolution>` / `<AmazonWafSolution>` with ready JSON (`createTime`, `endTime`) → assert `CreateTimeUtc`/`EndTimeUtc` are set. With `{"errorId":12,"errorCode":"ERROR_CAPTCHA_UNSOLVABLE"}` → assert `Status == TaskStatusType.Error`. Include one existing type (Turnstile) as a control.
   - Green: add `new TaskResultConverter<ProsopoSolution>()` and `new TaskResultConverter<AmazonWafSolution>()` to `Internal/Helpers/HttpHelper.cs:19-29`. Change the list to `internal static readonly IReadOnlyList<JsonConverter> Converters` (it is also passed as an array to `DeserializeObject`; cache the array).
