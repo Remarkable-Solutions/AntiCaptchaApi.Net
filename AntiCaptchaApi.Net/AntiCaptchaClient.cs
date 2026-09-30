@@ -110,6 +110,28 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
         return response.TaskId;
     }
 
+    /// <inheritdoc />
+    public async Task<TaskStatus<TSolution>> GetTaskResultAsync<TSolution>(int taskId, CancellationToken ct = default)
+        where TSolution : Solution
+    {
+        GetTaskResultResponse response;
+        try
+        {
+            response = await Transport.PostAsync(
+                "getTaskResult",
+                new GetTaskResultRequest(_apiKey, taskId),
+                AntiCaptchaJsonContext.Default.GetTaskResultRequest,
+                AntiCaptchaJsonContext.Default.GetTaskResultResponse,
+                Redactor,
+                ct).ConfigureAwait(false);
+        }
+        catch (AntiCaptchaException ex) when (ex.TaskId is null)
+        {
+            throw new AntiCaptchaException(ex.Error, taskId, 0, ex);
+        }
+        return TaskResultMapper.Map<TSolution>(response, taskId);
+    }
+
     /// <summary>Describes the client without revealing the API key.</summary>
     /// <returns>The type name and the base address.</returns>
     public override string ToString() => $"AntiCaptchaClient {{ BaseAddress = {Options.BaseAddress} }}";

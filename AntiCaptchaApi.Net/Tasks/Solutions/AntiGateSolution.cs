@@ -6,6 +6,8 @@ namespace AntiCaptchaApi.Net.Tasks;
 /// <summary>
 /// The solution of an <see cref="AntiGateTask"/>: the state of the worker's browser when the template finished.
 /// Only <see cref="Url"/> and <see cref="Domain"/> are always present; the other members depend on the template.
+/// They are <see cref="JsonNode"/>s because the API sends either shape: maps are objects but an empty map arrives as
+/// <c>[]</c>, and <c>HTMLsInBase64</c>, <c>screenshots</c> and the headers are documented as arrays.
 /// </summary>
 /// <param name="Url">The URL of the final page (<c>url</c>).</param>
 /// <param name="Domain">The domain of the final page (<c>domain</c>).</param>
@@ -20,11 +22,11 @@ namespace AntiCaptchaApi.Net.Tasks;
 public sealed record AntiGateSolution(
     [property: JsonPropertyName("url")] string Url,
     [property: JsonPropertyName("domain")] string Domain,
-    [property: JsonPropertyName("cookies")] JsonObject? Cookies,
-    [property: JsonPropertyName("localStorage")] JsonObject? LocalStorage,
-    [property: JsonPropertyName("sessionStorage")] JsonObject? SessionStorage,
-    [property: JsonPropertyName("fingerprint")] JsonObject? Fingerprint,
-    [property: JsonPropertyName("HTMLsInBase64")] JsonObject? HtmlsInBase64,
-    [property: JsonPropertyName("screenshots")] JsonObject? Screenshots,
-    [property: JsonPropertyName("requestHeaders")] JsonObject? RequestHeaders,
-    [property: JsonPropertyName("responseHeaders")] JsonObject? ResponseHeaders) : Solution;
+    [property: JsonPropertyName("cookies")] JsonNode? Cookies,
+    [property: JsonPropertyName("localStorage")] JsonNode? LocalStorage,
+    [property: JsonPropertyName("sessionStorage")] JsonNode? SessionStorage,
+    [property: JsonPropertyName("fingerprint")] JsonNode? Fingerprint,
+    [property: JsonPropertyName("HTMLsInBase64")] JsonNode? HtmlsInBase64,
+    [property: JsonPropertyName("screenshots")] JsonNode? Screenshots,
+    [property: JsonPropertyName("requestHeaders")] JsonNode? RequestHeaders,
+    [property: JsonPropertyName("responseHeaders")] JsonNode? ResponseHeaders) : Solution;

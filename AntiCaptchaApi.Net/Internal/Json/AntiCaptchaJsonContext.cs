@@ -15,6 +15,8 @@ namespace AntiCaptchaApi.Net.Internal.Json;
 [JsonSerializable(typeof(ApiErrorEnvelope))]
 [JsonSerializable(typeof(CreateTaskRequest))]
 [JsonSerializable(typeof(CreateTaskResponse))]
+[JsonSerializable(typeof(GetTaskResultRequest))]
+[JsonSerializable(typeof(GetTaskResultResponse))]
 [JsonSerializable(typeof(ProxyType))]
 // Tasks and their solutions (one pair per catalog type; guarded by TaskSnapshotTests).
 [JsonSerializable(typeof(TurnstileTask))]
