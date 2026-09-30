@@ -496,7 +496,7 @@ Tasks:
 Goal: every remaining 2.x API method has a 3.0 equivalent (spec FR-8), and the public surface is pinned.
 
 Tasks:
-- [ ] Task 5.1: `GetBalanceAsync` (TDD)
+- [x] Task 5.1: `GetBalanceAsync` (TDD) [32aa2dd]
   - Tests `UnitTests/Client/AccountTests.cs`:
     - `GetBalance_SendsClientKey_ReturnsDecimal`
     - `GetBalance_ApiError_Throws`
