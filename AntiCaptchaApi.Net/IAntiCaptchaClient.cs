@@ -107,6 +107,28 @@ public interface IAntiCaptchaClient
     Task ReportAsync(int taskId, Report report, CancellationToken ct = default);
 
     /// <summary>
+    /// Sends the value of a postponed variable to a running <see cref="AntiGateTask"/> (<c>pushAntiGateVariable</c>).
+    /// Create the task with the variable set to <c>"_WAIT_FOR_IT_"</c> and a <c>WAIT_FOR_VARIABLE_VALUE</c> step in the
+    /// template (<see href="https://anti-captcha.com/apidoc/methods/pushAntiGateVariable"/>).
+    /// </summary>
+    /// <param name="taskId">The id of the AntiGate task.</param>
+    /// <param name="name">The variable name.</param>
+    /// <param name="value">
+    /// The value: a <see cref="string"/>, <see cref="bool"/>, an integral or floating-point number (finite),
+    /// a <see cref="decimal"/>, or a <see cref="System.Text.Json.Nodes.JsonNode"/> for objects and arrays.
+    /// </param>
+    /// <param name="ct">Cancels the call; cancellation always surfaces as <see cref="OperationCanceledException"/>.</param>
+    /// <returns>A task that completes when the API accepted the value.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>. Nothing was sent.</exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="name"/> is null, empty or whitespace, or <paramref name="value"/> has an unsupported type. Nothing was sent.
+    /// </exception>
+    /// <exception cref="AntiCaptchaException">
+    /// The API or the transport failed. <see cref="AntiCaptchaException.TaskId"/> is <paramref name="taskId"/>.
+    /// </exception>
+    Task PushAntiGateVariableAsync(int taskId, string name, object value, CancellationToken ct = default);
+
+    /// <summary>
     /// Reads the account balance (<c>getBalance</c>). The API asks not to call this more than once every 30 seconds;
     /// cache the value instead.
     /// </summary>

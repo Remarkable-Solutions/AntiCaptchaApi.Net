@@ -210,6 +210,24 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
     }
 
     /// <inheritdoc />
+    public Task PushAntiGateVariableAsync(int taskId, string name, object value, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("The variable name must not be null, empty or whitespace.", nameof(name));
+        }
+        var json = AntiGateVariableValue.ToJsonNode(value, nameof(value));
+        return PostForTaskAsync(
+            "pushAntiGateVariable",
+            taskId,
+            new PushAntiGateVariableRequest(_apiKey, taskId, name, json),
+            AntiCaptchaJsonContext.Default.PushAntiGateVariableRequest,
+            AntiCaptchaJsonContext.Default.ActionResponse,
+            Redactor,
+            ct);
+    }
+
+    /// <inheritdoc />
     public async Task<decimal> GetBalanceAsync(CancellationToken ct = default)
     {
         var response = await Transport.PostAsync(
