@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json.Nodes;
 using AntiCaptchaApi.Net;
 using AntiCaptchaApi.Net.Internal.Json;
+using AntiCaptchaApi.Net.Internal.Time;
 using AntiCaptchaApi.Net.Tasks;
 using System.Runtime.Versioning;
 
@@ -16,6 +17,9 @@ var commands = new Dictionary<string, (string Description, Func<string[], int> R
     ["info"] = ("Print the core assembly version, target framework and referenced assemblies.", _ => Info()),
     ["serialize"] = ("Print the createTask JSON of a sample of every task type, plus validation and redaction examples.", _ => Serialize()),
     ["offline-create"] = ("Run CreateTaskAsync against an in-process scripted handler: masked request JSON, then error scenarios.", _ => OfflineCreate().GetAwaiter().GetResult()),
+    ["offline-solve"] = ("Run TrySolveAsync offline on a simulated clock: processing -> transient error -> ready; print the timeline and the SolveResult.", _ => OfflineSolve().GetAwaiter().GetResult()),
+    ["offline-retry"] = ("Run TrySolveAsync offline on a simulated clock: ERROR_NO_SLOT_AVAILABLE x2 -> success; print the timeline, backoff delays and the SolveResult.", _ => OfflineRetry().GetAwaiter().GetResult()),
+    ["live-solve-image"] = ("USER ONLY (paid, needs ClientKey): solve ImageToText from captchaexample.png [path] and print the text, cost and attempts.", a => LiveSolveImage(a).GetAwaiter().GetResult()),
     ["live-create-image"] = ("USER ONLY (paid, needs ClientKey): create one ImageToText task from captchaexample.png [path] and print the taskId.", a => LiveCreateImage(a).GetAwaiter().GetResult()),
     ["live-amazon-shape"] = ("USER ONLY (paid, needs ClientKey): <websiteUrl> <websiteKey> <iv> <context>; solve AmazonWaf and print the raw solution JSON (spec Q-2).", a => LiveAmazonShape(a).GetAwaiter().GetResult()),
 };
@@ -169,6 +173,57 @@ static async Task<int> OfflineCreate()
     static HttpResponseMessage Json(string json) => new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
 }
 
+static async Task<int> OfflineSolve()
+{
+    var timeline = new Timeline();
+    timeline.Script("createTask", "{\"errorId\":0,\"taskId\":123456}");
+    timeline.Script("getTaskResult", "{\"errorId\":0,\"status\":\"processing\"}");
+    timeline.ScriptFailure("getTaskResult", new HttpRequestException("connection reset by peer (simulated)"));
+    timeline.Script("getTaskResult", "{\"errorId\":0,\"status\":\"ready\",\"solution\":{\"token\":\"0.SIMULATED_TURNSTILE_TOKEN\"},"
+        + "\"cost\":\"0.00200\",\"ip\":\"198.51.100.7\",\"createTime\":1700000000,\"endTime\":1700000016,\"solveCount\":\"1\"}");
+
+    var result = await timeline.Client.TrySolveAsync(new TurnstileTask("https://example.com/login", "SITE_KEY"));
+    return timeline.Report("TrySolveAsync(TurnstileTask), default SolveOptions", result.ToString(), result.IsSuccess && result.Attempts == 1);
+}
+
+static async Task<int> OfflineRetry()
+{
+    var timeline = new Timeline();
+    const string NoSlot = "{\"errorId\":2,\"errorCode\":\"ERROR_NO_SLOT_AVAILABLE\",\"errorDescription\":\"No idle workers are available at the moment.\"}";
+    timeline.Script("createTask", NoSlot);
+    timeline.Script("createTask", NoSlot);
+    timeline.Script("createTask", "{\"errorId\":0,\"taskId\":654321}");
+    timeline.Script("getTaskResult", "{\"errorId\":0,\"status\":\"ready\",\"solution\":{\"text\":\"deditur\"},"
+        + "\"cost\":\"0.00070\",\"ip\":\"203.0.113.9\",\"createTime\":1700000000,\"endTime\":1700000004,\"solveCount\":\"0\"}");
+
+    var result = await timeline.Client.TrySolveAsync(ImageToTextTask.FromBytes(new byte[] { 0x89, 0x50, 0x4E, 0x47 }));
+    return timeline.Report("TrySolveAsync(ImageToTextTask), default SolveOptions (backoff 2 s, 4 s; jitter off)", result.ToString(), result.IsSuccess && result.Attempts == 3);
+}
+
+static async Task<int> LiveSolveImage(string[] args)
+{
+    if (RequireClientKey() is not { } key)
+    {
+        return 2;
+    }
+    var path = args.Length > 0 ? args[0] : FindUpwards(Path.Combine("AntiCaptchaApi.Net.Tests", "Resources", "captchaexample.png"));
+    if (path is null || !File.Exists(path))
+    {
+        Console.Error.WriteLine("captchaexample.png not found; pass the image path as the first argument.");
+        return 2;
+    }
+
+    // TrySolveAsync (not SolveAsync) so that the cost and the attempt count can be printed as well.
+    var result = await new AntiCaptchaClient(key).TrySolveAsync(ImageToTextTask.FromFile(path));
+    if (result.IsSuccess)
+    {
+        Console.WriteLine($"Text = {result.Solution!.Text}, cost = {result.Cost} USD, attempts = {result.Attempts}, taskId = {result.TaskId}, solve time = {result.SolveTime}");
+        return 0;
+    }
+    Console.Error.WriteLine($"Solve failed after {result.Attempts} attempt(s), taskId = {result.TaskId}: {result.Error}");
+    return 1;
+}
+
 static string? RequireClientKey()
 {
     var key = Environment.GetEnvironmentVariable("ClientKey");
@@ -284,5 +339,96 @@ sealed class BodyLoggingHandler(string key) : DelegatingHandler
             Console.WriteLine("getTaskResult raw: " + body.Replace(key, "***"));
         }
         return response;
+    }
+}
+
+/// <summary>
+/// An offline client on a simulated clock: delays return at once and advance the clock, and every delay and API call is
+/// logged with its simulated time. The client key is a recognisable fake secret that must never be printed.
+/// </summary>
+sealed class Timeline : ISystemClock
+{
+    private const string Key = "SECRET_PROBE_KEY";
+    private readonly DateTimeOffset _start = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    private readonly Dictionary<string, Queue<Func<HttpResponseMessage>>> _scripts = new(StringComparer.Ordinal);
+    private readonly StringBuilder _output = new();
+
+    public Timeline()
+    {
+        UtcNow = _start;
+        // Random 0.5 = no jitter, so the printed backoff delays are exactly RetryBaseDelay x 2^(attempt-1).
+        Client = new AntiCaptchaClient(Key, new HttpClient(new Handler(this)), null, this, () => 0.5);
+    }
+
+    public AntiCaptchaClient Client { get; }
+
+    public DateTimeOffset UtcNow { get; private set; }
+
+    public Task Delay(TimeSpan delay, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        Log($"wait {delay.TotalSeconds:0.###} s");
+        UtcNow += delay;
+        return Task.CompletedTask;
+    }
+
+    public void Script(string method, string json) =>
+        Enqueue(method, () => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") });
+
+    public void ScriptFailure(string method, Exception exception) => Enqueue(method, () => throw exception);
+
+    public int Report(string title, string result, bool expected)
+    {
+        Print("");
+        Print("SolveResult: " + result);
+        var leaked = _output.ToString().Contains("SECRET", StringComparison.Ordinal);
+        Console.WriteLine();
+        Console.WriteLine(leaked ? "FAIL: a SECRET string appears in the output above." : "OK: no SECRET string appears in the output above.");
+        Console.WriteLine(expected ? "OK: the outcome matches the scenario." : "FAIL: unexpected outcome.");
+        Console.WriteLine($"(scenario: {title})");
+        return leaked || !expected ? 1 : 0;
+    }
+
+    private void Enqueue(string method, Func<HttpResponseMessage> respond)
+    {
+        if (!_scripts.TryGetValue(method, out var queue))
+        {
+            _scripts[method] = queue = new Queue<Func<HttpResponseMessage>>();
+        }
+        queue.Enqueue(respond);
+    }
+
+    private void Log(string text) => Print($"  t = {(UtcNow - _start).TotalSeconds,6:0.###} s  {text}");
+
+    private void Print(string line)
+    {
+        Console.WriteLine(line);
+        _output.AppendLine(line);
+    }
+
+    private sealed class Handler(Timeline timeline) : HttpMessageHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var method = request.RequestUri!.Segments[^1];
+            var body = JsonNode.Parse(await request.Content!.ReadAsStringAsync(cancellationToken))!;
+            var taskId = body["taskId"] is { } id ? $" taskId={id}" : "";
+            if (!timeline._scripts.TryGetValue(method, out var queue) || queue.Count == 0)
+            {
+                throw new InvalidOperationException($"unscripted call to {method}");
+            }
+            try
+            {
+                var response = queue.Dequeue()();
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                timeline.Log($"{method}{taskId} -> {content}");
+                return response;
+            }
+            catch (HttpRequestException ex)
+            {
+                timeline.Log($"{method}{taskId} -> HttpRequestException: {ex.Message}");
+                throw;
+            }
+        }
     }
 }
