@@ -257,6 +257,31 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
         return new QueueStats(waiting, load, bid, speed, total);
     }
 
+    /// <inheritdoc />
+    public async Task<SpendingStats> GetSpendingStatsAsync(SpendingQuery? q = null, CancellationToken ct = default)
+    {
+        const string Method = "getSpendingStats";
+        var response = await Transport.PostAsync(
+            Method,
+            new GetSpendingStatsRequest(_apiKey, q),
+            AntiCaptchaJsonContext.Default.GetSpendingStatsRequest,
+            AntiCaptchaJsonContext.Default.GetSpendingStatsResponse,
+            Redactor,
+            ct).ConfigureAwait(false);
+        var data = response.Data ?? throw InvalidResponse(Method, "the response has no data array.");
+        var days = new DailySpending[data.Count];
+        for (var i = 0; i < days.Length; i++)
+        {
+            if (data[i] is not { DateFrom: { } from, DateTill: { } till, Volume: { } volume, Money: { } money }
+                || !IsUnixSeconds(from) || !IsUnixSeconds(till))
+            {
+                throw InvalidResponse(Method, "a data record lacks dateFrom, dateTill, volume or money, or has an invalid time.");
+            }
+            days[i] = new DailySpending(DateTimeOffset.FromUnixTimeSeconds(from), DateTimeOffset.FromUnixTimeSeconds(till), volume, money);
+        }
+        return new SpendingStats(days);
+    }
+
     /// <summary>Describes the client without revealing the API key.</summary>
     /// <returns>The type name and the base address.</returns>
     public override string ToString() => $"AntiCaptchaClient {{ BaseAddress = {Options.BaseAddress} }}";
@@ -280,6 +305,9 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
     // A successful envelope that lacks a required field. The body is not included (it could echo request data).
     private static AntiCaptchaException InvalidResponse(string method, string reason) =>
         new(new AntiCaptchaError(AntiCaptchaErrorCode.InvalidResponse, null, method + ": " + reason, null), taskId: null, attempts: 0);
+
+    // The range DateTimeOffset.FromUnixTimeSeconds accepts (years 0001 to 9999).
+    private static bool IsUnixSeconds(long seconds) => seconds >= -62_135_596_800L && seconds <= 253_402_300_799L;
 
     private SolveOptions ResolveSolveOptions(SolveOptions? o) =>
         o is null ? Options.DefaultSolveOptions : o.Validate(nameof(o));

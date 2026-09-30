@@ -146,4 +146,11 @@ public interface IAntiCaptchaClient
     /// <returns>The queue statistics.</returns>
     /// <exception cref="AntiCaptchaException">The API or the transport failed.</exception>
     Task<QueueStats> GetQueueStatsAsync(QueueType q, CancellationToken ct = default);
+
+    /// <summary>Reads the account spending and task volume for a 24-hour period (<c>getSpendingStats</c>).</summary>
+    /// <param name="q">Filters (period start, queue, app, IP), or <see langword="null"/> for the API defaults.</param>
+    /// <param name="ct">Cancels the call; cancellation always surfaces as <see cref="OperationCanceledException"/>.</param>
+    /// <returns>The spending records.</returns>
+    /// <exception cref="AntiCaptchaException">The API or the transport failed.</exception>
+    Task<SpendingStats> GetSpendingStatsAsync(SpendingQuery? q = null, CancellationToken ct = default);
 }
