@@ -564,7 +564,7 @@ Tasks:
 Goal: `ActivitySource("AntiCaptcha")` and `Meter("AntiCaptcha")` telemetry, free of secrets.
 
 Tasks:
-- [~] Task 6.1: DiagnosticSource dependency and `AntiCaptchaDiagnostics` (TDD)
+- [x] Task 6.1: DiagnosticSource dependency and `AntiCaptchaDiagnostics` (TDD) [295f16d]
   - Add `System.Diagnostics.DiagnosticSource 8.0.0` to the csproj (netstandard2.0 only). Add `AntiCaptchaDiagnostics.cs` (public constants) and `Internal/Diagnostics/Telemetry.cs` (static `ActivitySource`, `Meter`, instruments).
   - Tests:
     - `AntiCaptchaDiagnosticsTests.Names_AreAntiCaptcha`
