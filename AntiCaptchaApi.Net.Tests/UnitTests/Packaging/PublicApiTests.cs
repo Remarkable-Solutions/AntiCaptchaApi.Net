@@ -18,7 +18,7 @@ public class PublicApiTests
 
     private static readonly Assembly Core = typeof(AntiCaptchaClient).Assembly;
 
-    // Spec FR-4, verbatim apart from the generic constraints, which the spec lists only on the first two methods.
+    // Spec FR-4, verbatim (design §4.2 is the same without the generic constraints).
     private static readonly string[] ExpectedClientMethods =
     {
         "Task<TSolution> SolveAsync<TSolution>(CaptchaTask<TSolution> task, SolveOptions? o = null, CancellationToken ct = default) where TSolution : Solution",
