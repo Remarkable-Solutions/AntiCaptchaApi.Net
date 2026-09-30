@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Reflection;
 using System.Text;
@@ -19,6 +21,7 @@ var commands = new Dictionary<string, (string Description, Func<string[], int> R
     ["offline-create"] = ("Run CreateTaskAsync against an in-process scripted handler: masked request JSON, then error scenarios.", _ => OfflineCreate().GetAwaiter().GetResult()),
     ["offline-solve"] = ("Run TrySolveAsync offline on a simulated clock: processing -> transient error -> ready; print the timeline and the SolveResult.", _ => OfflineSolve().GetAwaiter().GetResult()),
     ["offline-retry"] = ("Run TrySolveAsync offline on a simulated clock: ERROR_NO_SLOT_AVAILABLE x2 -> success; print the timeline, backoff delays and the SolveResult.", _ => OfflineRetry().GetAwaiter().GetResult()),
+    ["telemetry"] = ("Attach an ActivityListener and a MeterListener, run the offline-solve scenario (task with a proxy), print the activities and measurements; fails if a secret appears.", _ => TelemetryProbe().GetAwaiter().GetResult()),
     ["offline-account"] = ("Run every Phase 5 method (balance, queue, report, push, spending, app stats) against a scripted handler; print masked requests and results.", _ => OfflineAccount().GetAwaiter().GetResult()),
     ["live-balance"] = ("USER ONLY (read-only, free, needs ClientKey): print the account balance.", _ => LiveBalance().GetAwaiter().GetResult()),
     ["live-queue"] = ("USER ONLY (read-only, free): <QueueType|queueId>; print the queue stats (no key sent; ClientKey still required).", a => LiveQueue(a).GetAwaiter().GetResult()),
@@ -180,15 +183,127 @@ static async Task<int> OfflineCreate()
 
 static async Task<int> OfflineSolve()
 {
+    var timeline = OfflineSolveTimeline();
+    var result = await timeline.Client.TrySolveAsync(OfflineSolveTask());
+    return timeline.Report("TrySolveAsync(TurnstileTask), default SolveOptions", result.ToString(), result.IsSuccess && result.Attempts == 1);
+}
+
+// The offline-solve script (also used by "telemetry"): processing -> transient network failure -> ready.
+static Timeline OfflineSolveTimeline()
+{
     var timeline = new Timeline();
     timeline.Script("createTask", "{\"errorId\":0,\"taskId\":123456}");
     timeline.Script("getTaskResult", "{\"errorId\":0,\"status\":\"processing\"}");
     timeline.ScriptFailure("getTaskResult", new HttpRequestException("connection reset by peer (simulated)"));
     timeline.Script("getTaskResult", "{\"errorId\":0,\"status\":\"ready\",\"solution\":{\"token\":\"0.SIMULATED_TURNSTILE_TOKEN\"},"
         + "\"cost\":\"0.00200\",\"ip\":\"198.51.100.7\",\"createTime\":1700000000,\"endTime\":1700000016,\"solveCount\":\"1\"}");
+    return timeline;
+}
 
-    var result = await timeline.Client.TrySolveAsync(new TurnstileTask("https://example.com/login", "SITE_KEY"));
-    return timeline.Report("TrySolveAsync(TurnstileTask), default SolveOptions", result.ToString(), result.IsSuccess && result.Attempts == 1);
+static TurnstileTask OfflineSolveTask() => new("https://example.com/login", "SITE_KEY");
+
+static async Task<int> TelemetryProbe()
+{
+    // A recognisable fake proxy password; together with the Timeline key it must never be printed.
+    const string ProxyPassword = "SECRET_PROXY_PASS";
+    var original = Console.Out;
+    var captured = new StringBuilder();
+    Console.SetOut(new TeeWriter(original, captured));
+    try
+    {
+        var started = new List<Activity>();
+        using var activityListener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name == AntiCaptchaDiagnostics.ActivitySourceName,
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStarted = activity => { lock (started) { started.Add(activity); } },
+        };
+        ActivitySource.AddActivityListener(activityListener);
+
+        var measurements = new List<string>();
+        using var meterListener = new MeterListener
+        {
+            InstrumentPublished = (instrument, listener) =>
+            {
+                if (instrument.Meter.Name == AntiCaptchaDiagnostics.MeterName)
+                {
+                    listener.EnableMeasurementEvents(instrument);
+                }
+            },
+        };
+        void Record(Instrument instrument, object value, ReadOnlySpan<KeyValuePair<string, object?>> tags)
+        {
+            var formatted = new List<string>();
+            foreach (var tag in tags)
+            {
+                formatted.Add($"{tag.Key}={tag.Value}");
+            }
+            lock (measurements)
+            {
+                measurements.Add($"{instrument.Name} ({instrument.GetType().Name.Replace("`1", "")}<{value.GetType().Name}>) = {value} {instrument.Unit}  {{{string.Join(", ", formatted)}}}");
+            }
+        }
+        meterListener.SetMeasurementEventCallback<long>((instrument, value, tags, _) => Record(instrument, value, tags));
+        meterListener.SetMeasurementEventCallback<double>((instrument, value, tags, _) => Record(instrument, value, tags));
+        meterListener.Start();
+
+        Console.WriteLine($"Listening to ActivitySource \"{AntiCaptchaDiagnostics.ActivitySourceName}\" and Meter \"{AntiCaptchaDiagnostics.MeterName}\".");
+        Console.WriteLine("Scenario: offline-solve (processing -> transient network failure -> ready), with a proxy (login + password) on the task.");
+        Console.WriteLine();
+        var timeline = OfflineSolveTimeline();
+        var task = OfflineSolveTask() with
+        {
+            Proxy = new Proxy(ProxyType.Http, "203.0.113.10", 8080) { Login = "proxyUser", Password = ProxyPassword },
+            UserAgent = "Mozilla/5.0 (probe)",
+        };
+        var result = await timeline.Client.TrySolveAsync(task);
+
+        Console.WriteLine();
+        Console.WriteLine("Activities (start order; children indented under their parent):");
+        foreach (var activity in started)
+        {
+            var depth = 0;
+            for (var parent = activity.Parent; parent is not null && started.Contains(parent); parent = parent.Parent)
+            {
+                depth++;
+            }
+            var indent = new string(' ', 2 + 4 * depth);
+            var status = activity.Status == ActivityStatusCode.Unset ? "Unset" : $"{activity.Status} \"{activity.StatusDescription}\"";
+            Console.WriteLine($"{indent}{activity.OperationName}  kind={activity.Kind}  status={status}");
+            foreach (var tag in activity.TagObjects)
+            {
+                Console.WriteLine($"{indent}    {tag.Key} = {tag.Value}");
+            }
+            foreach (var e in activity.Events)
+            {
+                Console.WriteLine($"{indent}    event {e.Name}");
+            }
+        }
+        Console.WriteLine();
+        Console.WriteLine("Measurements (record order):");
+        foreach (var measurement in measurements)
+        {
+            Console.WriteLine("  " + measurement);
+        }
+        Console.WriteLine();
+        Console.WriteLine("SolveResult: " + result);
+
+        var text = captured.ToString();
+        var leaked = text.Contains(Timeline.Key, StringComparison.Ordinal) || text.Contains(ProxyPassword, StringComparison.Ordinal);
+        var expected = result.IsSuccess && result.Attempts == 1
+            && started.Count(a => a.OperationName == "AntiCaptcha.Solve") == 1
+            && started.Count(a => a.OperationName.StartsWith("AntiCaptcha.", StringComparison.Ordinal)) == 5
+            && measurements.Count == 4;
+        Console.SetOut(original);
+        Console.WriteLine();
+        Console.WriteLine(leaked ? "FAIL: the probe key or the proxy password appears in the output above." : "OK: neither the probe key nor the proxy password appears in the output above.");
+        Console.WriteLine(expected ? "OK: 1 solve activity + 4 call activities, 4 measurements (no failure), success with 1 attempt." : "FAIL: unexpected telemetry or outcome.");
+        return leaked || !expected ? 1 : 0;
+    }
+    finally
+    {
+        Console.SetOut(original);
+    }
 }
 
 static async Task<int> OfflineRetry()
@@ -561,13 +676,31 @@ sealed class BodyLoggingHandler(string key) : DelegatingHandler
     }
 }
 
+/// <summary>Writes to the console and keeps a copy, so that a command can check its whole output for secrets.</summary>
+sealed class TeeWriter(TextWriter inner, StringBuilder copy) : TextWriter
+{
+    public override Encoding Encoding => inner.Encoding;
+
+    public override void Write(char value)
+    {
+        inner.Write(value);
+        copy.Append(value);
+    }
+
+    public override void Write(string? value)
+    {
+        inner.Write(value);
+        copy.Append(value);
+    }
+}
+
 /// <summary>
 /// An offline client on a simulated clock: delays return at once and advance the clock, and every delay and API call is
 /// logged with its simulated time. The client key is a recognisable fake secret that must never be printed.
 /// </summary>
 sealed class Timeline : ISystemClock
 {
-    private const string Key = "SECRET_PROBE_KEY";
+    public const string Key = "SECRET_PROBE_KEY";
     private readonly DateTimeOffset _start = new(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
     private readonly Dictionary<string, Queue<Func<HttpResponseMessage>>> _scripts = new(StringComparer.Ordinal);
     private readonly StringBuilder _output = new();
