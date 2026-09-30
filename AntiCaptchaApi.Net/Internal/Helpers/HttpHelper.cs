@@ -6,6 +6,7 @@ using System.Net.Http; // Add missing using for IHttpClientFactory
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using AntiCaptchaApi.Net.Internal.Common;
 using AntiCaptchaApi.Net.Internal.Converters;
 using AntiCaptchaApi.Net.Models.Solutions;
 using AntiCaptchaApi.Net.Responses;
@@ -95,7 +96,7 @@ internal class HttpHelper : IHttpHelper
                  response.ErrorDescription = $"JSON Deserialization Error: {jsonEx.Message}";
                  response.RawResponse = responseContent; // Include raw response for debugging
                  response.RawPayload = redactedPayload;
-                 response.ErrorCode = "JsonError";
+                 response.ErrorCode = TransportErrorCodes.JsonError;
                  return response;
             }
             catch (HttpRequestException httpEx) // Catch specific HTTP errors
@@ -105,7 +106,7 @@ internal class HttpHelper : IHttpHelper
                  response.RawResponse = responseContent;
                 response.RawPayload = redactedPayload;
                 // HttpRequestException doesn't have StatusCode directly. Use a generic code.
-                response.ErrorCode = "HttpError";
+                response.ErrorCode = TransportErrorCodes.HttpError;
                 return response;
            }
             catch (OperationCanceledException) // Catch cancellation (TaskCanceledException or OperationCanceledException)
@@ -114,7 +115,7 @@ internal class HttpHelper : IHttpHelper
                  response.ErrorDescription = "Operation was canceled.";
                  response.RawResponse = responseContent;
                  response.RawPayload = redactedPayload;
-                 response.ErrorCode = "Cancelled";
+                 response.ErrorCode = TransportErrorCodes.Cancelled;
                  return response;
             }
             catch (Exception ex) // Catch broader exceptions
@@ -123,7 +124,7 @@ internal class HttpHelper : IHttpHelper
                 response.ErrorDescription = $"An unexpected error occurred: {ex.Message}";
                 response.RawResponse = responseContent;
                 response.RawPayload = redactedPayload;
-                response.ErrorCode = "UnexpectedError";
+                response.ErrorCode = TransportErrorCodes.UnexpectedError;
                 return response;
             }
         }
