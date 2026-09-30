@@ -315,7 +315,8 @@ Tasks:
     - `IsTransient` (Theory: HttpError-network/408/429/5xx, HttpTimeout, InvalidResponse → true; HttpError-400 → false)
   - Commit: `feat(errors): add typed AntiCaptchaErrorCode with retry classification`
 
-- [ ] Task 3.2: `AntiCaptchaException` and `SecretRedactor` (TDD)
+- [x] Task 3.2: `AntiCaptchaException` and `SecretRedactor` (TDD) 9d561f0
+  - Done 2026-09-30: the ctor is `(AntiCaptchaError error, int? taskId, int attempts, Exception? innerException = null)` and is public, so users can throw it from mocks. Without a description the message is just `{Code}`. The exception does not redact: descriptions are redacted where the error is built (transport). `SecretRedactor.With(password)` returns an extended copy, for the per-task proxy password. 4 extra tests: `Redact_OverlappingSecrets_LongerIsReplacedFirst`, `With_AddsPasswords_WithoutChangingOriginal`, `Message_WithoutDescription_IsCode`, `Ctor_NullError_ThrowsArgumentNull`.
   - Files: `Errors/AntiCaptchaException.cs`, `Internal/Errors/SecretRedactor.cs` (constructed with the key and a set of proxy passwords; `Redact(string?)`).
   - Tests:
     - `SecretRedactorTests.Redact_ReplacesKeyAndPasswords`
