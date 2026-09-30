@@ -117,7 +117,8 @@ Tasks:
     - `ProxyType_Serializes_Lowercase` (Theory: Http→`http`, Socks4→`socks4`, Socks5→`socks5`)
   - Commit: `feat(tasks): add Proxy record with redacted ToString`
 
-- [~] Task 2.2: `Validator`, `ValidationError`, `AntiCaptchaValidationException` (TDD)
+- [x] Task 2.2: `Validator`, `ValidationError`, `AntiCaptchaValidationException` (TDD) 772ac44
+  - Done 2026-09-30: signatures are `Url/NotEmpty/NotNull(value, [CallerArgumentExpression] field = "")`, `Range<T>(value, min, max, field)`, `OneOf<T>(value, IReadOnlyCollection<T> allowed, field)` and `Must(condition, field, message)` (the field is explicit because the condition expression is not a field name). Every check fails on `null`, so optional values are guarded by the caller. 3 extra tests: `NotEmpty_ThisQualifiedExpression_StripsThisPrefix`, `ThrowIfInvalid_WithErrors_ThrowsWithAllErrors`, `ThrowIfInvalid_NoErrors_DoesNotThrow`. The exception has a public ctor `(IEnumerable<ValidationError>)` so that users can throw it from mocks.
   - Files: `Tasks/Validator.cs`, `Errors/ValidationError.cs`, `Errors/AntiCaptchaValidationException.cs`.
   - Tests `UnitTests/Tasks/ValidatorTests.cs`:
     - `Url_Relative_AddsError`
@@ -132,7 +133,7 @@ Tasks:
     - `Errors_AreReadOnly`
   - Commit: `feat(validation): add fluent Validator and AntiCaptchaValidationException`
 
-- [ ] Task 2.3: `CaptchaTask`, `CaptchaTask<TSolution>`, `ProxyMode`, `Solution` (TDD)
+- [~] Task 2.3: `CaptchaTask`, `CaptchaTask<TSolution>`, `ProxyMode`, `Solution` (TDD)
   - Files:
     - `Tasks/CaptchaTask.cs`: `private protected` ctor; `Proxy`; internal abstract `ResolveTypeName()`, `RunValidation()`, `ResolvedFirstPollDelay`.
     - `Tasks/CaptchaTaskOfT.cs`: the design members, plus mode-based name resolution and proxy validation before the per-type `Validate`.
