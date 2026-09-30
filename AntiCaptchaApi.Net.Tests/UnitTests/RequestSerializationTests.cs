@@ -863,5 +863,70 @@ namespace AntiCaptchaApi.Net.Tests.UnitTests
             AssertSame(expectedPayload, Payload);
         }
 
+        [Fact]
+        public void AmazonWafProxylessRequestSerializationTest()
+        {
+            var expectedPayload = new JObject
+            {
+                ["type"] = "AmazonTaskProxyless",
+                ["websiteURL"] = "https://example.com/waf",
+                ["websiteKey"] = "AQIDAHjcYu/GjX+QlghicBgQ/7bFaQZ+m5FKCMDnO+vTbNg96AF5H1K/siwSLK7RfstKtN5bAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMLp9uHaj",
+                ["iv"] = "CgAHbCe2GgAAAAAj",
+                ["context"] = "9BUgmlm48F92WUoqv97a49ZuEJJ50TCk9MVr3C7WMtQ0X6flVbufM4n8mjFLmbLVAPgaQ1Jydeaja94iAS49ljb",
+                ["captchaScript"] = "https://example.token.awswaf.com/captcha.js",
+                ["challengeScript"] = "https://example.token.awswaf.com/challenge.js",
+            };
+
+            var request = new AmazonWafProxylessRequest
+            {
+                WebsiteUrl = expectedPayload["websiteURL"]!.ToString(),
+                WebsiteKey = expectedPayload["websiteKey"]!.ToString(),
+                Iv = expectedPayload["iv"]!.ToString(),
+                Context = expectedPayload["context"]!.ToString(),
+                CaptchaScript = expectedPayload["captchaScript"]!.ToString(),
+                ChallengeScript = expectedPayload["challengeScript"]!.ToString(),
+            };
+
+            var Payload = CreateCaptchaRequestHelper.Build(request);
+            AssertSame(expectedPayload, Payload);
+        }
+
+        [Fact]
+        public void AmazonWafRequestSerializationTest()
+        {
+            var expectedPayload = new JObject
+            {
+                ["type"] = "AmazonTask",
+                ["websiteURL"] = "https://example.com/waf",
+                ["websiteKey"] = "AQIDAHjcYu/GjX+QlghicBgQ/7bFaQZ+m5FKCMDnO+vTbNg96AF5H1K",
+                ["iv"] = "CgAHbCe2GgAAAAAj",
+                ["context"] = "9BUgmlm48F92WUoqv97a49ZuEJJ50TCk9MVr3C7WMtQ0X6flVbufM4n8mjFLmbLVAPgaQ1Jydeaja94iAS49ljb",
+                ["proxyType"] = "http",
+                ["proxyAddress"] = "proxyAddressTest",
+                ["proxyPort"] = 1080,
+                ["proxyLogin"] = "proxyLoginTest",
+                ["proxyPassword"] = "proxyPasswordTest",
+            };
+
+            var request = new AmazonWafRequest
+            {
+                WebsiteUrl = expectedPayload["websiteURL"]!.ToString(),
+                WebsiteKey = expectedPayload["websiteKey"]!.ToString(),
+                Iv = expectedPayload["iv"]!.ToString(),
+                Context = expectedPayload["context"]!.ToString(),
+                ProxyConfig = new ProxyConfig
+                {
+                    ProxyType = ProxyTypeOption.Http,
+                    ProxyAddress = expectedPayload["proxyAddress"]!.ToString(),
+                    ProxyLogin = expectedPayload["proxyLogin"]!.ToString(),
+                    ProxyPassword = expectedPayload["proxyPassword"]!.ToString(),
+                    ProxyPort = int.Parse(expectedPayload["proxyPort"]!.ToString()),
+                }
+            };
+
+            var Payload = CreateCaptchaRequestHelper.Build(request);
+            AssertSame(expectedPayload, Payload);
+        }
+
     }
 }
