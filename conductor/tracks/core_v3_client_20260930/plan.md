@@ -635,7 +635,7 @@ Tasks:
     - Wire deviations (spec §9) and changed defaults (spec R-7).
   - Commit: `docs(migration): add 2.x to 3.0 migration guide`
 
-- [~] Task 7.4: README rewrite (no red phase — docs)
+- [x] Task 7.4: README rewrite (no red phase — docs) [2835770]
   - `README.md` sections: badges; install; a 10-line quick start (`new AntiCaptchaClient(key)` + `SolveAsync(new TurnstileTask(...))`); `TrySolveAsync` example; one example per task type (13); proxy usage; `SolveOptions`/`AntiCaptchaClientOptions` table; errors and retry classification; cancellation vs timeout; `IHttpClientFactory` usage without the DI package; observability (source and meter names, OpenTelemetry snippet); troubleshooting; links to MIGRATION and CHANGELOG.
   - Verify: each code snippet compiles. Copy them into a probe command `readme-snippets` that compiles against the library; running it is not required.
   - Commit: `docs(readme): rewrite README for 3.0 core package`
