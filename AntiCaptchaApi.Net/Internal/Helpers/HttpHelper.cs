@@ -16,7 +16,7 @@ namespace AntiCaptchaApi.Net.Internal.Helpers
 {
 internal class HttpHelper : IHttpHelper
 {
-        private static readonly List<JsonConverter> Converters = new List<JsonConverter>()
+        private static readonly JsonConverter[] ConverterArray =
         {
             new TaskResultConverter<FunCaptchaSolution>(),
             new AntiGateTaskResultConverter(),
@@ -26,7 +26,15 @@ internal class HttpHelper : IHttpHelper
             new TaskResultConverter<ImageToTextSolution>(),
             new TaskResultConverter<ImageToCoordinatesSolution>(),
             new TaskResultConverter<TurnstileSolution>(),
+            new TaskResultConverter<ProsopoSolution>(),
+            new TaskResultConverter<AmazonWafSolution>(),
         };
+
+        /// <summary>
+        /// Result converters registered for every concrete <see cref="BaseSolution"/> type.
+        /// Internal (read-only) so the registry-completeness tests can inspect it.
+        /// </summary>
+        internal static readonly IReadOnlyList<JsonConverter> Converters = Array.AsReadOnly(ConverterArray);
         
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly HttpClient _httpClient;
@@ -64,7 +72,7 @@ internal class HttpHelper : IHttpHelper
                 responseContent = await httpResponseMessage.Content.ReadAsStringAsync();
                 
                 // Attempt deserialization
-                response = JsonConvert.DeserializeObject<T>(responseContent, Converters.ToArray());
+                response = JsonConvert.DeserializeObject<T>(responseContent, ConverterArray);
                 
                 // Handle case where deserialization might return null for valid JSON (e.g., "null")
                 // or if the response structure doesn't match T perfectly but doesn't throw.
