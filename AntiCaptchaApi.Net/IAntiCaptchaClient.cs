@@ -92,6 +92,21 @@ public interface IAntiCaptchaClient
         where TSolution : Solution;
 
     /// <summary>
+    /// Reports how a solved task worked out (<c>reportIncorrectImageCaptcha</c>, <c>reportIncorrectRecaptcha</c> or
+    /// <c>reportCorrectRecaptcha</c>). Send it within 60 seconds of completion; only one report per task is accepted.
+    /// </summary>
+    /// <param name="taskId">The id of the solved task.</param>
+    /// <param name="report">What to report.</param>
+    /// <param name="ct">Cancels the call; cancellation always surfaces as <see cref="OperationCanceledException"/>.</param>
+    /// <returns>A task that completes when the API accepted the report.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="report"/> is not a defined value. Nothing was sent.</exception>
+    /// <exception cref="AntiCaptchaException">
+    /// The API or the transport failed, for example <see cref="AntiCaptchaErrorCode.NoSuchCaptchaId"/> when the report is late.
+    /// <see cref="AntiCaptchaException.TaskId"/> is <paramref name="taskId"/>.
+    /// </exception>
+    Task ReportAsync(int taskId, Report report, CancellationToken ct = default);
+
+    /// <summary>
     /// Reads the account balance (<c>getBalance</c>). The API asks not to call this more than once every 30 seconds;
     /// cache the value instead.
     /// </summary>

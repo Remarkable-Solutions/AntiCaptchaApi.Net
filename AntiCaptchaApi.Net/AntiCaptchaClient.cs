@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Net.Http;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using AntiCaptchaApi.Net.Internal.Errors;
@@ -140,22 +141,36 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
     internal async Task<TaskStatus<TSolution>> GetTaskResultCoreAsync<TSolution>(int taskId, SecretRedactor redactor, CancellationToken ct)
         where TSolution : Solution
     {
-        GetTaskResultResponse response;
+        var response = await PostForTaskAsync(
+            "getTaskResult",
+            taskId,
+            new GetTaskResultRequest(_apiKey, taskId),
+            AntiCaptchaJsonContext.Default.GetTaskResultRequest,
+            AntiCaptchaJsonContext.Default.GetTaskResultResponse,
+            redactor,
+            ct).ConfigureAwait(false);
+        return TaskResultMapper.Map<TSolution>(response, taskId);
+    }
+
+    // A call about an existing task: its errors carry the task id.
+    private async Task<TResponse> PostForTaskAsync<TRequest, TResponse>(
+        string method,
+        int taskId,
+        TRequest body,
+        JsonTypeInfo<TRequest> requestInfo,
+        JsonTypeInfo<TResponse> responseInfo,
+        SecretRedactor redactor,
+        CancellationToken ct)
+        where TResponse : class
+    {
         try
         {
-            response = await Transport.PostAsync(
-                "getTaskResult",
-                new GetTaskResultRequest(_apiKey, taskId),
-                AntiCaptchaJsonContext.Default.GetTaskResultRequest,
-                AntiCaptchaJsonContext.Default.GetTaskResultResponse,
-                redactor,
-                ct).ConfigureAwait(false);
+            return await Transport.PostAsync(method, body, requestInfo, responseInfo, redactor, ct).ConfigureAwait(false);
         }
         catch (AntiCaptchaException ex) when (ex.TaskId is null)
         {
             throw new AntiCaptchaException(ex.Error, taskId, 0, ex);
         }
-        return TaskResultMapper.Map<TSolution>(response, taskId);
     }
 
     /// <inheritdoc />
@@ -172,6 +187,26 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
             0,
             ct).ConfigureAwait(false);
         return status.Solution!; // PollAsync returns only ready statuses, and IsReady guarantees a solution.
+    }
+
+    /// <inheritdoc />
+    public Task ReportAsync(int taskId, Report report, CancellationToken ct = default)
+    {
+        var method = report switch
+        {
+            Report.IncorrectImageCaptcha => "reportIncorrectImageCaptcha",
+            Report.IncorrectRecaptcha => "reportIncorrectRecaptcha",
+            Report.CorrectRecaptcha => "reportCorrectRecaptcha",
+            _ => throw new ArgumentOutOfRangeException(nameof(report), report, "Undefined Report value."),
+        };
+        return PostForTaskAsync(
+            method,
+            taskId,
+            new TaskActionRequest(_apiKey, taskId),
+            AntiCaptchaJsonContext.Default.TaskActionRequest,
+            AntiCaptchaJsonContext.Default.ActionResponse,
+            Redactor,
+            ct);
     }
 
     /// <inheritdoc />
