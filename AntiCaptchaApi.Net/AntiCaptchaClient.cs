@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
+using AntiCaptchaApi.Net.Internal.Diagnostics;
 using AntiCaptchaApi.Net.Internal.Errors;
 using AntiCaptchaApi.Net.Internal.Http;
 using AntiCaptchaApi.Net.Internal.Json;
@@ -130,6 +131,7 @@ public sealed class AntiCaptchaClient : IAntiCaptchaClient
             AntiCaptchaJsonContext.Default.CreateTaskResponse,
             RedactorFor(task),
             ct).ConfigureAwait(false);
+        Telemetry.RecordTaskCreated(task);
         return response.TaskId;
     }
 

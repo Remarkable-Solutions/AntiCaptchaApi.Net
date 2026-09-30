@@ -1,5 +1,8 @@
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using AntiCaptchaApi.Net.Tasks;
 
 namespace AntiCaptchaApi.Net.Internal.Diagnostics;
 
@@ -14,6 +17,11 @@ internal static class Telemetry
     public const string TaskIdTag = "anticaptcha.task.id";
     public const string AttemptsTag = "anticaptcha.attempts";
     public const string ErrorCodeTag = "anticaptcha.error.code";
+
+    // Metric tag names are the ones of the spec FR-10 instrument table.
+    private const string MetricTaskTypeTag = "task.type";
+    private const string MetricOutcomeTag = "outcome";
+    private const string MetricErrorCodeTag = "error.code";
 
     private const string SolveActivityName = "AntiCaptcha.Solve";
     private const string CallActivityPrefix = "AntiCaptcha.";
@@ -67,5 +75,49 @@ internal static class Telemetry
         var name = code.ToString();
         activity.SetTag(ErrorCodeTag, name);
         activity.SetStatus(ActivityStatusCode.Error, name);
+    }
+
+    /// <summary>Counts one created task. The type name is resolved only when somebody listens.</summary>
+    public static void RecordTaskCreated(CaptchaTask task)
+    {
+        if (TasksCreated.Enabled)
+        {
+            TasksCreated.Add(1, new KeyValuePair<string, object?>(MetricTaskTypeTag, task.ResolveTypeName()));
+        }
+    }
+
+    /// <summary>
+    /// Ends a solve: tags and status on <paramref name="activity"/>, then the cost (success only, when reported), the
+    /// failure by error code, the outcome and the duration.
+    /// </summary>
+    public static void RecordSolve<TSolution>(Activity? activity, string taskType, SolveResult<TSolution> result, TimeSpan duration)
+        where TSolution : Solution
+    {
+        var error = result.Error;
+        if (activity is not null)
+        {
+            if (result.TaskId is { } taskId)
+            {
+                activity.SetTag(TaskIdTag, taskId);
+            }
+            activity.SetTag(AttemptsTag, result.Attempts);
+            if (error is not null)
+            {
+                SetFailure(activity, error.Code);
+            }
+        }
+
+        var type = new KeyValuePair<string, object?>(MetricTaskTypeTag, taskType);
+        if (error is null && result.Cost is { } cost)
+        {
+            Cost.Add((double)cost, type);
+        }
+        if (error is not null)
+        {
+            Failures.Add(1, type, new KeyValuePair<string, object?>(MetricErrorCodeTag, error.Code.ToString()));
+        }
+        var outcome = new KeyValuePair<string, object?>(MetricOutcomeTag, error is null ? "success" : "failure");
+        Solves.Add(1, type, outcome);
+        SolveDuration.Record(duration.TotalSeconds, type, outcome);
     }
 }

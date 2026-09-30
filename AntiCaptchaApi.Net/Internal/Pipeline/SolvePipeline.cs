@@ -25,6 +25,7 @@ internal sealed class SolvePipeline
     /// Steps 2–3 for a validated task: up to <see cref="SolveOptions.MaxAttempts"/> attempts of createTask + polling, with
     /// an exponential backoff between them. API and transport failures are returned as the
     /// <see cref="SolveOutcome{TSolution}.Failure"/> (with the last created task id and the attempt count); cancellation escapes.
+    /// The solve runs inside an <c>AntiCaptcha.Solve</c> activity and ends with the solve metrics (spec FR-10).
     /// </summary>
     public async Task<SolveOutcome<TSolution>> SolveAsync<TSolution>(
         CaptchaTask<TSolution> task,
@@ -33,21 +34,11 @@ internal sealed class SolvePipeline
         CancellationToken ct)
         where TSolution : Solution
     {
-        using var activity = Telemetry.StartSolve(task.ResolveTypeName());
+        var taskType = task.ResolveTypeName();
+        using var activity = Telemetry.StartSolve(taskType);
+        var startedAt = _client.Clock.UtcNow;
         var outcome = await RunAttemptsAsync(task, options, redactor, ct).ConfigureAwait(false);
-        if (activity is not null)
-        {
-            var result = outcome.Result;
-            if (result.TaskId is { } taskId)
-            {
-                activity.SetTag(Telemetry.TaskIdTag, taskId);
-            }
-            activity.SetTag(Telemetry.AttemptsTag, result.Attempts);
-            if (result.Error is { } error)
-            {
-                Telemetry.SetFailure(activity, error.Code);
-            }
-        }
+        Telemetry.RecordSolve(activity, taskType, outcome.Result, _client.Clock.UtcNow - startedAt);
         return outcome;
     }
 
