@@ -21,8 +21,9 @@ internal sealed class SolvePipeline
     }
 
     /// <summary>
-    /// Steps 2–3 for a validated task: create it, then poll it. API and transport failures are returned as the
-    /// <see cref="SolveOutcome{TSolution}.Failure"/> (with the last task id and the attempt count); cancellation escapes.
+    /// Steps 2–3 for a validated task: up to <see cref="SolveOptions.MaxAttempts"/> attempts of createTask + polling, with
+    /// an exponential backoff between them. API and transport failures are returned as the
+    /// <see cref="SolveOutcome{TSolution}.Failure"/> (with the last created task id and the attempt count); cancellation escapes.
     /// </summary>
     public async Task<SolveOutcome<TSolution>> SolveAsync<TSolution>(
         CaptchaTask<TSolution> task,
@@ -32,26 +33,61 @@ internal sealed class SolvePipeline
         where TSolution : Solution
     {
         int? taskId = null;
-        var attempts = 0;
+        for (var attempt = 1; ; attempt++)
+        {
+            AntiCaptchaException failure;
+            bool retryable;
+            var createdAt = _client.Clock.UtcNow;
+            var created = await TryCreateAsync(task, options, ct).ConfigureAwait(false);
+            if (created.Error is { } createError)
+            {
+                // Transient HTTP trouble on createTask is retried too (spec R-4 accepts a small duplicate-task risk).
+                failure = new AntiCaptchaException(createError.Error, taskId, attempt, createError);
+                retryable = createError.Error.IsRetryable;
+            }
+            else
+            {
+                taskId = created.TaskId;
+                try
+                {
+                    var status = await PollAsync<TSolution>(
+                        created.TaskId,
+                        options,
+                        options.FirstPollDelay ?? task.ResolvedFirstPollDelay,
+                        createdAt + options.Timeout,
+                        redactor,
+                        attempt,
+                        ct).ConfigureAwait(false);
+                    return SolveOutcome<TSolution>.Success(created.TaskId, status, attempt);
+                }
+                catch (AntiCaptchaException ex)
+                {
+                    // A poll failure is retried only for task errors (for example CaptchaUnsolvable). Transient errors got
+                    // here by exceeding MaxConsecutivePollErrors, and SolveTimeout is fatal: in both cases the task may be charged.
+                    failure = ex;
+                    retryable = ex.Error.IsRetryable && !ex.Error.IsTransient;
+                }
+            }
+
+            if (!retryable || attempt >= options.MaxAttempts)
+            {
+                return SolveOutcome<TSolution>.Failed(failure);
+            }
+            await _client.Clock.Delay(
+                Backoff.Delay(attempt, options.RetryBaseDelay, options.RetryMaxDelay, _client.Random),
+                ct).ConfigureAwait(false);
+        }
+    }
+
+    private async Task<(int TaskId, AntiCaptchaException? Error)> TryCreateAsync(CaptchaTask task, SolveOptions options, CancellationToken ct)
+    {
         try
         {
-            attempts++;
-            var createdAt = _client.Clock.UtcNow;
-            taskId = await _client.CreateTaskAsync(task, options, ct).ConfigureAwait(false);
-            var status = await PollAsync<TSolution>(
-                taskId.Value,
-                options,
-                options.FirstPollDelay ?? task.ResolvedFirstPollDelay,
-                createdAt + options.Timeout,
-                redactor,
-                attempts,
-                ct).ConfigureAwait(false);
-            return SolveOutcome<TSolution>.Success(taskId.Value, status, attempts);
+            return (await _client.CreateTaskAsync(task, options, ct).ConfigureAwait(false), null);
         }
         catch (AntiCaptchaException ex)
         {
-            var failure = ex.TaskId == taskId && ex.Attempts == attempts ? ex : new AntiCaptchaException(ex.Error, taskId, attempts, ex);
-            return SolveOutcome<TSolution>.Failed(failure);
+            return (0, ex);
         }
     }
 
