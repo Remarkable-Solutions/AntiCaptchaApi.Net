@@ -167,6 +167,9 @@ namespace AntiCaptchaApi.Net
             for (var tries = 0; tries < ClientConfig.SolveAsyncRetries; ++tries)
             {
                 createTaskResponse = await CreateCaptchaTaskAsync<TSolution>(request, languagePool, callbackUrl, cancellationToken);
+                // A local validation/build failure cannot succeed on retry.
+                if (createTaskResponse.ErrorCode == HttpStatusCode.BadRequest.ToString())
+                    break;
                 if (!createTaskResponse.IsErrorResponse && createTaskResponse.TaskId.HasValue)
                 {
                     taskResult = await WaitForTaskResultAsync<TSolution>(createTaskResponse, cancellationToken);
